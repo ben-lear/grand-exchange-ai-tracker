@@ -11,6 +11,10 @@
 # Output of the go coverage tool
 *.out
 
+# Coverage reports
+coverage/
+*.html
+
 # Go workspace file
 go.work
 

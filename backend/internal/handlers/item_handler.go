@@ -47,6 +47,9 @@ func (h *ItemHandler) ListItems(c *fiber.Ctx) error {
 		return errorResponse(c, fiber.StatusBadRequest, err.Error())
 	}
 
+	// Compute offset from page/limit for repository queries.
+	params.Offset = (params.Page - 1) * params.Limit
+
 	// Get items
 	items, total, err := h.itemService.ListItems(ctx, params)
 	if err != nil {

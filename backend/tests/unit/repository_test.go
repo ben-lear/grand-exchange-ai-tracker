@@ -1,51 +1,27 @@
+//go:build slow
+// +build slow
+
 package unit
 
 import (
 	"context"
-	"fmt"
-	"os"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
-	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 
 	"github.com/guavi/osrs-ge-tracker/internal/models"
 	"github.com/guavi/osrs-ge-tracker/internal/repository"
+	"github.com/guavi/osrs-ge-tracker/tests/testutil"
 )
 
 func setupTestDB(t *testing.T) *gorm.DB {
-	// Get database connection details from environment or use defaults
-	host := getEnv("POSTGRES_HOST", "localhost")
-	port := getEnv("POSTGRES_PORT", "5432")
-	user := getEnv("POSTGRES_USER", "osrs_tracker")
-	password := getEnv("POSTGRES_PASSWORD", "changeme")
-	dbname := getEnv("POSTGRES_DB", "osrs_ge_tracker")
-
-	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable TimeZone=UTC",
-		host, user, password, dbname, port)
-
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
-	require.NoError(t, err, "Failed to connect to test database")
-
-	// Auto migrate models
-	err = db.AutoMigrate(&models.Item{}, &models.CurrentPrice{})
-	require.NoError(t, err)
-
-	// Clean up any existing test data
-	db.Exec("TRUNCATE TABLE items, current_prices CASCADE")
-
+	db, release := testutil.SharedPostgres(t)
+	t.Cleanup(release)
 	return db
-}
-
-func getEnv(key, defaultValue string) string {
-	if value := os.Getenv(key); value != "" {
-		return value
-	}
-	return defaultValue
 }
 
 func TestItemRepository_Create(t *testing.T) {
@@ -258,4 +234,58 @@ func TestPriceRepository_GetAllCurrentPrices(t *testing.T) {
 	results, err := priceRepo.GetAllCurrentPrices(ctx)
 	require.NoError(t, err)
 	assert.Len(t, results, 2)
+}
+
+func TestPriceRepository_HistoryLifecycle(t *testing.T) {
+	db := setupTestDB(t)
+	logger, _ := zap.NewDevelopment()
+	priceRepo := repository.NewPriceRepository(db, logger.Sugar())
+	itemRepo := repository.NewItemRepository(db, logger.Sugar())
+
+	ctx := context.Background()
+
+	// Create item first (FK)
+	item := &models.Item{ItemID: 42, Name: "Test Item", Members: false}
+	err := itemRepo.Create(ctx, item)
+	require.NoError(t, err)
+
+	high := int64(1200)
+	low := int64(1100)
+
+	older := time.Now().Add(-48 * time.Hour).UTC()
+	newer := time.Now().Add(-2 * time.Hour).UTC()
+
+	// Insert into partitioned table (exercises trigger/partition creation)
+	err = priceRepo.InsertHistory(ctx, &models.PriceHistory{ItemID: 42, HighPrice: &high, LowPrice: &low, Timestamp: older})
+	require.NoError(t, err)
+	err = priceRepo.InsertHistory(ctx, &models.PriceHistory{ItemID: 42, HighPrice: &high, LowPrice: &low, Timestamp: newer})
+	require.NoError(t, err)
+
+	// Latest timestamp
+	latest, err := priceRepo.GetLatestHistoryTimestamp(ctx, 42)
+	require.NoError(t, err)
+	require.NotNil(t, latest)
+	assert.True(t, latest.Timestamp.Equal(newer) || latest.Timestamp.After(older))
+
+	// Period filter (24h should exclude the 48h point)
+	history, err := priceRepo.GetHistory(ctx, models.PriceHistoryParams{ItemID: 42, Period: models.Period24Hours})
+	require.NoError(t, err)
+	assert.Len(t, history, 1)
+	assert.True(t, history[0].Timestamp.After(time.Now().Add(-24*time.Hour)))
+
+	// Sampling
+	maxPoints := 1
+	history, err = priceRepo.GetHistory(ctx, models.PriceHistoryParams{ItemID: 42, Period: models.PeriodAll, MaxPoints: &maxPoints})
+	require.NoError(t, err)
+	assert.Len(t, history, 1)
+
+	// Delete old history
+	cutoff := time.Now().Add(-24 * time.Hour).Unix()
+	err = priceRepo.DeleteOldHistory(ctx, 42, cutoff)
+	require.NoError(t, err)
+
+	remaining, err := priceRepo.GetHistory(ctx, models.PriceHistoryParams{ItemID: 42, Period: models.PeriodAll})
+	require.NoError(t, err)
+	assert.Len(t, remaining, 1)
+
 }

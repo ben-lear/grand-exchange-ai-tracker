@@ -19,7 +19,7 @@ This is a full-stack application for tracking and visualizing **Old School RuneS
 ## Tech Stack
 
 ### Backend
-- **Language**: Go 1.22+
+- **Language**: Go 1.24.0+
 - **Framework**: Fiber v2 (high-performance HTTP framework)
 - **Database**: PostgreSQL 16 with GORM
 - **Caching**: Redis 7 with go-redis/v9

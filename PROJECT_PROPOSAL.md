@@ -45,7 +45,7 @@ Based on the API documentation, we will use:
 
 ## Technical Architecture
 
-### Backend (Go 1.22+)
+### Backend (Go 1.24.0+)
 
 #### Technology Stack
 - **Framework**: Fiber v2 (High-performance HTTP framework similar to Express)

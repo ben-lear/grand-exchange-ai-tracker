@@ -2,13 +2,13 @@
 
 ## Overview
 
-The backend includes comprehensive unit tests that run against a real PostgreSQL database using Docker. No CGO or SQLite dependencies are required - tests connect to the same PostgreSQL container used in development.
+The backend test suite runs against a real PostgreSQL database started on-demand via Testcontainers (Docker). No CGO or SQLite dependencies are required.
 
 ## Prerequisites
 
-- Docker and Docker Compose installed
+- Docker installed (Docker Desktop on Windows)
 - Docker daemon running
-- Go 1.22+ installed
+- Go 1.24.0+ installed
 
 ## Quick Start
 
@@ -26,10 +26,10 @@ chmod +x test.sh
 ```
 
 These scripts will:
-1. Start PostgreSQL container (if not running)
-2. Wait for database to be ready (with health checks)
-3. Set environment variables
-4. Run all unit tests (models + repositories)
+1. Verify Docker is reachable
+2. Run the Go test suite
+
+The tests themselves start and tear down an ephemeral PostgreSQL 16 container as needed.
 
 ## Test Suites
 
@@ -54,31 +54,84 @@ These scripts will:
 
 ## Manual Testing
 
-### Run All Tests
-```bash
-# Ensure PostgreSQL is running
-docker-compose up -d postgres
+## Validation Standard
 
-# Run all tests
-POSTGRES_HOST=localhost \
-POSTGRES_PORT=5432 \
-POSTGRES_USER=osrs_tracker \
-POSTGRES_PASSWORD=changeme \
-POSTGRES_DB=osrs_ge_tracker \
-go test ./tests/unit/... -v -count=1
+When validating changes to tests (or any backend change that could affect behavior), the standard is:
+
+1. Run **fast** tests for quick feedback (no Docker)
+2. Run the **full** suite (includes `-tags=slow`, requires Docker)
+
+Even though the full suite includes the fast tests, we still run the fast suite first because it fails faster and doesn’t require Docker.
+
+### Run Fast Tests (Default)
+Runs unit tests that do not require Docker/Postgres.
+
+```bash
+go test ./... -v -count=1
 ```
 
-### Windows PowerShell
-```powershell
-# Set environment variables
-$env:POSTGRES_HOST="localhost"
-$env:POSTGRES_PORT="5432"
-$env:POSTGRES_USER="osrs_tracker"
-$env:POSTGRES_PASSWORD="changeme"
-$env:POSTGRES_DB="osrs_ge_tracker"
+### Run Full Test Suite (Includes Docker/Postgres)
+Runs everything, including Postgres/Testcontainers-backed tests.
 
-# Run tests
-go test ./tests/unit/... -v -count=1
+```bash
+go test ./... -v -count=1 -tags=slow
+```
+
+## Coverage
+
+Coverage is generated via Go's built-in coverage tooling using the `-coverprofile` flag.
+
+**Important**: We use `-coverpkg=./...` so that coverage reflects execution of code across the whole backend module, not just the package under test.
+
+### Fast Coverage (No Docker)
+
+```bash
+mkdir -p coverage
+go test ./... -v -count=1 -coverprofile=coverage/fast.out -covermode=atomic -coverpkg=./...
+go tool cover -html=coverage/fast.out -o coverage/fast.html
+```
+
+### Full Coverage (Includes Docker/Postgres)
+
+```bash
+mkdir -p coverage
+go test ./... -v -count=1 -tags=slow -coverprofile=coverage/full.out -covermode=atomic -coverpkg=./...
+go tool cover -html=coverage/full.out -o coverage/full.html
+```
+
+```bash
+mkdir -p coverage
+rm -rf coverage/cov_full
+mkdir -p coverage/cov_full
+
+GOCOVERDIR="$(pwd)/coverage/cov_full" go test ./... -v -count=1 -tags=slow -cover -covermode=atomic -coverpkg=./...
+go tool covdata textfmt -i coverage/cov_full -o coverage/full.out
+go tool cover -html=coverage/full.out -o coverage/full.html
+```
+
+### Using the Scripts
+
+**Linux/macOS:**
+```bash
+./test.sh                     # Run all tests
+./test.sh --coverage          # Run all tests with coverage report
+```
+
+**Windows PowerShell:**
+```powershell
+.\test.ps1                    # Run all tests
+.\test.ps1 -Coverage          # Run all tests with coverage report
+```
+
+### Windows PowerShell (Manual Commands)
+```powershell
+# Run all tests
+go test ./... -v -count=1
+
+# Run all tests with coverage
+mkdir coverage -Force
+go test ./... -v -count=1 -coverprofile=coverage/coverage.out -covermode=atomic -coverpkg=./...
+go tool cover -html=coverage/coverage.out -o coverage/coverage.html
 ```
 
 ### Model Tests Only (No Database)
@@ -97,31 +150,26 @@ backend/tests/
 └── e2e/                     # End-to-end tests (Phase 6)
 ```
 
+## How Postgres Works In Tests
+
+- The suite uses Testcontainers to launch `postgres:16-alpine` on a random host port.
+- Migrations are applied automatically from `backend/migrations/001_init.sql`.
+- Tests truncate tables between runs to keep isolation.
+
+This behavior is implemented in `backend/tests/testutil/postgres.go`.
+
 ## Testing Strategy
 
 ### Development Workflow
-1. **Quick feedback**: Run model tests only (`go test ./tests/unit/models_test.go -v`)
-2. **Full validation**: Run test script (`.\test.ps1` or `./test.sh`)
-3. **Continuous**: Tests use `-count=1` flag to disable caching for fresh results
+1. **Quick feedback**: Run fast tests (`go test ./... -v`)
+2. **Full validation**: Run full suite with Docker (`go test ./... -v -tags=slow` or use `.\test.ps1` / `./test.sh`)
+3. **Continuous**: Use `-count=1` to disable caching for fresh results
 
 ### CI/CD Integration
 ```yaml
-# Example GitHub Actions workflow
-- name: Start PostgreSQL
-  run: docker-compose up -d postgres
-
-- name: Wait for PostgreSQL
-  run: |
-    timeout 60 bash -c 'until docker-compose exec -T postgres pg_isready -U osrs_tracker > /dev/null 2>&1; do sleep 1; done'
-
-- name: Run tests
-  env:
-    POSTGRES_HOST: localhost
-    POSTGRES_PORT: 5432
-    POSTGRES_USER: osrs_tracker
-    POSTGRES_PASSWORD: changeme
-    POSTGRES_DB: osrs_ge_tracker
-  run: go test ./tests/unit/... -v -count=1
+# Example GitHub Actions workflow (docker-enabled runner)
+- name: Run backend tests
+  run: go test ./... -v -count=1
 ```
 
 ## Why Docker PostgreSQL Instead of SQLite?
@@ -130,14 +178,14 @@ backend/tests/
 2. **No CGO Required**: Avoids MinGW/GCC requirements on Windows
 3. **Full Feature Support**: Tests use real PostgreSQL features (partitioning, CTEs, etc.)
 4. **Consistent Results**: Same behavior across all platforms
-5. **Simple Setup**: Just `docker-compose up -d postgres`
+5. **Simple Setup**: Just run `go test` with Docker available
 
 ## Troubleshooting
 
 ### Tests fail with connection errors
 - Ensure Docker is running: `docker info`
-- Check PostgreSQL is healthy: `docker inspect osrs-ge-postgres --format='{{.State.Health.Status}}'`
-- View logs: `docker-compose logs postgres`
+- Ensure the `postgres:16-alpine` image can be pulled
+- If Docker Desktop is in WSL2 mode, ensure your terminal environment can reach Docker
 
 ### Tests fail with foreign key errors
 - Tests create clean database state per test
@@ -145,9 +193,8 @@ backend/tests/
 - Check that tests create parent records before children (items before prices)
 
 ### Container not starting
-- Check port 5432 is not in use: `netstat -an | findstr 5432` (Windows) or `lsof -i :5432` (Linux/macOS)
-- Remove old containers: `docker-compose down -v`
-- Restart: `docker-compose up -d postgres`
+- Testcontainers uses random host ports, so port 5432 conflicts are unlikely.
+- Check Docker resources (CPU/RAM) and pull permissions.
 
 ## Next Steps
 

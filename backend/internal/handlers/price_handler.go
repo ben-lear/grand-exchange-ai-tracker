@@ -66,6 +66,11 @@ func (h *PriceHandler) GetCurrentPrice(c *fiber.Ctx) error {
 			"error": "price not found",
 		})
 	}
+	if price == nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"error": "price not found",
+		})
+	}
 
 	return c.JSON(fiber.Map{
 		"data": price,

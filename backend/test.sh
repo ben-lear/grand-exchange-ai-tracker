@@ -3,45 +3,74 @@
 
 set -e
 
-echo "🧪 Running OSRS GE Tracker Tests"
+COVERAGE=false
+
+for arg in "$@"; do
+    case "$arg" in
+        --coverage)
+            COVERAGE=true
+            ;;
+        --help|-h)
+            echo "Usage: ./test.sh [--coverage]"
+            echo "  --coverage   Generate coverage report"
+            exit 0
+            ;;
+        *)
+            echo "Unknown argument: $arg"
+            echo "Use --help for usage."
+            exit 1
+            ;;
+    esac
+done
+
+echo "🧪 Running OSRS GE Tracker Backend Tests"
 echo ""
 
-# Check if Docker is running
+# Check if Docker is running (required for integration tests)
 if ! docker info > /dev/null 2>&1; then
     echo "❌ Docker is not running. Please start Docker and try again."
     exit 1
 fi
 
-# Start PostgreSQL if not already running
-echo "🐘 Starting PostgreSQL..."
-docker-compose up -d postgres
+if [ "$COVERAGE" = true ]; then
+    mkdir -p coverage
 
-# Wait for PostgreSQL to be ready
-echo "⏳ Waiting for PostgreSQL to be ready..."
-timeout=30
-counter=0
-until docker-compose exec -T postgres pg_isready -U osrs_tracker > /dev/null 2>&1; do
-    counter=$((counter + 1))
-    if [ $counter -gt $timeout ]; then
-        echo "❌ PostgreSQL failed to start within ${timeout} seconds"
+    echo "🧪 Running Backend Tests with coverage..."
+    go test ./... -v -count=1 -coverprofile=coverage/coverage.out -covermode=atomic -coverpkg=./...
+    
+    if [ $? -ne 0 ]; then
+        echo "❌ Tests failed"
         exit 1
     fi
-    sleep 1
-done
 
-echo "✅ PostgreSQL is ready"
-echo ""
+    echo "📊 Generating HTML coverage report..."
+    go tool cover -html=coverage/coverage.out -o coverage/coverage.html
+    
+    if [ $? -ne 0 ]; then
+        echo "❌ Failed to generate HTML coverage report"
+        exit 1
+    fi
 
-# Set database connection for repository tests
-export POSTGRES_HOST=localhost
-export POSTGRES_PORT=5432
-export POSTGRES_USER=osrs_tracker
-export POSTGRES_PASSWORD=changeme
-export POSTGRES_DB=osrs_ge_tracker
+    echo ""
+    echo "✅ All tests passed!"
+    echo "Coverage reports:"
+    echo "- coverage/coverage.out"
+    echo "- coverage/coverage.html"
+    
+    echo ""
+    echo "📊 Coverage Summary:"
+    go tool cover -func=coverage/coverage.out | grep "^total:"
+    
+    exit 0
+fi
 
-# Run all tests
-echo "🧪 Running All Unit Tests..."
-go test ./tests/unit/... -v -count=1
+echo "🧪 Running Backend Tests..."
+go test ./... -v -count=1
+
+if [ $? -ne 0 ]; then
+    echo "❌ Tests failed"
+    exit 1
+fi
 
 echo ""
 echo "✅ All tests passed!"

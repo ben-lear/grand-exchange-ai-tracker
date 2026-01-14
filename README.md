@@ -3,7 +3,7 @@
 A full-stack application for tracking and visualizing **Old School RuneScape (OSRS)** Grand Exchange item prices and market trends.
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
-![Go Version](https://img.shields.io/badge/Go-1.22+-00ADD8?logo=go)
+![Go Version](https://img.shields.io/badge/Go-1.24.0+-00ADD8?logo=go)
 ![React](https://img.shields.io/badge/React-18-61DAFB?logo=react)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-3178C6?logo=typescript)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql)
@@ -30,7 +30,7 @@ This application polls the official OSRS Grand Exchange API every minute, stores
 ### Backend
 | Technology | Purpose |
 |------------|---------|
-| Go 1.22+ | Primary language |
+| Go 1.24.0+ | Primary language |
 | Fiber v2 | HTTP framework |
 | GORM | PostgreSQL ORM |
 | Redis 7 | Caching layer |
@@ -62,7 +62,7 @@ This application polls the official OSRS Grand Exchange API every minute, stores
 ### Prerequisites
 
 - Docker & Docker Compose
-- Go 1.22+ (for local development)
+- Go 1.24.0+ (for local development)
 - Node.js 20+ (for local development)
 
 ### Using Docker (Recommended)
@@ -215,15 +215,16 @@ VITE_API_BASE_URL=http://localhost:8080/api/v1
 ```bash
 cd backend
 
-# Run all tests
-go test ./...
+# Standard validation: run BOTH suites
+go test ./... -count=1
+go test ./... -tags=slow -count=1
 
-# Run with coverage
-go test -cover ./...
-
-# Run specific package tests
-go test ./internal/services/...
+# Coverage (recommended via scripts)
+./test.sh --coverage
+# or Windows PowerShell: .\test.ps1 -Coverage
 ```
+
+See [backend/TESTING.md](backend/TESTING.md) for details (fast vs slow, scripts, coverage).
 
 ### Frontend
 

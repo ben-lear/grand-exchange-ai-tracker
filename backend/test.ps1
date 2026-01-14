@@ -1,8 +1,12 @@
 # Test runner script for Windows PowerShell
 
-Write-Host "`nRunning OSRS GE Tracker Tests`n" -ForegroundColor Cyan
+param(
+    [switch]$Coverage
+)
 
-# Check if Docker is running
+Write-Host "`nRunning OSRS GE Tracker Backend Tests`n" -ForegroundColor Cyan
+
+# Check if Docker is running (required for integration tests)
 try {
     docker info *> $null
     if ($LASTEXITCODE -ne 0) { throw }
@@ -11,51 +15,43 @@ try {
     exit 1
 }
 
-# Start PostgreSQL if not already running
-Write-Host "Starting PostgreSQL..." -ForegroundColor Yellow
-docker-compose up -d postgres
+if ($Coverage) {
+    $coverageDir = Join-Path $PSScriptRoot "coverage"
+    New-Item -ItemType Directory -Force -Path $coverageDir | Out-Null
 
-# Wait for PostgreSQL to be ready
-Write-Host "Waiting for PostgreSQL to be ready..." -ForegroundColor Yellow
-$timeout = 60
-$counter = 0
-$ready = $false
-
-while (-not $ready -and $counter -lt $timeout) {
-    try {
-        $health = docker inspect osrs-ge-postgres --format='{{.State.Health.Status}}' 2>&1
-        if ($health -eq 'healthy') {
-            $ready = $true
-        } else {
-            Start-Sleep -Seconds 1
-            $counter++
-            if ($counter % 5 -eq 0) {
-                Write-Host "  Still waiting... ($counter seconds)" -ForegroundColor Gray
-            }
-        }
-    } catch {
-        Start-Sleep -Seconds 1
-        $counter++
+    Write-Host "Running Backend Tests with coverage..." -ForegroundColor Yellow
+    
+    $coverageOut = Join-Path $coverageDir "coverage.out"
+    $coverageHtml = Join-Path $coverageDir "coverage.html"
+    
+    go test ./... -v -count=1 -coverprofile="$coverageOut" -covermode=atomic -coverpkg=./...
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "`nERROR: Tests failed" -ForegroundColor Red
+        exit 1
     }
+
+    Write-Host "Generating HTML coverage report..." -ForegroundColor Yellow
+    go tool cover "-html=$coverageOut" "-o=$coverageHtml"
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "`nERROR: Failed to generate HTML coverage report" -ForegroundColor Red
+        exit 1
+    }
+
+    Write-Host "`nCoverage reports:" -ForegroundColor Green
+    Write-Host "- $coverageOut" -ForegroundColor Green
+    Write-Host "- $coverageHtml" -ForegroundColor Green
+    
+    # Display coverage summary
+    Write-Host "`nCoverage Summary:" -ForegroundColor Cyan
+    $coverageResult = go tool cover -func $coverageOut
+    $coverageResult | Select-String "^total:"
+    
+    exit 0
 }
 
-if (-not $ready) {
-    Write-Host "ERROR: PostgreSQL failed to start within $timeout seconds" -ForegroundColor Red
-    exit 1
-}
+Write-Host "Running Backend Tests..." -ForegroundColor Yellow
 
-Write-Host "PostgreSQL is ready`n" -ForegroundColor Green
-
-# Set database connection for repository tests
-$env:POSTGRES_HOST="localhost"
-$env:POSTGRES_PORT="5432"
-$env:POSTGRES_USER="osrs_tracker"
-$env:POSTGRES_PASSWORD="changeme"
-$env:POSTGRES_DB="osrs_ge_tracker"
-
-# Run all tests
-Write-Host "Running All Unit Tests..." -ForegroundColor Yellow
-go test ./tests/unit/... -v -count=1
+go test ./... -v -count=1
 
 if ($LASTEXITCODE -ne 0) {
     Write-Host "`nERROR: Tests failed" -ForegroundColor Red

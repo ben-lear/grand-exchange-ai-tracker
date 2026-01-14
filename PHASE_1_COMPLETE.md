@@ -162,7 +162,7 @@ npm install
 ## Configuration Files Created
 
 ### Backend Configuration
-- **go.mod**: Go 1.22 with all required dependencies
+- **go.mod**: Go module configuration with all required dependencies
 - **.env.example**: Environment variables for server, database, Redis, OSRS API
 - **Dockerfile**: Multi-stage production build (alpine-based)
 - **main.go**: Fiber HTTP server with middleware, health check, graceful shutdown

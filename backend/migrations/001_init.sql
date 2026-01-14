@@ -12,7 +12,8 @@ CREATE TABLE IF NOT EXISTS items (
     high_alch INTEGER,
     low_alch INTEGER,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP WITH TIME ZONE
 );
 
 -- Create current_prices table
@@ -38,6 +39,7 @@ CREATE TABLE IF NOT EXISTS price_history (
 -- Create indexes
 CREATE INDEX IF NOT EXISTS idx_items_name ON items(name);
 CREATE INDEX IF NOT EXISTS idx_items_item_id ON items(item_id);
+CREATE INDEX IF NOT EXISTS idx_items_deleted_at ON items(deleted_at);
 CREATE INDEX IF NOT EXISTS idx_price_history_item_timestamp ON price_history(item_id, timestamp DESC);
 
 -- Function to create monthly partitions automatically

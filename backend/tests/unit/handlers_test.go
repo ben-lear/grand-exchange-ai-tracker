@@ -3,6 +3,7 @@ package unit
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http/httptest"
 	"testing"
 
@@ -117,6 +118,66 @@ func TestItemHandler_ListItems(t *testing.T) {
 	mockService.AssertExpectations(t)
 }
 
+func TestItemHandler_ListItems_InvalidPagination(t *testing.T) {
+	logger := zap.NewNop().Sugar()
+	mockService := new(MockItemService)
+	handler := handlers.NewItemHandler(mockService, logger)
+
+	app := fiber.New()
+	app.Get("/items", handler.ListItems)
+
+	resp, err := app.Test(httptest.NewRequest("GET", "/items?page=0&limit=50", nil))
+	assert.NoError(t, err)
+	assert.Equal(t, 400, resp.StatusCode)
+
+	var result map[string]any
+	_ = json.NewDecoder(resp.Body).Decode(&result)
+	assert.Equal(t, "page must be greater than 0", result["error"])
+
+	mockService.AssertNotCalled(t, "ListItems", mock.Anything, mock.Anything)
+}
+
+func TestItemHandler_ListItems_InvalidSort(t *testing.T) {
+	logger := zap.NewNop().Sugar()
+	mockService := new(MockItemService)
+	handler := handlers.NewItemHandler(mockService, logger)
+
+	app := fiber.New()
+	app.Get("/items", handler.ListItems)
+
+	resp, err := app.Test(httptest.NewRequest("GET", "/items?sort_by=bad_field", nil))
+	assert.NoError(t, err)
+	assert.Equal(t, 400, resp.StatusCode)
+
+	var result map[string]any
+	_ = json.NewDecoder(resp.Body).Decode(&result)
+	assert.Equal(t, "invalid sort_by field", result["error"])
+
+	mockService.AssertNotCalled(t, "ListItems", mock.Anything, mock.Anything)
+}
+
+func TestItemHandler_ListItems_ServiceError(t *testing.T) {
+	logger := zap.NewNop().Sugar()
+	mockService := new(MockItemService)
+	handler := handlers.NewItemHandler(mockService, logger)
+
+	mockService.On("ListItems", mock.Anything, mock.AnythingOfType("models.ItemListParams")).
+		Return([]models.Item{}, int64(0), errors.New("boom"))
+
+	app := fiber.New()
+	app.Get("/items", handler.ListItems)
+
+	resp, err := app.Test(httptest.NewRequest("GET", "/items", nil))
+	assert.NoError(t, err)
+	assert.Equal(t, 500, resp.StatusCode)
+
+	var result map[string]any
+	_ = json.NewDecoder(resp.Body).Decode(&result)
+	assert.Equal(t, "failed to fetch items", result["error"])
+
+	mockService.AssertExpectations(t)
+}
+
 func TestItemHandler_GetItemByID(t *testing.T) {
 	logger := zap.NewNop().Sugar()
 	mockService := new(MockItemService)
@@ -139,6 +200,46 @@ func TestItemHandler_GetItemByID(t *testing.T) {
 	// Assertions
 	assert.NoError(t, err)
 	assert.Equal(t, 200, resp.StatusCode)
+
+	mockService.AssertExpectations(t)
+}
+
+func TestItemHandler_GetItemByID_InvalidID(t *testing.T) {
+	logger := zap.NewNop().Sugar()
+	mockService := new(MockItemService)
+	handler := handlers.NewItemHandler(mockService, logger)
+
+	app := fiber.New()
+	app.Get("/items/:id", handler.GetItemByID)
+
+	resp, err := app.Test(httptest.NewRequest("GET", "/items/abc", nil))
+	assert.NoError(t, err)
+	assert.Equal(t, 400, resp.StatusCode)
+
+	var result map[string]any
+	_ = json.NewDecoder(resp.Body).Decode(&result)
+	assert.Equal(t, "invalid item ID", result["error"])
+
+	mockService.AssertNotCalled(t, "GetItemWithPrice", mock.Anything, mock.Anything)
+}
+
+func TestItemHandler_GetItemByID_NotFound(t *testing.T) {
+	logger := zap.NewNop().Sugar()
+	mockService := new(MockItemService)
+	handler := handlers.NewItemHandler(mockService, logger)
+
+	mockService.On("GetItemWithPrice", mock.Anything, 123).Return((*models.ItemWithCurrentPrice)(nil), errors.New("not found"))
+
+	app := fiber.New()
+	app.Get("/items/:id", handler.GetItemByID)
+
+	resp, err := app.Test(httptest.NewRequest("GET", "/items/123", nil))
+	assert.NoError(t, err)
+	assert.Equal(t, 404, resp.StatusCode)
+
+	var result map[string]any
+	_ = json.NewDecoder(resp.Body).Decode(&result)
+	assert.Equal(t, "item not found", result["error"])
 
 	mockService.AssertExpectations(t)
 }
@@ -186,4 +287,87 @@ func TestItemHandler_SearchItems_MissingQuery(t *testing.T) {
 	// Assertions
 	assert.NoError(t, err)
 	assert.Equal(t, 400, resp.StatusCode)
+}
+
+func TestItemHandler_SearchItems_InvalidLimit(t *testing.T) {
+	logger := zap.NewNop().Sugar()
+	mockService := new(MockItemService)
+	handler := handlers.NewItemHandler(mockService, logger)
+
+	app := fiber.New()
+	app.Get("/items/search", handler.SearchItems)
+
+	resp, err := app.Test(httptest.NewRequest("GET", "/items/search?q=dragon&limit=999", nil))
+	assert.NoError(t, err)
+	assert.Equal(t, 400, resp.StatusCode)
+
+	var result map[string]any
+	_ = json.NewDecoder(resp.Body).Decode(&result)
+	assert.Equal(t, "limit must be between 1 and 200", result["error"])
+
+	mockService.AssertNotCalled(t, "SearchItems", mock.Anything, mock.Anything)
+}
+
+func TestItemHandler_SearchItems_ServiceError(t *testing.T) {
+	logger := zap.NewNop().Sugar()
+	mockService := new(MockItemService)
+	handler := handlers.NewItemHandler(mockService, logger)
+
+	mockService.On("SearchItems", mock.Anything, mock.AnythingOfType("models.ItemSearchParams")).
+		Return([]models.Item{}, errors.New("boom"))
+
+	app := fiber.New()
+	app.Get("/items/search", handler.SearchItems)
+
+	resp, err := app.Test(httptest.NewRequest("GET", "/items/search?q=dragon", nil))
+	assert.NoError(t, err)
+	assert.Equal(t, 500, resp.StatusCode)
+
+	var result map[string]any
+	_ = json.NewDecoder(resp.Body).Decode(&result)
+	assert.Equal(t, "failed to search items", result["error"])
+
+	mockService.AssertExpectations(t)
+}
+
+func TestItemHandler_GetItemCount_OK(t *testing.T) {
+	logger := zap.NewNop().Sugar()
+	mockService := new(MockItemService)
+	handler := handlers.NewItemHandler(mockService, logger)
+
+	mockService.On("GetItemCount", mock.Anything, (*bool)(nil)).Return(int64(123), nil)
+
+	app := fiber.New()
+	app.Get("/items/count", handler.GetItemCount)
+
+	resp, err := app.Test(httptest.NewRequest("GET", "/items/count", nil))
+	assert.NoError(t, err)
+	assert.Equal(t, 200, resp.StatusCode)
+
+	var result map[string]any
+	_ = json.NewDecoder(resp.Body).Decode(&result)
+	assert.Equal(t, float64(123), result["count"])
+
+	mockService.AssertExpectations(t)
+}
+
+func TestItemHandler_GetItemCount_ServiceError(t *testing.T) {
+	logger := zap.NewNop().Sugar()
+	mockService := new(MockItemService)
+	handler := handlers.NewItemHandler(mockService, logger)
+
+	mockService.On("GetItemCount", mock.Anything, (*bool)(nil)).Return(int64(0), errors.New("boom"))
+
+	app := fiber.New()
+	app.Get("/items/count", handler.GetItemCount)
+
+	resp, err := app.Test(httptest.NewRequest("GET", "/items/count", nil))
+	assert.NoError(t, err)
+	assert.Equal(t, 500, resp.StatusCode)
+
+	var result map[string]any
+	_ = json.NewDecoder(resp.Body).Decode(&result)
+	assert.Equal(t, "failed to get item count", result["error"])
+
+	mockService.AssertExpectations(t)
 }

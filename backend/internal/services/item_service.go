@@ -78,6 +78,9 @@ func (s *itemService) GetItemWithPrice(ctx context.Context, itemID int) (*models
 	if err != nil {
 		return nil, err
 	}
+	if item == nil {
+		return nil, fmt.Errorf("item not found")
+	}
 
 	result := &models.ItemWithCurrentPrice{
 		Item: *item,
