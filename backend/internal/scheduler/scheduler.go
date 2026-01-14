@@ -11,11 +11,11 @@ import (
 
 // Scheduler manages all scheduled jobs
 type Scheduler struct {
-	cron    *cron.Cron
-	jobs    map[string]cron.EntryID
+	cron        *cron.Cron
+	jobs        map[string]cron.EntryID
 	runningJobs map[string]bool
-	mu      sync.RWMutex
-	running bool
+	mu          sync.RWMutex
+	running     bool
 }
 
 // JobFunc represents a scheduled job function
@@ -24,8 +24,8 @@ type JobFunc func(ctx context.Context) error
 // New creates a new scheduler instance
 func New() *Scheduler {
 	return &Scheduler{
-		cron: cron.New(cron.WithSeconds()),
-		jobs: make(map[string]cron.EntryID),
+		cron:        cron.New(cron.WithSeconds()),
+		jobs:        make(map[string]cron.EntryID),
 		runningJobs: make(map[string]bool),
 	}
 }

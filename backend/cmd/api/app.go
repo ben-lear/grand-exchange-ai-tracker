@@ -23,9 +23,9 @@ import (
 )
 
 type appDeps struct {
-	cfg             *config.Config
-	db              *gorm.DB
-	redis           *redis.Client
+	cfg              *config.Config
+	db               *gorm.DB
+	redis            *redis.Client
 	osrsClient       *services.OSRSAPIClient
 	itemRepo         repository.ItemRepository
 	priceHistoryRepo repository.PriceHistoryRepository
@@ -126,9 +126,9 @@ func buildDependencies(cfg *config.Config, db *gorm.DB, redisClient *redis.Clien
 	priceTrendRepo := repository.NewPriceTrendRepository(db)
 
 	return appDeps{
-		cfg:             cfg,
-		db:              db,
-		redis:           redisClient,
+		cfg:              cfg,
+		db:               db,
+		redis:            redisClient,
 		osrsClient:       osrsClient,
 		itemRepo:         itemRepo,
 		priceHistoryRepo: priceHistoryRepo,
