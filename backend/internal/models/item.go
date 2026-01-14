@@ -28,21 +28,21 @@ func (Item) TableName() string {
 
 // ItemSearchParams contains parameters for searching items
 type ItemSearchParams struct {
-	Query      string
-	Members    *bool
-	Limit      int
-	Offset     int
-	SortBy     string
-	SortOrder  string
+	Query     string
+	Members   *bool
+	Limit     int
+	Offset    int
+	SortBy    string
+	SortOrder string
 }
 
 // ItemListParams contains parameters for listing items
 type ItemListParams struct {
-	Limit      int    `query:"limit" validate:"min=1,max=200"`
-	Offset     int    `query:"offset" validate:"min=0"`
-	SortBy     string `query:"sortBy" validate:"omitempty,oneof=name item_id members"`
-	SortOrder  string `query:"sortOrder" validate:"omitempty,oneof=asc desc"`
-	Members    *bool  `query:"members"`
+	Limit     int    `query:"limit" validate:"min=1,max=200"`
+	Offset    int    `query:"offset" validate:"min=0"`
+	SortBy    string `query:"sortBy" validate:"omitempty,oneof=name item_id members"`
+	SortOrder string `query:"sortOrder" validate:"omitempty,oneof=asc desc"`
+	Members   *bool  `query:"members"`
 }
 
 // DefaultItemListParams returns default parameters for item listing

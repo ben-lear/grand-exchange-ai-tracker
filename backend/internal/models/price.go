@@ -6,12 +6,12 @@ import (
 
 // CurrentPrice represents the latest price for an item
 type CurrentPrice struct {
-	ItemID        int       `gorm:"primaryKey" json:"itemId"`
-	HighPrice     *int64    `gorm:"type:bigint" json:"highPrice"`
+	ItemID        int        `gorm:"primaryKey" json:"itemId"`
+	HighPrice     *int64     `gorm:"type:bigint" json:"highPrice"`
 	HighPriceTime *time.Time `gorm:"type:timestamp with time zone" json:"highPriceTime"`
-	LowPrice      *int64    `gorm:"type:bigint" json:"lowPrice"`
+	LowPrice      *int64     `gorm:"type:bigint" json:"lowPrice"`
 	LowPriceTime  *time.Time `gorm:"type:timestamp with time zone" json:"lowPriceTime"`
-	UpdatedAt     time.Time `gorm:"type:timestamp with time zone;default:CURRENT_TIMESTAMP" json:"updatedAt"`
+	UpdatedAt     time.Time  `gorm:"type:timestamp with time zone;default:CURRENT_TIMESTAMP" json:"updatedAt"`
 }
 
 // TableName overrides the table name

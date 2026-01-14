@@ -51,11 +51,11 @@ type PricePoint struct {
 
 // BulkDumpItem represents an item in the OSRS bulk price dump
 type BulkDumpItem struct {
-	High      int64 `json:"high"`
-	HighTime  int64 `json:"highTime"`
-	Low       int64 `json:"low"`
-	LowTime   int64 `json:"lowTime"`
-	ItemID    int   `json:"-"` // Set from map key
+	High     int64 `json:"high"`
+	HighTime int64 `json:"highTime"`
+	Low      int64 `json:"low"`
+	LowTime  int64 `json:"lowTime"`
+	ItemID   int   `json:"-"` // Set from map key
 }
 
 // HistoricalDataPoint represents a point in historical price data

@@ -164,7 +164,7 @@ func samplePriceHistory(history []models.PriceHistory, targetPoints int) []model
 
 	step := float64(len(history)) / float64(targetPoints)
 	sampled := make([]models.PriceHistory, targetPoints)
-	
+
 	for i := 0; i < targetPoints; i++ {
 		idx := int(float64(i) * step)
 		if idx >= len(history) {

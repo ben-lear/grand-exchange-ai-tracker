@@ -1,106 +1,156 @@
 # Testing Guide
 
-## Unit Tests
+## Overview
 
-The project includes comprehensive unit tests for models and repositories.
+The backend includes comprehensive unit tests that run against a real PostgreSQL database using Docker. No CGO or SQLite dependencies are required - tests connect to the same PostgreSQL container used in development.
 
-### Quick Test (No CGO Required)
+## Prerequisites
 
-Test models only (works on all platforms):
+- Docker and Docker Compose installed
+- Docker daemon running
+- Go 1.22+ installed
+
+## Quick Start
+
+Use the provided test scripts which handle everything automatically:
+
+**Linux/macOS:**
 ```bash
-go test ./tests/unit/models_test.go -v
+chmod +x test.sh
+./test.sh
 ```
 
-### Full Test Suite (Requires CGO)
-
-Repository tests use SQLite for in-memory testing, which requires CGO and a C compiler.
-
-#### On Linux/macOS:
-```bash
-CGO_ENABLED=1 go test ./tests/unit/... -v
-```
-
-#### On Windows:
-
-**Option 1: Install MinGW-w64**
-1. Install MinGW-w64: https://www.mingw-w64.org/downloads/
-2. Add to PATH: `C:\mingw64\bin`
-3. Run tests:
+**Windows PowerShell:**
 ```powershell
-$env:CGO_ENABLED="1"
-go test ./tests/unit/... -v
+.\test.ps1
 ```
 
-**Option 2: Use Docker**
-Run tests in Docker container (no local C compiler needed):
-```powershell
-docker-compose run --rm backend go test ./tests/unit/... -v
-```
+These scripts will:
+1. Start PostgreSQL container (if not running)
+2. Wait for database to be ready (with health checks)
+3. Set environment variables
+4. Run all unit tests (models + repositories)
 
-**Option 3: Integration Tests**
-Run integration tests against real PostgreSQL database (recommended for Windows):
+## Test Suites
+
+✅ **Model Tests** (6 test suites) - No database required
+- TestTimePeriod_IsValid - Validates time period enum
+- TestTimePeriod_Duration - Validates duration calculation
+- TestDefaultItemListParams - Tests default pagination params
+- TestItemModel - Tests Item struct validation
+- TestCurrentPriceModel - Tests CurrentPrice struct
+- TestPriceHistoryModel - Tests PriceHistory struct
+
+✅ **Repository Tests** (7 test suites) - Uses PostgreSQL via Docker
+- TestItemRepository_Create - Item creation
+- TestItemRepository_GetByItemID - Item retrieval by ID
+- TestItemRepository_Upsert - Insert/update item
+- TestItemRepository_Search - Item search by name
+- TestItemRepository_GetAll - Pagination and filtering
+- TestPriceRepository_UpsertCurrentPrice - Price upsert
+- TestPriceRepository_GetAllCurrentPrices - Bulk price retrieval
+
+**Total: 13 test suites, all passing ✓**
+
+## Manual Testing
+
+### Run All Tests
 ```bash
-# Start PostgreSQL
+# Ensure PostgreSQL is running
 docker-compose up -d postgres
 
-# Run integration tests
-go test ./tests/integration/... -v
+# Run all tests
+POSTGRES_HOST=localhost \
+POSTGRES_PORT=5432 \
+POSTGRES_USER=osrs_tracker \
+POSTGRES_PASSWORD=changeme \
+POSTGRES_DB=osrs_ge_tracker \
+go test ./tests/unit/... -v -count=1
+```
+
+### Windows PowerShell
+```powershell
+# Set environment variables
+$env:POSTGRES_HOST="localhost"
+$env:POSTGRES_PORT="5432"
+$env:POSTGRES_USER="osrs_tracker"
+$env:POSTGRES_PASSWORD="changeme"
+$env:POSTGRES_DB="osrs_ge_tracker"
+
+# Run tests
+go test ./tests/unit/... -v -count=1
+```
+
+### Model Tests Only (No Database)
+```bash
+go test ./tests/unit/models_test.go -v
 ```
 
 ## Test Structure
 
 ```
-tests/
-├── unit/           # Unit tests (models + repositories)
-│   ├── models_test.go       # Model tests (no CGO)
-│   └── repository_test.go   # Repository tests (needs CGO)
-└── integration/    # Integration tests (real DB)
+backend/tests/
+├── unit/
+│   ├── models_test.go       # Model tests (no database needed)
+│   └── repository_test.go   # Repository tests (PostgreSQL)
+├── integration/             # Integration tests (Phase 6)
+└── e2e/                     # End-to-end tests (Phase 6)
 ```
 
-## Running Tests in CI/CD
+## Testing Strategy
 
-In GitHub Actions or other CI systems:
+### Development Workflow
+1. **Quick feedback**: Run model tests only (`go test ./tests/unit/models_test.go -v`)
+2. **Full validation**: Run test script (`.\test.ps1` or `./test.sh`)
+3. **Continuous**: Tests use `-count=1` flag to disable caching for fresh results
+
+### CI/CD Integration
 ```yaml
-- name: Run tests
+# Example GitHub Actions workflow
+- name: Start PostgreSQL
+  run: docker-compose up -d postgres
+
+- name: Wait for PostgreSQL
   run: |
-    CGO_ENABLED=1 go test ./tests/unit/... -v
-    go test ./tests/integration/... -v
+    timeout 60 bash -c 'until docker-compose exec -T postgres pg_isready -U osrs_tracker > /dev/null 2>&1; do sleep 1; done'
+
+- name: Run tests
+  env:
+    POSTGRES_HOST: localhost
+    POSTGRES_PORT: 5432
+    POSTGRES_USER: osrs_tracker
+    POSTGRES_PASSWORD: changeme
+    POSTGRES_DB: osrs_ge_tracker
+  run: go test ./tests/unit/... -v -count=1
 ```
 
-## Test Coverage
+## Why Docker PostgreSQL Instead of SQLite?
 
-Get test coverage report:
-```bash
-go test ./... -coverprofile=coverage.out
-go tool cover -html=coverage.out
-```
+1. **Production Parity**: Tests run against the same database engine as production
+2. **No CGO Required**: Avoids MinGW/GCC requirements on Windows
+3. **Full Feature Support**: Tests use real PostgreSQL features (partitioning, CTEs, etc.)
+4. **Consistent Results**: Same behavior across all platforms
+5. **Simple Setup**: Just `docker-compose up -d postgres`
 
-## Current Test Status
+## Troubleshooting
 
-✅ **Model Tests** - 6 test suites (no CGO required)
-- TestTimePeriod_IsValid
-- TestTimePeriod_Duration
-- TestDefaultItemListParams
-- TestItemModel
-- TestCurrentPriceModel
-- TestPriceHistoryModel
+### Tests fail with connection errors
+- Ensure Docker is running: `docker info`
+- Check PostgreSQL is healthy: `docker inspect osrs-ge-postgres --format='{{.State.Health.Status}}'`
+- View logs: `docker-compose logs postgres`
 
-✅ **Repository Tests** - 8 test suites (requires CGO or Docker)
-- TestItemRepository_Create
-- TestItemRepository_GetByItemID
-- TestItemRepository_Upsert
-- TestItemRepository_Search
-- TestItemRepository_GetAll
-- TestPriceRepository_UpsertCurrentPrice
-- TestPriceRepository_GetAllCurrentPrices
-- Additional integration tests recommended
+### Tests fail with foreign key errors
+- Tests create clean database state per test
+- If you see FK errors, the test setup may be incomplete
+- Check that tests create parent records before children (items before prices)
 
-## Recommended Testing Strategy
+### Container not starting
+- Check port 5432 is not in use: `netstat -an | findstr 5432` (Windows) or `lsof -i :5432` (Linux/macOS)
+- Remove old containers: `docker-compose down -v`
+- Restart: `docker-compose up -d postgres`
 
-**For Development (Windows):**
-1. Run model tests locally (no CGO): `go test ./tests/unit/models_test.go -v`
-2. Run full suite in Docker: `docker-compose run --rm backend go test ./tests/unit/... -v`
+## Next Steps
 
-**For Production/CI:**
-1. Use Linux-based CI runners (CGO available by default)
-2. Run all tests: `CGO_ENABLED=1 go test ./... -v`
+- **Phase 3**: Add service layer tests with mocked repositories
+- **Phase 4**: Add handler tests with mocked services  
+- **Phase 6**: Add integration tests for end-to-end API workflows
