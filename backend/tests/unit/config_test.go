@@ -307,34 +307,36 @@ func TestSetDefaults_AllFieldsHaveDefaults(t *testing.T) {
 	// Reset viper before test
 	viper.Reset()
 
-	// Call setDefaults directly
-	config.setDefaults()
+	// Load config which internally calls setDefaults
+	cfg, err := config.LoadConfig()
+	require.NoError(t, err)
+	require.NotNil(t, cfg)
 
-	// Verify all defaults are set
-	assert.Equal(t, "8080", viper.GetString("PORT"))
-	assert.Equal(t, "development", viper.GetString("ENVIRONMENT"))
-	assert.Equal(t, "*", viper.GetString("CORS_ORIGINS"))
+	// Verify all defaults are set via the config object
+	assert.Equal(t, "8080", cfg.Port)
+	assert.Equal(t, "development", cfg.Environment)
+	assert.Equal(t, "*", cfg.CorsOrigins)
 
-	assert.Equal(t, "localhost", viper.GetString("POSTGRES_HOST"))
-	assert.Equal(t, "5432", viper.GetString("POSTGRES_PORT"))
-	assert.Equal(t, "osrs_tracker", viper.GetString("POSTGRES_USER"))
-	assert.Equal(t, "password", viper.GetString("POSTGRES_PASSWORD"))
-	assert.Equal(t, "osrs_ge_tracker", viper.GetString("POSTGRES_DB"))
-	assert.Equal(t, "disable", viper.GetString("POSTGRES_SSL_MODE"))
+	assert.Equal(t, "localhost", cfg.PostgresHost)
+	assert.Equal(t, "5432", cfg.PostgresPort)
+	assert.Equal(t, "osrs_tracker", cfg.PostgresUser)
+	assert.Equal(t, "password", cfg.PostgresPassword)
+	assert.Equal(t, "osrs_ge_tracker", cfg.PostgresDB)
+	assert.Equal(t, "disable", cfg.PostgresSSLMode)
 
-	assert.Equal(t, "localhost", viper.GetString("REDIS_HOST"))
-	assert.Equal(t, "6379", viper.GetString("REDIS_PORT"))
-	assert.Equal(t, "", viper.GetString("REDIS_PASSWORD"))
-	assert.Equal(t, 0, viper.GetInt("REDIS_DB"))
+	assert.Equal(t, "localhost", cfg.RedisHost)
+	assert.Equal(t, "6379", cfg.RedisPort)
+	assert.Equal(t, "", cfg.RedisPassword)
+	assert.Equal(t, 0, cfg.RedisDB)
 
-	assert.Equal(t, "https://chisel.weirdgloop.org/gazproj/gazbot/os_dump.json", viper.GetString("OSRS_BULK_DUMP_URL"))
-	assert.Equal(t, "https://api.weirdgloop.org/exchange/history/osrs", viper.GetString("OSRS_HISTORY_URL"))
-	assert.Equal(t, "https://secure.runescape.com/m=itemdb_oldschool/api/catalogue/detail.json", viper.GetString("OSRS_DETAIL_URL"))
-	assert.Equal(t, "OSRS-GE-Tracker/1.0", viper.GetString("OSRS_USER_AGENT"))
+	assert.Equal(t, "https://chisel.weirdgloop.org/gazproj/gazbot/os_dump.json", cfg.OSRSBulkDumpURL)
+	assert.Equal(t, "https://api.weirdgloop.org/exchange/history/osrs", cfg.OSRSHistoryURL)
+	assert.Equal(t, "https://secure.runescape.com/m=itemdb_oldschool/api/catalogue/detail.json", cfg.OSRSDetailURL)
+	assert.Equal(t, "OSRS-GE-Tracker/1.0", cfg.OSRSUserAgent)
 
-	assert.Equal(t, "*/1 * * * *", viper.GetString("PRICE_POLL_INTERVAL"))
-	assert.Equal(t, "0 * * * *", viper.GetString("HISTORICAL_SYNC_CRON"))
-	assert.Equal(t, "0 0 * * *", viper.GetString("FULL_HISTORICAL_CRON"))
+	assert.Equal(t, "*/1 * * * *", cfg.PricePollInterval)
+	assert.Equal(t, "0 * * * *", cfg.HistoricalSyncCron)
+	assert.Equal(t, "0 0 * * *", cfg.FullHistoricalCron)
 }
 
 func TestLoadConfig_MultipleCallsDoNotInterfere(t *testing.T) {
