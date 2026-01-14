@@ -110,10 +110,10 @@ func TestItemHandler_ListItems(t *testing.T) {
 	// Parse response
 	var result map[string]interface{}
 	json.NewDecoder(resp.Body).Decode(&result)
-	
+
 	data := result["data"].([]interface{})
 	assert.Len(t, data, 2)
-	
+
 	mockService.AssertExpectations(t)
 }
 

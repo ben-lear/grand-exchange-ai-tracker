@@ -193,10 +193,10 @@ func getTopItemIDs() []int {
 		13190, // Platinum token
 
 		// Popular consumables
-		385,   // Shark
-		3144,  // Karambwan
-		6685,  // Saradomin brew(4)
-		2434,  // Super restore(4)
+		385,  // Shark
+		3144, // Karambwan
+		6685, // Saradomin brew(4)
+		2434, // Super restore(4)
 
 		// Combat gear
 		4151,  // Abyssal whip
@@ -205,25 +205,25 @@ func getTopItemIDs() []int {
 		19553, // Avernic defender hilt
 
 		// Skilling supplies
-		1513,  // Magic logs
-		561,   // Nature rune
-		554,   // Fire rune
-		555,   // Water rune
-		556,   // Air rune
-		557,   // Earth rune
+		1513, // Magic logs
+		561,  // Nature rune
+		554,  // Fire rune
+		555,  // Water rune
+		556,  // Air rune
+		557,  // Earth rune
 
 		// Popular herbs/potions
-		257,   // Ranarr weed
-		3040,  // Ranarr potion (unf)
-		2448,  // Super attack(4)
-		2440,  // Super strength(4)
-		2436,  // Super defence(4)
+		257,  // Ranarr weed
+		3040, // Ranarr potion (unf)
+		2448, // Super attack(4)
+		2440, // Super strength(4)
+		2436, // Super defence(4)
 
 		// Ores/bars
-		440,   // Iron ore
-		453,   // Coal
-		2357,  // Gold bar
-		2359,  // Silver bar
+		440,  // Iron ore
+		453,  // Coal
+		2357, // Gold bar
+		2359, // Silver bar
 
 		// Dragon items
 		1215,  // Dragon dagger
@@ -235,8 +235,8 @@ func getTopItemIDs() []int {
 		11978, // Amulet of torture
 
 		// Runes and teleport items
-		563,   // Law rune
-		564,   // Cosmic rune
-		8007,  // Teleport to house (tablet)
+		563,  // Law rune
+		564,  // Cosmic rune
+		8007, // Teleport to house (tablet)
 	}
 }

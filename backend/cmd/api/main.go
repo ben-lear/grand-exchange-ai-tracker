@@ -100,22 +100,22 @@ func main() {
 
 	// Item routes
 	items := api.Group("/items")
-	items.Get("/", itemHandler.ListItems)           // GET /api/v1/items
-	items.Get("/search", itemHandler.SearchItems)   // GET /api/v1/items/search?q=...
-	items.Get("/count", itemHandler.GetItemCount)   // GET /api/v1/items/count
-	items.Get("/:id", itemHandler.GetItemByID)      // GET /api/v1/items/:id
+	items.Get("/", itemHandler.ListItems)         // GET /api/v1/items
+	items.Get("/search", itemHandler.SearchItems) // GET /api/v1/items/search?q=...
+	items.Get("/count", itemHandler.GetItemCount) // GET /api/v1/items/count
+	items.Get("/:id", itemHandler.GetItemByID)    // GET /api/v1/items/:id
 
 	// Price routes
 	prices := api.Group("/prices")
-	prices.Get("/current", priceHandler.GetAllCurrentPrices)                 // GET /api/v1/prices/current
-	prices.Get("/current/batch", priceHandler.GetBatchCurrentPrices)         // GET /api/v1/prices/current/batch?ids=1,2,3
-	prices.Get("/current/:id", priceHandler.GetCurrentPrice)                 // GET /api/v1/prices/current/:id
-	prices.Get("/history/:id", priceHandler.GetPriceHistory)                 // GET /api/v1/prices/history/:id?period=7d&sample=150
+	prices.Get("/current", priceHandler.GetAllCurrentPrices)         // GET /api/v1/prices/current
+	prices.Get("/current/batch", priceHandler.GetBatchCurrentPrices) // GET /api/v1/prices/current/batch?ids=1,2,3
+	prices.Get("/current/:id", priceHandler.GetCurrentPrice)         // GET /api/v1/prices/current/:id
+	prices.Get("/history/:id", priceHandler.GetPriceHistory)         // GET /api/v1/prices/history/:id?period=7d&sample=150
 
 	// Admin/sync routes (with stricter rate limiting)
 	sync := api.Group("/sync", middleware.NewSyncRateLimiter())
-	sync.Post("/prices", priceHandler.SyncCurrentPrices)                     // POST /api/v1/sync/prices
-	sync.Post("/prices/history/:id", priceHandler.SyncHistoricalPrices)      // POST /api/v1/sync/prices/history/:id?full=true
+	sync.Post("/prices", priceHandler.SyncCurrentPrices)                // POST /api/v1/sync/prices
+	sync.Post("/prices/history/:id", priceHandler.SyncHistoricalPrices) // POST /api/v1/sync/prices/history/:id?full=true
 
 	// Initialize and start scheduler
 	sched := scheduler.NewScheduler(priceService, itemService, logger)

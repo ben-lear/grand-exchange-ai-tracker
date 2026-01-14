@@ -32,7 +32,7 @@ func NewRequestLogger(config RequestLoggerConfig) fiber.Handler {
 		// Log after request
 		duration := time.Since(start)
 		statusCode := c.Response().StatusCode()
-		
+
 		fields := []interface{}{
 			"request_id", requestID,
 			"method", c.Method(),

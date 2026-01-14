@@ -137,7 +137,7 @@ func (h *PriceHandler) GetPriceHistory(c *fiber.Ctx) error {
 	// Parse query parameters
 	periodStr := c.Query("period", "7d")
 	sampleStr := c.Query("sample")
-	
+
 	// Parse period
 	period := models.TimePeriod(periodStr)
 	validPeriods := map[models.TimePeriod]bool{
@@ -185,12 +185,12 @@ func (h *PriceHandler) GetPriceHistory(c *fiber.Ctx) error {
 	return c.JSON(fiber.Map{
 		"data": history.Data,
 		"meta": fiber.Map{
-			"item_id":     history.ItemID,
-			"period":      history.Period,
-			"count":       history.Count,
-			"first_date":  history.FirstDate,
-			"last_date":   history.LastDate,
-			"sampled":     maxPoints != nil && history.Count > *maxPoints,
+			"item_id":    history.ItemID,
+			"period":     history.Period,
+			"count":      history.Count,
+			"first_date": history.FirstDate,
+			"last_date":  history.LastDate,
+			"sampled":    maxPoints != nil && history.Count > *maxPoints,
 		},
 	})
 }

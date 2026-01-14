@@ -124,7 +124,7 @@ func (s *priceService) GetPriceHistory(ctx context.Context, params models.PriceH
 	// Convert to PricePoint format
 	dataPoints := make([]models.PricePoint, len(history))
 	var firstDate, lastDate *time.Time
-	
+
 	for i, h := range history {
 		highPrice := int64(0)
 		lowPrice := int64(0)
@@ -139,7 +139,7 @@ func (s *priceService) GetPriceHistory(ctx context.Context, params models.PriceH
 			HighPrice: highPrice,
 			LowPrice:  lowPrice,
 		}
-		
+
 		// Track first and last dates
 		if i == 0 {
 			firstDate = &h.Timestamp

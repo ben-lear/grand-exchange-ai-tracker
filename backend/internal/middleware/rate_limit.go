@@ -9,10 +9,10 @@ import (
 
 // RateLimiterConfig holds rate limiter configuration
 type RateLimiterConfig struct {
-	Max               int           // Maximum number of requests
-	Expiration        time.Duration // Time window
-	SkipFailedRequest bool          // Don't count failed requests
-	SkipSuccessfulRequest bool      // Don't count successful requests
+	Max                   int           // Maximum number of requests
+	Expiration            time.Duration // Time window
+	SkipFailedRequest     bool          // Don't count failed requests
+	SkipSuccessfulRequest bool          // Don't count successful requests
 }
 
 // NewRateLimiter creates a new rate limiting middleware
@@ -34,11 +34,11 @@ func NewRateLimiter(config RateLimiterConfig) fiber.Handler {
 		},
 		LimitReached: func(c *fiber.Ctx) error {
 			return c.Status(fiber.StatusTooManyRequests).JSON(fiber.Map{
-				"error": "rate limit exceeded",
+				"error":       "rate limit exceeded",
 				"retry_after": config.Expiration.Seconds(),
 			})
 		},
-		SkipFailedRequests: config.SkipFailedRequest,
+		SkipFailedRequests:     config.SkipFailedRequest,
 		SkipSuccessfulRequests: config.SkipSuccessfulRequest,
 	})
 }
@@ -46,9 +46,9 @@ func NewRateLimiter(config RateLimiterConfig) fiber.Handler {
 // NewAPIRateLimiter creates a rate limiter specifically for API endpoints
 func NewAPIRateLimiter() fiber.Handler {
 	return NewRateLimiter(RateLimiterConfig{
-		Max:        100,
-		Expiration: 1 * time.Minute,
-		SkipFailedRequest: false,
+		Max:                   100,
+		Expiration:            1 * time.Minute,
+		SkipFailedRequest:     false,
 		SkipSuccessfulRequest: false,
 	})
 }
@@ -56,9 +56,9 @@ func NewAPIRateLimiter() fiber.Handler {
 // NewSyncRateLimiter creates a more restrictive rate limiter for sync endpoints
 func NewSyncRateLimiter() fiber.Handler {
 	return NewRateLimiter(RateLimiterConfig{
-		Max:        10,
-		Expiration: 1 * time.Minute,
-		SkipFailedRequest: true,
+		Max:                   10,
+		Expiration:            1 * time.Minute,
+		SkipFailedRequest:     true,
 		SkipSuccessfulRequest: false,
 	})
 }

@@ -58,7 +58,7 @@ func (h *ItemHandler) ListItems(c *fiber.Ctx) error {
 
 	// Calculate pagination metadata
 	totalPages := (total + int64(params.Limit) - 1) / int64(params.Limit)
-	
+
 	return c.JSON(fiber.Map{
 		"data": items,
 		"meta": fiber.Map{
@@ -134,9 +134,9 @@ func (h *ItemHandler) SearchItems(c *fiber.Ctx) error {
 	return c.JSON(fiber.Map{
 		"data": items,
 		"meta": fiber.Map{
-			"query":  params.Query,
-			"count":  len(items),
-			"limit":  params.Limit,
+			"query": params.Query,
+			"count": len(items),
+			"limit": params.Limit,
 		},
 	})
 }
@@ -146,7 +146,7 @@ func (h *ItemHandler) GetItemCount(c *fiber.Ctx) error {
 	ctx := c.Context()
 
 	members := utils.ParseNullableBool(c.Query("members"))
-	
+
 	count, err := h.itemService.GetItemCount(ctx, members)
 	if err != nil {
 		h.logger.Errorf("Failed to get item count: %v", err)

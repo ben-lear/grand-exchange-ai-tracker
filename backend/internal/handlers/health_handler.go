@@ -86,7 +86,7 @@ func (h *HealthHandler) Health(c *fiber.Ctx) error {
 		response.Status = "degraded"
 	} else {
 		response.Cache["status"] = "up"
-		
+
 		// Get Redis info
 		info, err := h.redis.DBSize(ctx).Result()
 		if err == nil {
