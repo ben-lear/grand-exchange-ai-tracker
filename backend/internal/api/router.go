@@ -29,15 +29,15 @@ func SetupRoutes(app *fiber.App, osrsClient *services.OSRSAPIClient) {
 
 	// Items routes
 	items := v1.Group("/items")
-	items.Get("/", itemHandler.ListItems)              // GET /api/v1/items?page=1&limit=20&search=abyssal&members=true
-	items.Get("/:id", itemHandler.GetItem)             // GET /api/v1/items/4151
-	items.Get("/:id/prices", priceHandler.GetPrices)   // GET /api/v1/items/4151/prices?range=30d
-	items.Get("/:id/graph", priceHandler.GetGraph)     // GET /api/v1/items/4151/graph?range=90d
-	items.Get("/:id/trend", priceHandler.GetTrend)     // GET /api/v1/items/4151/trend
+	items.Get("/", itemHandler.ListItems)            // GET /api/v1/items?page=1&limit=20&search=abyssal&members=true
+	items.Get("/:id", itemHandler.GetItem)           // GET /api/v1/items/4151
+	items.Get("/:id/prices", priceHandler.GetPrices) // GET /api/v1/items/4151/prices?range=30d
+	items.Get("/:id/graph", priceHandler.GetGraph)   // GET /api/v1/items/4151/graph?range=90d
+	items.Get("/:id/trend", priceHandler.GetTrend)   // GET /api/v1/items/4151/trend
 
 	// Stats routes
 	stats := v1.Group("/stats")
-	stats.Get("/trending", itemHandler.GetTrending)           // GET /api/v1/stats/trending?limit=10
+	stats.Get("/trending", itemHandler.GetTrending)             // GET /api/v1/stats/trending?limit=10
 	stats.Get("/biggest-movers", priceHandler.GetBiggestMovers) // GET /api/v1/stats/biggest-movers?direction=gainers&limit=10
 
 	// 404 handler

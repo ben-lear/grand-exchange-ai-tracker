@@ -15,9 +15,9 @@ var DB *gorm.DB
 // InitDatabase initializes the database connection and runs migrations
 func InitDatabase(cfg *config.DatabaseConfig) error {
 	dsn := cfg.DSN()
-	
+
 	logger.Info("connecting to database", "host", cfg.Host, "port", cfg.Port, "database", cfg.Name)
-	
+
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
 		return fmt.Errorf("failed to connect to database: %w", err)
@@ -46,7 +46,7 @@ func InitDatabase(cfg *config.DatabaseConfig) error {
 	if err := db.AutoMigrate(&models.Item{}); err != nil {
 		return fmt.Errorf("failed to migrate items table: %w", err)
 	}
-	
+
 	// Then migrate tables with foreign keys
 	if err := db.AutoMigrate(
 		&models.PriceHistory{},

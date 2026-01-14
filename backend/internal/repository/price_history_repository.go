@@ -25,7 +25,7 @@ func (r *priceHistoryRepository) BatchCreate(ctx context.Context, histories []*m
 	if len(histories) == 0 {
 		return nil
 	}
-	
+
 	// Use Clauses to handle conflicts - update price if timestamp already exists
 	return r.db.WithContext(ctx).
 		Clauses(clause.OnConflict{
@@ -38,19 +38,19 @@ func (r *priceHistoryRepository) BatchCreate(ctx context.Context, histories []*m
 func (r *priceHistoryRepository) GetByItemID(ctx context.Context, itemID uint, startTime, endTime int64, limit int) ([]*models.PriceHistory, error) {
 	var histories []*models.PriceHistory
 	query := r.db.WithContext(ctx).Where("item_id = ?", itemID)
-	
+
 	if startTime > 0 {
 		query = query.Where("timestamp >= ?", startTime)
 	}
 	if endTime > 0 {
 		query = query.Where("timestamp <= ?", endTime)
 	}
-	
+
 	query = query.Order("timestamp DESC")
 	if limit > 0 {
 		query = query.Limit(limit)
 	}
-	
+
 	err := query.Find(&histories).Error
 	return histories, err
 }

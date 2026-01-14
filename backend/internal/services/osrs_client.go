@@ -31,19 +31,19 @@ type OSRSItemResponse struct {
 
 // OSRSItemDetail represents an individual item from the API
 type OSRSItemDetail struct {
-	Icon      string            `json:"icon"`
-	IconLarge string            `json:"icon_large"`
-	ID        int               `json:"id"`
-	Type      string            `json:"type"`
-	TypeIcon  string            `json:"typeIcon"`
-	Name      string            `json:"name"`
-	Description string          `json:"description"`
-	Current   OSRSPriceInfo     `json:"current"`
-	Today     OSRSPriceInfo     `json:"today"`
-	Members   string            `json:"members"`
-	Day30     *OSRSTrendInfo    `json:"day30,omitempty"`
-	Day90     *OSRSTrendInfo    `json:"day90,omitempty"`
-	Day180    *OSRSTrendInfo    `json:"day180,omitempty"`
+	Icon        string         `json:"icon"`
+	IconLarge   string         `json:"icon_large"`
+	ID          int            `json:"id"`
+	Type        string         `json:"type"`
+	TypeIcon    string         `json:"typeIcon"`
+	Name        string         `json:"name"`
+	Description string         `json:"description"`
+	Current     OSRSPriceInfo  `json:"current"`
+	Today       OSRSPriceInfo  `json:"today"`
+	Members     string         `json:"members"`
+	Day30       *OSRSTrendInfo `json:"day30,omitempty"`
+	Day90       *OSRSTrendInfo `json:"day90,omitempty"`
+	Day180      *OSRSTrendInfo `json:"day180,omitempty"`
 }
 
 // OSRSPriceInfo represents price information
@@ -90,7 +90,7 @@ func NewOSRSAPIClient(cfg *config.OSRSAPIConfig, redisClient *redis.Client) *OSR
 // FetchItemsList fetches items list by category, letter, and page
 func (c *OSRSAPIClient) FetchItemsList(ctx context.Context, category int, letter string, page int) (*OSRSItemResponse, error) {
 	cacheKey := fmt.Sprintf("osrs:items:list:%d:%s:%d", category, letter, page)
-	
+
 	// Try to get from cache
 	if c.redisClient != nil {
 		cached, err := c.redisClient.Get(ctx, cacheKey).Result()
@@ -106,6 +106,7 @@ func (c *OSRSAPIClient) FetchItemsList(ctx context.Context, category int, letter
 	logger.Info("fetching items list from API", "category", category, "letter", letter, "page", page)
 
 	var response OSRSItemResponse
+	
 	resp, err := c.client.R().
 		SetContext(ctx).
 		SetQueryParams(map[string]string{
@@ -121,8 +122,28 @@ func (c *OSRSAPIClient) FetchItemsList(ctx context.Context, category int, letter
 	}
 
 	if resp.StatusCode() != 200 {
+		logger.Error("API returned non-200 status", "status", resp.StatusCode(), "body", resp.String())
 		return nil, fmt.Errorf("API returned status %d", resp.StatusCode())
 	}
+
+	// Log first 500 chars of response for debugging
+	bodyStr := resp.String()
+	if len(bodyStr) > 500 {
+		logger.Debug("API response body (truncated)", "body", bodyStr[:500])
+	} else {
+		logger.Debug("API response body", "body", bodyStr)
+	}
+	
+	// Try manual parsing if SetResult didn't work
+	if len(response.Items) == 0 {
+		logger.Debug("SetResult gave empty items, trying manual JSON unmarshal")
+		if err := json.Unmarshal(resp.Body(), &response); err != nil {
+			logger.Error("manual JSON unmarshal failed", "error", err)
+			return nil, fmt.Errorf("failed to parse response: %w", err)
+		}
+	}
+
+	logger.Info("items list fetched", "total", response.Total, "items_count", len(response.Items), "status", resp.StatusCode())
 
 	// Cache the response
 	if c.redisClient != nil {
@@ -136,7 +157,7 @@ func (c *OSRSAPIClient) FetchItemsList(ctx context.Context, category int, letter
 // FetchItemDetail fetches detailed information for a specific item
 func (c *OSRSAPIClient) FetchItemDetail(ctx context.Context, itemID int) (*OSRSItemDetail, error) {
 	cacheKey := fmt.Sprintf("osrs:item:%d", itemID)
-	
+
 	// Try to get from cache
 	if c.redisClient != nil {
 		cached, err := c.redisClient.Get(ctx, cacheKey).Result()
@@ -178,7 +199,7 @@ func (c *OSRSAPIClient) FetchItemDetail(ctx context.Context, itemID int) (*OSRSI
 // FetchPriceGraph fetches 180 days of price history for an item
 func (c *OSRSAPIClient) FetchPriceGraph(ctx context.Context, itemID int) (*OSRSGraphResponse, error) {
 	cacheKey := fmt.Sprintf("osrs:graph:%d", itemID)
-	
+
 	// Try to get from cache
 	if c.redisClient != nil {
 		cached, err := c.redisClient.Get(ctx, cacheKey).Result()
@@ -227,7 +248,7 @@ func ParsePrice(priceInterface interface{}) int {
 	case string:
 		// Remove commas
 		priceStr := strings.ReplaceAll(v, ",", "")
-		
+
 		// Check for millions (m)
 		if strings.HasSuffix(strings.ToLower(priceStr), "m") {
 			priceStr = strings.TrimSuffix(strings.ToLower(priceStr), "m")
@@ -235,7 +256,7 @@ func ParsePrice(priceInterface interface{}) int {
 				return int(val * 1000000)
 			}
 		}
-		
+
 		// Check for thousands (k)
 		if strings.HasSuffix(strings.ToLower(priceStr), "k") {
 			priceStr = strings.TrimSuffix(strings.ToLower(priceStr), "k")
@@ -243,17 +264,17 @@ func ParsePrice(priceInterface interface{}) int {
 				return int(val * 1000)
 			}
 		}
-		
+
 		// Try to parse as regular number
 		// Remove any non-numeric characters except decimal point
 		re := regexp.MustCompile(`[^\d.]`)
 		priceStr = re.ReplaceAllString(priceStr, "")
-		
+
 		if val, err := strconv.ParseFloat(priceStr, 64); err == nil {
 			return int(val)
 		}
 	}
-	
+
 	return 0
 }
 

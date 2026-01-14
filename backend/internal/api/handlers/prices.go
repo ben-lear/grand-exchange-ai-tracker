@@ -53,7 +53,7 @@ func (h *PriceHandler) GetPrices(c *fiber.Ctx) error {
 	// Parse time range
 	rangeStr := c.Query("range", "30d")
 	days := parseTimeRange(rangeStr)
-	
+
 	startTime := time.Now().AddDate(0, 0, -days).Unix()
 	endTime := time.Now().Unix()
 
@@ -104,7 +104,7 @@ func (h *PriceHandler) GetGraph(c *fiber.Ctx) error {
 	// Parse time range
 	rangeStr := c.Query("range", "90d")
 	days := parseTimeRange(rangeStr)
-	
+
 	startTime := time.Now().AddDate(0, 0, -days).Unix()
 	endTime := time.Now().Unix()
 

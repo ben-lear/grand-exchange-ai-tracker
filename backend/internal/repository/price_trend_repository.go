@@ -20,7 +20,7 @@ func NewPriceTrendRepository(db *gorm.DB) PriceTrendRepository {
 func (r *priceTrendRepository) Upsert(ctx context.Context, trend *models.PriceTrend) error {
 	return r.db.WithContext(ctx).
 		Clauses(clause.OnConflict{
-			Columns:   []clause.Column{{Name: "item_id"}},
+			Columns: []clause.Column{{Name: "item_id"}},
 			DoUpdates: clause.AssignmentColumns([]string{
 				"current_price", "current_trend", "today_price_change", "today_trend",
 				"day30_change", "day30_trend", "day90_change", "day90_trend",
@@ -56,7 +56,7 @@ func (r *priceTrendRepository) Delete(ctx context.Context, itemID uint) error {
 // GetTopTrending returns items with the biggest price changes
 func (r *priceTrendRepository) GetTopTrending(ctx context.Context, limit, hours int) ([]models.PriceTrend, error) {
 	var trends []models.PriceTrend
-	
+
 	// For now, return based on current_price (DESC) as a proxy for trending
 	// In a real implementation, you'd calculate based on time window
 	err := r.db.WithContext(ctx).
@@ -64,24 +64,24 @@ func (r *priceTrendRepository) GetTopTrending(ctx context.Context, limit, hours 
 		Order("current_price DESC").
 		Limit(limit).
 		Find(&trends).Error
-	
+
 	return trends, err
 }
 
 // GetBiggestMovers returns items with biggest price changes
 func (r *priceTrendRepository) GetBiggestMovers(ctx context.Context, limit, hours int, ascending bool) ([]models.PriceTrend, error) {
 	var trends []models.PriceTrend
-	
+
 	order := "today_price_change DESC"
 	if ascending {
 		order = "today_price_change ASC"
 	}
-	
+
 	err := r.db.WithContext(ctx).
 		Where("today_price_change != 0").
 		Order(order).
 		Limit(limit).
 		Find(&trends).Error
-	
+
 	return trends, err
 }

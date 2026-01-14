@@ -40,12 +40,12 @@ func SetupMiddleware(app *fiber.App) {
 	// Custom logging middleware
 	app.Use(func(c *fiber.Ctx) error {
 		start := time.Now()
-		
+
 		err := c.Next()
-		
+
 		latency := time.Since(start)
 		status := c.Response().StatusCode()
-		
+
 		applogger.Info("request processed",
 			"method", c.Method(),
 			"path", c.Path(),
@@ -53,7 +53,7 @@ func SetupMiddleware(app *fiber.App) {
 			"latency_ms", latency.Milliseconds(),
 			"ip", c.IP(),
 		)
-		
+
 		return err
 	})
 }
