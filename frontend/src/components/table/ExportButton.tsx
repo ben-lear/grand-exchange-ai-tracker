@@ -4,7 +4,6 @@
 
 import { Download } from 'lucide-react';
 import { ItemWithPrice } from './columns';
-import { formatGold } from '@/utils/formatters';
 
 export interface ExportButtonProps {
   data: ItemWithPrice[];

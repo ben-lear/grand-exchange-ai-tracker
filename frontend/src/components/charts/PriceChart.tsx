@@ -19,7 +19,7 @@ import {
   ResponsiveContainer,
   ReferenceLine,
 } from 'recharts';
-import { format, parseISO } from 'date-fns';
+import { format } from 'date-fns';
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { ChartTooltip } from './ChartTooltip';
 import { LoadingSpinner, ErrorDisplay } from '@/components/common';
@@ -238,7 +238,7 @@ export function PriceChart({
               fontSize={12}
             />
             <YAxis
-              tickFormatter={(value) => formatGold(value, { short: true })}
+              tickFormatter={(value) => formatGold(value, 0)}
               stroke="#6b7280"
               fontSize={12}
             />

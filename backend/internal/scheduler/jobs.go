@@ -40,8 +40,18 @@ func NewScheduler(
 func (s *Scheduler) Start() error {
 	s.logger.Info("Starting scheduler...")
 
+	// Run initial item sync to ensure we have all items before syncing prices
+	go s.syncItemsJob()
+
+	// Job 0: Sync items from bulk dump every 6 hours
+	_, err := s.cron.AddFunc("0 0 */6 * * *", s.syncItemsJob)
+	if err != nil {
+		return err
+	}
+	s.logger.Info("Scheduled: Sync items from bulk dump (every 6 hours)")
+
 	// Job 1: Sync current prices every 1 minute
-	_, err := s.cron.AddFunc("0 * * * * *", s.syncCurrentPricesJob)
+	_, err = s.cron.AddFunc("0 * * * * *", s.syncCurrentPricesJob)
 	if err != nil {
 		return err
 	}
@@ -74,6 +84,26 @@ func (s *Scheduler) Stop() {
 	ctx := s.cron.Stop()
 	<-ctx.Done()
 	s.logger.Info("Scheduler stopped")
+}
+
+// syncItemsJob syncs all items from the OSRS bulk dump
+func (s *Scheduler) syncItemsJob() {
+	s.logger.Info("Starting items sync job")
+	start := time.Now()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
+	defer cancel()
+
+	err := s.itemService.SyncItemsFromBulkDump(ctx)
+	if err != nil {
+		s.logger.Errorf("Items sync failed: %v", err)
+		return
+	}
+
+	duration := time.Since(start)
+	s.logger.Infow("Items sync completed",
+		"duration_ms", duration.Milliseconds(),
+	)
 }
 
 // syncCurrentPricesJob syncs current prices from OSRS bulk dump

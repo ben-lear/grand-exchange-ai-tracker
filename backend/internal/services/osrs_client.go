@@ -94,21 +94,33 @@ func (c *osrsClient) FetchBulkDump() (map[int]models.BulkDumpItem, error) {
 		return nil, fmt.Errorf("bulk dump request failed with status %d", resp.StatusCode())
 	}
 
-	// Parse response
-	var rawData map[string]models.BulkDumpItem
-	if err := json.Unmarshal(resp.Body(), &rawData); err != nil {
-		c.logger.Errorw("Failed to parse bulk dump response", "error", err)
+	// First unmarshal into generic map to filter out non-object entries (like %JAGEX_TIMESTAMP%)
+	var genericData map[string]json.RawMessage
+	if err := json.Unmarshal(resp.Body(), &genericData); err != nil {
+		c.logger.Errorw("Failed to parse bulk dump response (first pass)", "error", err)
 		return nil, fmt.Errorf("failed to parse bulk dump response: %w", err)
 	}
 
-	// Convert string keys to int
+	// Parse each item individually, skipping any that aren't objects
 	result := make(map[int]models.BulkDumpItem)
-	for itemIDStr, item := range rawData {
+	for itemIDStr, rawItem := range genericData {
+		// Skip if it's not an object (e.g., %JAGEX_TIMESTAMP% is just a number)
+		if len(rawItem) == 0 || rawItem[0] != '{' {
+			continue
+		}
+
+		var item models.BulkDumpItem
+		if err := json.Unmarshal(rawItem, &item); err != nil {
+			c.logger.Warnw("Skipping invalid item", "itemID", itemIDStr, "error", err)
+			continue
+		}
+
 		itemID, err := strconv.Atoi(itemIDStr)
 		if err != nil {
 			c.logger.Warnw("Skipping invalid item ID", "itemID", itemIDStr, "error", err)
 			continue
 		}
+
 		item.ItemID = itemID
 		result[itemID] = item
 	}
@@ -153,7 +165,7 @@ func (c *osrsClient) FetchLatestPrices(itemIDs []int) (map[int]models.Historical
 	}
 
 	// Parse response
-	var rawData map[string][]models.HistoricalDataPoint
+	var rawData map[string]models.HistoricalDataPoint
 	if err := json.Unmarshal(resp.Body(), &rawData); err != nil {
 		c.logger.Errorw("Failed to parse latest prices response", "error", err)
 		return nil, fmt.Errorf("failed to parse latest prices response: %w", err)
@@ -161,16 +173,13 @@ func (c *osrsClient) FetchLatestPrices(itemIDs []int) (map[int]models.Historical
 
 	// Convert to result format
 	result := make(map[int]models.HistoricalDataPoint)
-	for itemIDStr, dataPoints := range rawData {
-		if len(dataPoints) == 0 {
-			continue
-		}
+	for itemIDStr, point := range rawData {
 		itemID, err := strconv.Atoi(itemIDStr)
 		if err != nil {
 			c.logger.Warnw("Skipping invalid item ID in response", "itemID", itemIDStr)
 			continue
 		}
-		result[itemID] = dataPoints[0]
+		result[itemID] = point
 	}
 
 	c.logger.Infow("Successfully fetched latest prices", "resultCount", len(result))

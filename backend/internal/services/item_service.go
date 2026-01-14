@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"go.uber.org/zap"
 
@@ -16,6 +17,44 @@ type itemService struct {
 	osrsClient OSRSClient
 	cache      CacheService
 	logger     *zap.SugaredLogger
+}
+
+const osrsSpriteIconURLTemplate = "https://secure.runescape.com/m=itemdb_oldschool/obj_sprite.gif?id=%d"
+
+func normalizeItemIconURL(itemID int, iconURL string) string {
+	trimmed := strings.TrimSpace(iconURL)
+	if itemID <= 0 {
+		// Can't build a fallback URL without an ID.
+		if strings.HasPrefix(trimmed, "http://") {
+			return "https://" + strings.TrimPrefix(trimmed, "http://")
+		}
+		return trimmed
+	}
+
+	if trimmed == "" {
+		return fmt.Sprintf(osrsSpriteIconURLTemplate, itemID)
+	}
+
+	// Avoid mixed-content blocks.
+	if strings.HasPrefix(trimmed, "http://") {
+		return "https://" + strings.TrimPrefix(trimmed, "http://")
+	}
+	if strings.HasPrefix(trimmed, "https://") {
+		return trimmed
+	}
+
+	// Handle protocol-relative URLs.
+	if strings.HasPrefix(trimmed, "//") {
+		return "https:" + trimmed
+	}
+
+	// Handle path-only URLs from the RuneScape domain.
+	if strings.HasPrefix(trimmed, "/") {
+		return "https://secure.runescape.com" + trimmed
+	}
+
+	// Unknown/relative icon formats (e.g. a filename from a dump): fall back to a stable sprite URL.
+	return fmt.Sprintf(osrsSpriteIconURLTemplate, itemID)
 }
 
 // NewItemService creates a new item service
@@ -39,7 +78,14 @@ func (s *itemService) ListItems(ctx context.Context, params models.ItemListParam
 
 // GetAllItems returns all items with pagination
 func (s *itemService) GetAllItems(ctx context.Context, params models.ItemListParams) ([]models.Item, int64, error) {
-	return s.itemRepo.GetAll(ctx, params)
+	items, total, err := s.itemRepo.GetAll(ctx, params)
+	if err != nil {
+		return nil, 0, err
+	}
+	for i := range items {
+		items[i].IconURL = normalizeItemIconURL(items[i].ItemID, items[i].IconURL)
+	}
+	return items, total, nil
 }
 
 // GetItemByID returns an item by its internal ID
@@ -54,6 +100,7 @@ func (s *itemService) GetItemByItemID(ctx context.Context, itemID int) (*models.
 	var item models.Item
 	err := s.cache.GetJSON(ctx, cacheKey, &item)
 	if err == nil {
+		item.IconURL = normalizeItemIconURL(item.ItemID, item.IconURL)
 		return &item, nil
 	}
 
@@ -61,6 +108,9 @@ func (s *itemService) GetItemByItemID(ctx context.Context, itemID int) (*models.
 	dbItem, err := s.itemRepo.GetByItemID(ctx, itemID)
 	if err != nil {
 		return nil, err
+	}
+	if dbItem != nil {
+		dbItem.IconURL = normalizeItemIconURL(dbItem.ItemID, dbItem.IconURL)
 	}
 
 	// Cache the result
@@ -103,7 +153,13 @@ func (s *itemService) GetItemCount(ctx context.Context, members *bool) (int64, e
 // SearchItems searches for items by name
 func (s *itemService) SearchItems(ctx context.Context, params models.ItemSearchParams) ([]models.Item, error) {
 	items, _, err := s.itemRepo.Search(ctx, params)
-	return items, err
+	if err != nil {
+		return nil, err
+	}
+	for i := range items {
+		items[i].IconURL = normalizeItemIconURL(items[i].ItemID, items[i].IconURL)
+	}
+	return items, nil
 }
 
 // UpsertItem creates or updates an item
@@ -146,7 +202,7 @@ func (s *itemService) SyncItemFromAPI(ctx context.Context, itemID int) (*models.
 	item := &models.Item{
 		ItemID:  detail.ID,
 		Name:    detail.Name,
-		IconURL: detail.Icon,
+		IconURL: normalizeItemIconURL(detail.ID, detail.Icon),
 		Members: members,
 	}
 
@@ -157,4 +213,60 @@ func (s *itemService) SyncItemFromAPI(ctx context.Context, itemID int) (*models.
 
 	s.logger.Infow("Successfully synced item from API", "itemID", itemID, "name", item.Name)
 	return item, nil
+}
+
+// SyncItemsFromBulkDump fetches the bulk dump and syncs all items to the database
+func (s *itemService) SyncItemsFromBulkDump(ctx context.Context) error {
+	s.logger.Info("Starting bulk sync of items from OSRS API")
+
+	// Fetch bulk dump
+	bulkData, err := s.osrsClient.FetchBulkDump()
+	if err != nil {
+		return fmt.Errorf("failed to fetch bulk dump: %w", err)
+	}
+
+	s.logger.Infow("Fetched bulk dump", "itemCount", len(bulkData))
+
+	// Convert to Item models
+	items := make([]models.Item, 0, len(bulkData))
+	for _, bulkItem := range bulkData {
+		members := false
+		if bulkItem.Members != nil {
+			members = *bulkItem.Members
+		}
+
+		// Convert int64 pointers to int pointers
+		var buyLimit, lowAlch, highAlch *int
+		if bulkItem.Limit != nil {
+			limit := int(*bulkItem.Limit)
+			buyLimit = &limit
+		}
+		if bulkItem.LowAlch != nil {
+			low := int(*bulkItem.LowAlch)
+			lowAlch = &low
+		}
+		if bulkItem.HighAlch != nil {
+			high := int(*bulkItem.HighAlch)
+			highAlch = &high
+		}
+
+		item := models.Item{
+			ItemID:   bulkItem.ItemID,
+			Name:     bulkItem.Name,
+			IconURL:  normalizeItemIconURL(bulkItem.ItemID, bulkItem.Icon),
+			Members:  members,
+			BuyLimit: buyLimit,
+			LowAlch:  lowAlch,
+			HighAlch: highAlch,
+		}
+		items = append(items, item)
+	}
+
+	// Bulk upsert to database
+	if err := s.BulkUpsertItems(ctx, items); err != nil {
+		return fmt.Errorf("failed to bulk upsert items: %w", err)
+	}
+
+	s.logger.Infow("Successfully synced items from bulk dump", "itemCount", len(items))
+	return nil
 }

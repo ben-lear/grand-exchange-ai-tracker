@@ -15,16 +15,16 @@ import type {
  * Fetch all current prices
  */
 export const fetchAllCurrentPrices = async (): Promise<CurrentPrice[]> => {
-  const response = await apiClient.get<CurrentPrice[]>('/prices/current');
-  return response.data;
+  const response = await apiClient.get<{ data: CurrentPrice[]; meta: { count: number } }>('/prices/current');
+  return response.data.data;
 };
 
 /**
  * Fetch current price for a single item
  */
 export const fetchCurrentPrice = async (itemId: number): Promise<CurrentPrice> => {
-  const response = await apiClient.get<CurrentPrice>(`/prices/current/${itemId}`);
-  return response.data;
+  const response = await apiClient.get<{ data: CurrentPrice }>(`/prices/current/${itemId}`);
+  return response.data.data;
 };
 
 /**
@@ -51,10 +51,57 @@ export const fetchPriceHistory = async (
   period: TimePeriod = '7d',
   sample?: boolean
 ): Promise<PriceHistory> => {
-  const response = await apiClient.get<PriceHistory>(`/prices/history/${itemId}`, {
+  const response = await apiClient.get<{ 
+    data: Array<{
+      timestamp: string;
+      highPrice: number;
+      lowPrice: number;
+    }>; 
+    meta: { 
+      item_id: number;
+      period: string;
+      count: number;
+      first_date?: string;
+      last_date?: string;
+      sampled?: boolean;
+    } 
+  }>(`/prices/history/${itemId}`, {
     params: { period, sample },
   });
-  return response.data;
+  
+  // Transform backend response to match frontend PriceHistory interface
+  const backendData = response.data.data;
+  
+  // Convert backend format to frontend format
+  const data = backendData.map(point => ({
+    timestamp: new Date(point.timestamp).getTime(), // Convert to milliseconds
+    price: point.highPrice || point.lowPrice || 0, // Use high price as primary
+    volume: undefined, // Backend doesn't provide volume in history
+  }));
+  
+  // Calculate summary statistics from the data
+  const prices = data.map(point => point.price || 0);
+  const avgPrice = prices.length > 0 ? prices.reduce((a, b) => a + b, 0) / prices.length : 0;
+  const maxPrice = prices.length > 0 ? Math.max(...prices) : 0;
+  const minPrice = prices.length > 0 ? Math.min(...prices.filter(p => p > 0)) : 0;
+  const firstPrice = prices[0] || 0;
+  const lastPrice = prices[prices.length - 1] || 0;
+  const priceChange = lastPrice - firstPrice;
+  const priceChangePercent = firstPrice > 0 ? (priceChange / firstPrice) * 100 : 0;
+  
+  return {
+    itemId: response.data.meta.item_id,
+    period: response.data.meta.period as TimePeriod,
+    data: data,
+    summary: {
+      avgPrice,
+      maxPrice,
+      minPrice,
+      totalVolume: 0, // Backend doesn't provide volume in history
+      priceChange,
+      priceChangePercent,
+    },
+  };
 };
 
 /**

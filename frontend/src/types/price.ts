@@ -47,6 +47,8 @@ export interface PricePoint {
   price: number;
   /** Trading volume (if available) */
   volume?: number;
+  /** Previous price point (if available) */
+  previousPrice?: number;
 }
 
 /**

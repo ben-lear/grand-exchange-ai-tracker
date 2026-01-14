@@ -178,10 +178,48 @@ func samplePriceHistory(history []models.PriceHistory, targetPoints int) []model
 
 // InsertHistory inserts a price history record
 func (r *priceRepository) InsertHistory(ctx context.Context, history *models.PriceHistory) error {
+	if err := r.ensurePriceHistoryPartitions(ctx, []time.Time{history.Timestamp}); err != nil {
+		r.logger.Errorw("Failed to ensure price_history partitions", "error", err)
+		return fmt.Errorf("ensure price_history partitions: %w", err)
+	}
+
 	if err := r.db.WithContext(ctx).Create(history).Error; err != nil {
 		r.logger.Errorw("Failed to insert price history", "itemID", history.ItemID, "error", err)
 		return fmt.Errorf("failed to insert price history: %w", err)
 	}
+	return nil
+}
+
+func (r *priceRepository) ensurePriceHistoryPartitions(ctx context.Context, timestamps []time.Time) error {
+	if len(timestamps) == 0 {
+		return nil
+	}
+
+	seen := make(map[string]struct{})
+	for _, ts := range timestamps {
+		ts = ts.UTC()
+		monthStart := time.Date(ts.Year(), ts.Month(), 1, 0, 0, 0, 0, time.UTC)
+		partitionName := fmt.Sprintf("price_history_%04d_%02d", monthStart.Year(), int(monthStart.Month()))
+		if _, ok := seen[partitionName]; ok {
+			continue
+		}
+		seen[partitionName] = struct{}{}
+
+		startDate := monthStart.Format("2006-01-02")
+		endDate := monthStart.AddDate(0, 1, 0).Format("2006-01-02")
+
+		createSQL := fmt.Sprintf(
+			`CREATE TABLE IF NOT EXISTS "%s" PARTITION OF price_history FOR VALUES FROM ('%s') TO ('%s')`,
+			partitionName,
+			startDate,
+			endDate,
+		)
+
+		if err := r.db.WithContext(ctx).Exec(createSQL).Error; err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -211,6 +249,15 @@ func (r *priceRepository) BulkInsertHistory(ctx context.Context, inserts []model
 		}
 
 		batch := history[i:end]
+		times := make([]time.Time, 0, len(batch))
+		for _, h := range batch {
+			times = append(times, h.Timestamp)
+		}
+		if err := r.ensurePriceHistoryPartitions(ctx, times); err != nil {
+			r.logger.Errorw("Failed to ensure price_history partitions", "batch", i/batchSize, "error", err)
+			return fmt.Errorf("ensure price_history partitions: %w", err)
+		}
+
 		if err := r.db.WithContext(ctx).Create(&batch).Error; err != nil {
 			r.logger.Errorw("Failed to bulk insert price history", "batch", i/batchSize, "error", err)
 			return fmt.Errorf("failed to bulk insert price history: %w", err)

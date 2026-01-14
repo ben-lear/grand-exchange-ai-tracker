@@ -67,13 +67,18 @@ apiClient.interceptors.response.use(
   (error: AxiosError<ApiError>) => {
     // Enhanced error handling
     const apiError: ApiError = {
+      name: 'ApiError',
+      message: 'An unknown error occurred',
       error: 'An unknown error occurred',
       status: 500,
     };
     
     if (error.response) {
       // Server responded with error status
-      apiError.error = error.response.data?.error || error.message;
+      const errorMsg = error.response.data?.error || error.message;
+      apiError.name = 'ApiError';
+      apiError.message = errorMsg;
+      apiError.error = errorMsg;
       apiError.status = error.response.status;
       apiError.requestId = error.response.data?.requestId;
       apiError.details = error.response.data?.details;
@@ -85,12 +90,17 @@ apiClient.interceptors.response.use(
       });
     } else if (error.request) {
       // Request made but no response received
-      apiError.error = 'No response from server. Please check your connection.';
+      const errorMsg = 'No response from server. Please check your connection.';
+      apiError.name = 'NetworkError';
+      apiError.message = errorMsg;
+      apiError.error = errorMsg;
       apiError.status = 0;
       
       console.error('[API Network Error]', error.message);
     } else {
       // Error in request configuration
+      apiError.name = 'ConfigError';
+      apiError.message = error.message;
       apiError.error = error.message;
       
       console.error('[API Config Error]', error.message);

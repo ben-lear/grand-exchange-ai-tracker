@@ -54,9 +54,9 @@ export const ItemDetailPage: React.FC = () => {
   if (itemError) {
     return (
       <ErrorDisplay
+        error={itemError}
         title="Failed to load item"
-        message={itemError.message}
-        retry={() => window.location.reload()}
+        onRetry={() => window.location.reload()}
       />
     );
   }
@@ -64,8 +64,8 @@ export const ItemDetailPage: React.FC = () => {
   if (!item) {
     return (
       <ErrorDisplay
+        error="The requested item could not be found."
         title="Item Not Found"
-        message="The requested item could not be found."
       />
     );
   }
@@ -171,7 +171,7 @@ export const ItemDetailPage: React.FC = () => {
         </div>
         
         <PriceChart
-          data={priceHistory || []}
+          data={priceHistory?.data || []}
           isLoading={historyLoading}
           error={historyError}
           period={selectedPeriod}

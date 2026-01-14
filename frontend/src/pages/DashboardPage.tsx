@@ -13,8 +13,7 @@ import {
   type ItemWithPrice,
   type FilterState,
 } from '@/components/table';
-import { LoadingSpinner, ErrorDisplay } from '@/components/common';
-import { useItems, useBulkCurrentPrices } from '@/hooks';
+import { useItems, useAllCurrentPrices } from '@/hooks';
 import type { PaginationParams, SortParams, ItemFilters } from '@/types';
 
 /**
@@ -56,7 +55,7 @@ export const DashboardPage: React.FC = () => {
     isLoading: pricesLoading,
     error: pricesError,
     refetch: refetchPrices,
-  } = useBulkCurrentPrices();
+  } = useAllCurrentPrices();
 
   // Combine items with prices
   const itemsWithPrices: ItemWithPrice[] = useMemo(() => {
@@ -102,7 +101,7 @@ export const DashboardPage: React.FC = () => {
   };
 
   const handleRowClick = (item: ItemWithPrice) => {
-    navigate(`/item/${item.itemId}`);
+    navigate(`/items/${item.itemId}`);
   };
 
   const handlePageChange = (page: number) => {
@@ -156,7 +155,7 @@ export const DashboardPage: React.FC = () => {
               onRefresh={handleRefresh}
               onColumnsToggle={() => setShowFilters(!showFilters)}
               isRefreshing={isLoading}
-              totalCount={itemsResponse?.metadata?.total || 0}
+              totalCount={itemsResponse?.meta?.total || 0}
               visibleCount={filteredItems.length}
             />
 
@@ -170,11 +169,11 @@ export const DashboardPage: React.FC = () => {
             />
 
             {/* Pagination */}
-            {itemsResponse?.metadata && (
+            {itemsResponse?.meta && (
               <TablePagination
                 currentPage={currentPage}
                 pageSize={pageSize}
-                totalItems={itemsResponse.metadata.total}
+                totalItems={itemsResponse.meta.total}
                 onPageChange={handlePageChange}
                 onPageSizeChange={handlePageSizeChange}
               />

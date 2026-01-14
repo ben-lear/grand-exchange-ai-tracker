@@ -47,8 +47,8 @@ func TestOSRSClient_FetchBulkDump_OK_SkipsInvalidKeys(t *testing.T) {
 
 		w.Header().Set("Content-Type", "application/json")
 		_, _ = w.Write([]byte(`{
-			"1": {"high": 100, "highTime": 111, "low": 90, "lowTime": 222},
-			"abc": {"high": 1, "highTime": 1, "low": 1, "lowTime": 1}
+			"1": {"price": 100, "last": 90, "volume": 123},
+			"abc": {"price": 1, "last": 1, "volume": 1}
 		}`))
 	}))
 
@@ -57,10 +57,12 @@ func TestOSRSClient_FetchBulkDump_OK_SkipsInvalidKeys(t *testing.T) {
 	require.Len(t, data, 1)
 
 	item := data[1]
-	require.Equal(t, int64(100), item.High)
-	require.Equal(t, int64(90), item.Low)
-	require.Equal(t, int64(111), item.HighTime)
-	require.Equal(t, int64(222), item.LowTime)
+	require.NotNil(t, item.Price)
+	require.NotNil(t, item.Last)
+	require.NotNil(t, item.Volume)
+	require.Equal(t, int64(100), *item.Price)
+	require.Equal(t, int64(90), *item.Last)
+	require.Equal(t, int64(123), *item.Volume)
 	require.Equal(t, 1, item.ItemID)
 }
 

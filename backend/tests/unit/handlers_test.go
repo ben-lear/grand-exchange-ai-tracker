@@ -83,6 +83,11 @@ func (m *MockItemService) SyncItemFromAPI(ctx context.Context, itemID int) (*mod
 	return args.Get(0).(*models.Item), args.Error(1)
 }
 
+func (m *MockItemService) SyncItemsFromBulkDump(ctx context.Context) error {
+	args := m.Called(ctx)
+	return args.Error(0)
+}
+
 func TestItemHandler_ListItems(t *testing.T) {
 	logger := zap.NewNop().Sugar()
 	mockService := new(MockItemService)

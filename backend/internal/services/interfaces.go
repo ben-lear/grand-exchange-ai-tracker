@@ -38,6 +38,9 @@ type ItemService interface {
 
 	// SyncItemFromAPI fetches item details from OSRS API and updates the database
 	SyncItemFromAPI(ctx context.Context, itemID int) (*models.Item, error)
+
+	// SyncItemsFromBulkDump fetches the bulk dump and syncs all items to the database
+	SyncItemsFromBulkDump(ctx context.Context) error
 }
 
 // PriceService defines the interface for price business logic

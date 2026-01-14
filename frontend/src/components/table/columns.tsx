@@ -33,7 +33,7 @@ export const columns = [
           )}
           <div className="flex flex-col">
             <Link
-              to={`/item/${item.itemId}`}
+              to={`/items/${item.itemId}`}
               className="font-medium text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
             >
               {item.name}

@@ -49,9 +49,9 @@ func TestOSRSClient_FetchBulkDump_MixedValidInvalidKeys(t *testing.T) {
 	cli := newTestClient(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		_, _ = w.Write([]byte(`{
-			"1": {"high": 100, "highTime": 111, "low": 90, "lowTime": 222},
-			"invalid": {"high": 50, "highTime": 55, "low": 40, "lowTime": 44},
-			"2": {"high": 200, "highTime": 211, "low": 190, "lowTime": 222}
+			"1": {"price": 100, "last": 90, "volume": 10},
+			"invalid": {"price": 50, "last": 40, "volume": 5},
+			"2": {"price": 200, "last": 190, "volume": 20}
 		}`))
 	}))
 
@@ -78,19 +78,19 @@ func TestOSRSClient_FetchBulkDump_PartialData(t *testing.T) {
 	cli := newTestClient(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		_, _ = w.Write([]byte(`{
-			"1": {"high": 100, "lowTime": 222},
-			"2": {"high": 200, "highTime": 211, "low": 190, "lowTime": 222}
+			"1": {"price": 100},
+			"2": {"price": 200, "last": 190}
 		}`))
 	}))
 
 	data, err := cli.FetchBulkDump()
 	require.NoError(t, err)
 	assert.Len(t, data, 2)
-	// Item 1 should have default zero values for missing fields
-	assert.Equal(t, int64(100), data[1].High)
-	assert.Equal(t, int64(0), data[1].HighTime)
-	assert.Equal(t, int64(0), data[1].Low)
-	assert.Equal(t, int64(222), data[1].LowTime)
+	// Missing fields should be nil pointers
+	require.NotNil(t, data[1].Price)
+	assert.Equal(t, int64(100), *data[1].Price)
+	assert.Nil(t, data[1].Last)
+	assert.Nil(t, data[1].Volume)
 }
 
 // ========== FetchItemDetail Edge Cases ==========
@@ -487,10 +487,9 @@ func TestOSRSClient_FetchBulkDump_LargeNumbers(t *testing.T) {
 		w.Header().Set("Content-Type", "application/json")
 		_, _ = w.Write([]byte(`{
 			"1": {
-				"high": 2147483647,
-				"highTime": 1234567890123,
-				"low": 1000000000,
-				"lowTime": 9876543210
+				"price": 2147483647,
+				"last": 1000000000,
+				"volume": 1234567890123
 			}
 		}`))
 	}))
@@ -498,8 +497,10 @@ func TestOSRSClient_FetchBulkDump_LargeNumbers(t *testing.T) {
 	data, err := cli.FetchBulkDump()
 	require.NoError(t, err)
 	assert.Len(t, data, 1)
-	assert.Equal(t, int64(2147483647), data[1].High)
-	assert.Equal(t, int64(1234567890123), data[1].HighTime)
+	require.NotNil(t, data[1].Price)
+	require.NotNil(t, data[1].Volume)
+	assert.Equal(t, int64(2147483647), *data[1].Price)
+	assert.Equal(t, int64(1234567890123), *data[1].Volume)
 }
 
 func TestOSRSClient_FetchBulkDump_NegativeNumbers(t *testing.T) {
@@ -507,10 +508,9 @@ func TestOSRSClient_FetchBulkDump_NegativeNumbers(t *testing.T) {
 		w.Header().Set("Content-Type", "application/json")
 		_, _ = w.Write([]byte(`{
 			"1": {
-				"high": -100,
-				"highTime": -50,
-				"low": -200,
-				"lowTime": -25
+				"price": -100,
+				"last": -200,
+				"volume": -50
 			}
 		}`))
 	}))
@@ -519,8 +519,10 @@ func TestOSRSClient_FetchBulkDump_NegativeNumbers(t *testing.T) {
 	require.NoError(t, err)
 	assert.Len(t, data, 1)
 	// Negative values should be accepted as-is
-	assert.Equal(t, int64(-100), data[1].High)
-	assert.Equal(t, int64(-200), data[1].Low)
+	require.NotNil(t, data[1].Price)
+	require.NotNil(t, data[1].Last)
+	assert.Equal(t, int64(-100), *data[1].Price)
+	assert.Equal(t, int64(-200), *data[1].Last)
 }
 
 func TestOSRSClient_FetchBulkDump_ZeroValues(t *testing.T) {
@@ -528,10 +530,9 @@ func TestOSRSClient_FetchBulkDump_ZeroValues(t *testing.T) {
 		w.Header().Set("Content-Type", "application/json")
 		_, _ = w.Write([]byte(`{
 			"1": {
-				"high": 0,
-				"highTime": 0,
-				"low": 0,
-				"lowTime": 0
+				"price": 0,
+				"last": 0,
+				"volume": 0
 			}
 		}`))
 	}))
@@ -539,6 +540,8 @@ func TestOSRSClient_FetchBulkDump_ZeroValues(t *testing.T) {
 	data, err := cli.FetchBulkDump()
 	require.NoError(t, err)
 	assert.Len(t, data, 1)
-	assert.Equal(t, int64(0), data[1].High)
-	assert.Equal(t, int64(0), data[1].Low)
+	require.NotNil(t, data[1].Price)
+	require.NotNil(t, data[1].Last)
+	assert.Equal(t, int64(0), *data[1].Price)
+	assert.Equal(t, int64(0), *data[1].Last)
 }

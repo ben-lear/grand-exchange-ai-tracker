@@ -7,7 +7,7 @@
  * - Loading and error states
  */
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   useReactTable,
   getCoreRowModel,

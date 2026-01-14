@@ -60,12 +60,12 @@ export interface ItemFilters {
  * Paginated response for item listings
  */
 export interface ItemListResponse {
-  items: Item[];
-  pagination: {
+  data: Item[];
+  meta: {
     page: number;
-    pageSize: number;
-    totalItems: number;
-    totalPages: number;
+    limit: number;
+    total: number;
+    total_pages: number;
   };
 }
 

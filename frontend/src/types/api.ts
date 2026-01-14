@@ -5,7 +5,7 @@
 /**
  * Standard API error response
  */
-export interface ApiError {
+export interface ApiError extends Error {
   /** Error message */
   error: string;
   /** HTTP status code */

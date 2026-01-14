@@ -121,6 +121,21 @@ func (s *priceService) GetPriceHistory(ctx context.Context, params models.PriceH
 		return nil, err
 	}
 
+	// If no rows exist for this period, immediately seed from WeirdGloop/OSRS history API
+	// so the frontend chart doesn't stay empty.
+	if len(history) == 0 {
+		seedErr := s.seedHistoryOnDemand(ctx, params.ItemID, params.Period)
+		if seedErr != nil {
+			s.logger.Warnw("Failed to seed history on demand", "itemID", params.ItemID, "period", params.Period, "error", seedErr)
+		} else {
+			// Re-query once after seeding.
+			history, err = s.priceRepo.GetHistory(ctx, params)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+
 	// Convert to PricePoint format
 	dataPoints := make([]models.PricePoint, len(history))
 	var firstDate, lastDate *time.Time
@@ -140,12 +155,14 @@ func (s *priceService) GetPriceHistory(ctx context.Context, params models.PriceH
 			LowPrice:  lowPrice,
 		}
 
-		// Track first and last dates
-		if i == 0 {
-			firstDate = &h.Timestamp
+		// Track earliest and latest timestamps (repo returns DESC order)
+		if firstDate == nil || h.Timestamp.Before(*firstDate) {
+			t := h.Timestamp
+			firstDate = &t
 		}
-		if i == len(history)-1 {
-			lastDate = &h.Timestamp
+		if lastDate == nil || h.Timestamp.After(*lastDate) {
+			t := h.Timestamp
+			lastDate = &t
 		}
 	}
 
@@ -164,6 +181,81 @@ func (s *priceService) GetPriceHistory(ctx context.Context, params models.PriceH
 	}
 
 	return response, nil
+}
+
+func (s *priceService) seedHistoryOnDemand(ctx context.Context, itemID int, period models.TimePeriod) error {
+	// Cooldown so repeated requests for an empty item don't hammer the external API.
+	// This is best-effort (no strict locking) since CacheService doesn't expose SETNX.
+	cooldownKey := fmt.Sprintf("price:history:seed:cooldown:%d", itemID)
+	exists, err := s.cache.Exists(ctx, cooldownKey)
+	if err == nil && exists {
+		return nil
+	}
+	_ = s.cache.Set(ctx, cooldownKey, "1", 2*time.Minute)
+
+	// For any short-range chart (and as a general baseline), seed with last90d.
+	// This ensures 24h/7d/30d/90d queries have recent data.
+	dataPoints, err := s.osrsClient.FetchHistoricalData(itemID, "90d")
+	if err != nil {
+		return fmt.Errorf("fetch last90d history: %w", err)
+	}
+
+	// If last90d returns nothing, fall back to the sampled endpoint.
+	if len(dataPoints) == 0 {
+		dataPoints, err = s.osrsClient.FetchSampleData(itemID)
+		if err != nil {
+			return fmt.Errorf("fetch sample history: %w", err)
+		}
+	}
+
+	// For long-range views, also add sampled points (cheap) to widen coverage.
+	if (period == models.Period1Year || period == models.PeriodAll) && len(dataPoints) > 0 {
+		more, moreErr := s.osrsClient.FetchSampleData(itemID)
+		if moreErr == nil && len(more) > 0 {
+			dataPoints = append(dataPoints, more...)
+		}
+	}
+
+	if len(dataPoints) == 0 {
+		s.logger.Warnw("No history data points returned during on-demand seed", "itemID", itemID, "period", period)
+		return nil
+	}
+
+	inserts := make([]models.BulkHistoryInsert, 0, len(dataPoints))
+	for _, point := range dataPoints {
+		timestamp := point.Timestamp
+
+		if timestamp.Year() < 1970 || timestamp.Year() > 2100 {
+			s.logger.Warnw("Skipping invalid timestamp during on-demand seed",
+				"itemID", itemID,
+				"timestamp", timestamp,
+				"raw", point.Timestamp)
+			continue
+		}
+
+		high := point.Price
+		low := point.Price
+		inserts = append(inserts, models.BulkHistoryInsert{
+			ItemID:    itemID,
+			HighPrice: &high,
+			LowPrice:  &low,
+			Timestamp: timestamp,
+		})
+	}
+
+	if len(inserts) == 0 {
+		return nil
+	}
+
+	if err := s.priceRepo.BulkInsertHistory(ctx, inserts); err != nil {
+		return fmt.Errorf("bulk insert seeded history: %w", err)
+	}
+
+	// Invalidate history cache for this item so the next read can return seeded data.
+	_ = s.cache.DeletePattern(ctx, fmt.Sprintf("price:history:%d:*", itemID))
+
+	s.logger.Infow("Seeded price history on-demand", "itemID", itemID, "inserted", len(inserts), "period", period)
+	return nil
 }
 
 // UpdateCurrentPrice updates the current price for an item
@@ -197,16 +289,30 @@ func (s *priceService) SyncBulkPrices(ctx context.Context) error {
 
 	// Convert to bulk update format
 	updates := make([]models.BulkPriceUpdate, 0, len(bulkData))
+	now := time.Now()
+
 	for itemID, item := range bulkData {
-		highTime := time.Unix(item.HighTime, 0)
-		lowTime := time.Unix(item.LowTime, 0)
+		// Skip items without price data
+		if item.Price == nil && item.Last == nil {
+			continue
+		}
+
+		// Use the current price as both high and low
+		// The API returns 'price' and 'last' but not separate high/low values
+		var highPrice, lowPrice int64
+		if item.Price != nil {
+			highPrice = *item.Price
+		}
+		if item.Last != nil {
+			lowPrice = *item.Last
+		}
 
 		updates = append(updates, models.BulkPriceUpdate{
 			ItemID:        itemID,
-			HighPrice:     &item.High,
-			HighPriceTime: &highTime,
-			LowPrice:      &item.Low,
-			LowPriceTime:  &lowTime,
+			HighPrice:     &highPrice,
+			HighPriceTime: &now,
+			LowPrice:      &lowPrice,
+			LowPriceTime:  &now,
 		})
 	}
 
@@ -246,15 +352,26 @@ func (s *priceService) SyncHistoricalPrices(ctx context.Context, itemID int, ful
 	}
 
 	// Convert to bulk insert format
-	inserts := make([]models.BulkHistoryInsert, len(dataPoints))
-	for i, point := range dataPoints {
-		timestamp := time.Unix(point.Timestamp, 0)
-		inserts[i] = models.BulkHistoryInsert{
-			ItemID:    itemID,
-			HighPrice: &point.AvgPrice,
-			LowPrice:  &point.Volume,
-			Timestamp: timestamp,
+	inserts := make([]models.BulkHistoryInsert, 0, len(dataPoints))
+	for _, point := range dataPoints {
+		timestamp := point.Timestamp
+
+		// Validate timestamp is within PostgreSQL's valid range (1970-2100 for safety)
+		if timestamp.Year() < 1970 || timestamp.Year() > 2100 {
+			s.logger.Warnw("Skipping invalid timestamp",
+				"itemID", itemID,
+				"timestamp", timestamp,
+				"raw", point.Timestamp)
+			continue
 		}
+
+		price := point.Price
+		inserts = append(inserts, models.BulkHistoryInsert{
+			ItemID:    itemID,
+			HighPrice: &price,
+			LowPrice:  &price,
+			Timestamp: timestamp,
+		})
 	}
 
 	// Bulk insert to database
