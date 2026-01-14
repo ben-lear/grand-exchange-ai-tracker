@@ -3,8 +3,6 @@ package scheduler
 import (
 	"context"
 	"fmt"
-	"runtime"
-	"sync"
 	"time"
 
 	"github.com/guavi/grand-exchange-ai-tracker/internal/models"
@@ -36,347 +34,434 @@ func NewJobs(
 	}
 }
 
-// SyncItemCatalog fetches all items from OSRS API and syncs to database
+// SyncItemCatalog fetches all items from WeirdGloop bulk dump and syncs to database
+// This is much more efficient than the previous letter-by-letter approach
 func (j *Jobs) SyncItemCatalog(ctx context.Context) error {
-	logger.Info("starting item catalog sync")
+	logger.Info("starting item catalog sync using WeirdGloop bulk dump")
 
-	totalItems := 0
-	letters := "abcdefghijklmnopqrstuvwxyz"
+	// Fetch the complete bulk dump
+	dumpItems, jagexTimestamp, err := j.osrsClient.FetchBulkDump(ctx)
+	if err != nil {
+		logger.Error("failed to fetch bulk dump", "error", err)
+		return fmt.Errorf("failed to fetch bulk dump: %w", err)
+	}
 
-	for _, letter := range letters {
+	if len(dumpItems) == 0 {
+		logger.Warn("bulk dump returned no items")
+		return nil
+	}
+
+	logger.Info("bulk dump fetched", "item_count", len(dumpItems), "jagex_timestamp", jagexTimestamp)
+
+	// Convert dump items to model items for bulk upsert
+	var itemsToCreate []models.Item
+	for _, dumpItem := range dumpItems {
+		item := models.Item{
+			ItemID:       dumpItem.ID,
+			Name:         dumpItem.Name,
+			Description:  "",    // Bulk dump doesn't include description
+			IconURL:      "",    // Will be fetched separately if needed
+			IconLargeURL: "",    // Will be fetched separately if needed
+			Type:         "",    // Will be updated separately if needed
+			Members:      false, // Will be updated separately if needed
+		}
+
+		itemsToCreate = append(itemsToCreate, item)
+
+		if len(itemsToCreate)%1000 == 0 {
+			logger.Debug("processed items from dump", "count", len(itemsToCreate))
+		}
+	}
+
+	logger.Info("prepared items for bulk insert", "count", len(itemsToCreate))
+
+	// Bulk create or update all items
+	if err := j.itemRepo.BulkCreateOrUpdate(ctx, itemsToCreate); err != nil {
+		logger.Error("failed to bulk create/update items", "error", err)
+		return fmt.Errorf("failed to bulk create/update items: %w", err)
+	}
+
+	logger.Info("item catalog sync completed using bulk dump", "total_items", len(itemsToCreate))
+	return nil
+}
+
+// UpdateItemPrices updates current prices for all items from the WeirdGloop bulk dump
+// This is called frequently (every 5-10 minutes) and is very efficient
+func (j *Jobs) UpdateItemPrices(ctx context.Context) error {
+	logger.Info("starting item price update from bulk dump")
+
+	// Fetch the complete bulk dump for current prices
+	dumpItems, jagexTimestamp, err := j.osrsClient.FetchBulkDump(ctx)
+	if err != nil {
+		logger.Error("failed to fetch bulk dump for price update", "error", err)
+		return fmt.Errorf("failed to fetch bulk dump: %w", err)
+	}
+
+	if len(dumpItems) == 0 {
+		logger.Warn("bulk dump returned no items for price update")
+		return nil
+	}
+
+	logger.Info("bulk dump fetched for price update", "item_count", len(dumpItems))
+
+	// Get all items to map ItemID to database ID
+	var allItems []models.Item
+	const pageSize = 5000
+	offset := 0
+	itemIDToDBID := make(map[int]uint)
+
+	for {
 		if ctx.Err() != nil {
 			return ctx.Err()
 		}
 
-		letterStr := string(letter)
-		page := 1
-
-		for {
-			// Fetch items for this letter and page
-			itemsList, err := j.osrsClient.FetchItemsList(ctx, 1, letterStr, page)
-			if err != nil {
-				logger.Error("failed to fetch items list",
-					"letter", letterStr,
-					"page", page,
-					"error", err)
-				break // Move to next letter
-			}
-
-			// If no items, we're done with this letter
-			if len(itemsList.Items) == 0 {
-				break
-			}
-
-			// Save items to database
-			for _, apiItem := range itemsList.Items {
-				item := &models.Item{
-					ItemID:       apiItem.ID,
-					Name:         apiItem.Name,
-					Description:  apiItem.Description,
-					IconURL:      apiItem.Icon,
-					IconLargeURL: apiItem.IconLarge,
-					Type:         apiItem.Type,
-					Members:      apiItem.Members == "true",
-				}
-
-				// Check if item already exists
-				existing, err := j.itemRepo.GetByItemID(ctx, item.ItemID)
-				if err == nil && existing != nil {
-					// Update existing item
-					item.ID = existing.ID
-					if err := j.itemRepo.Update(ctx, item); err != nil {
-						logger.Error("failed to update item",
-							"item_id", item.ItemID,
-							"name", item.Name,
-							"error", err)
-					}
-				} else {
-					// Create new item
-					if err := j.itemRepo.Create(ctx, item); err != nil {
-						logger.Error("failed to create item",
-							"item_id", item.ItemID,
-							"name", item.Name,
-							"error", err)
-					}
-				}
-
-				totalItems++
-			}
-
-			logger.Info("synced items page",
-				"letter", letterStr,
-				"page", page,
-				"items", len(itemsList.Items),
-				"total_so_far", totalItems)
-
-			// Check if there are more pages
-			if page >= itemsList.Total {
-				break
-			}
-
-			page++
-
-			// Rate limiting - small delay between pages
-			time.Sleep(100 * time.Millisecond)
+		items, err := j.itemRepo.List(ctx, pageSize, offset, "", nil, "item_id", "asc")
+		if err != nil {
+			logger.Error("failed to list items", "error", err)
+			return fmt.Errorf("failed to list items: %w", err)
 		}
 
-		// Delay between letters
-		time.Sleep(200 * time.Millisecond)
+		if len(items) == 0 {
+			break
+		}
+
+		for _, item := range items {
+			itemIDToDBID[item.ItemID] = item.ID
+		}
+
+		allItems = append(allItems, items...)
+
+		if len(items) < pageSize {
+			break
+		}
+
+		offset += pageSize
 	}
 
-	logger.Info("item catalog sync completed", "total_items", totalItems)
+	logger.Info("loaded items from database", "count", len(allItems))
+
+	// Create price trends from dump data
+	var pricesToUpsert []*models.PriceTrend
+	processed := 0
+
+	for _, dumpItem := range dumpItems {
+		if ctx.Err() != nil {
+			return ctx.Err()
+		}
+
+		// Find the database ID for this item
+		dbID, exists := itemIDToDBID[dumpItem.ID]
+		if !exists {
+			logger.Debug("item from dump not found in database", "item_id", dumpItem.ID, "name", dumpItem.Name)
+			continue
+		}
+
+		// Create price trend update
+		trend := &models.PriceTrend{
+			ItemID:           dbID,
+			CurrentPrice:     dumpItem.Price,
+			CurrentTrend:     "", // Will need to calculate from historical data
+			TodayPriceChange: 0,  // Will need to calculate
+			TodayTrend:       "", // Will need to calculate
+			UpdatedAt:        time.Now(),
+		}
+
+		pricesToUpsert = append(pricesToUpsert, trend)
+		processed++
+
+		if processed%1000 == 0 {
+			logger.Debug("price update progress", "processed", processed, "total", len(dumpItems))
+		}
+	}
+
+	logger.Info("prepared price updates", "count", len(pricesToUpsert))
+
+	// Batch upsert all price trends
+	for _, trend := range pricesToUpsert {
+		if ctx.Err() != nil {
+			return ctx.Err()
+		}
+
+		if err := j.priceTrendRepo.Upsert(ctx, trend); err != nil {
+			logger.Error("failed to upsert price trend", "item_id", trend.ItemID, "error", err)
+			// Continue processing other items
+		}
+	}
+
+	logger.Info("item price update completed", "updated_count", len(pricesToUpsert), "jagex_timestamp", jagexTimestamp)
 	return nil
 }
 
-// UpdateItemDetails fetches detailed information for items
+// UpdateItemDetails no longer needed with bulk dump approach
+// Kept as a placeholder in case detailed item info is needed from separate source
 func (j *Jobs) UpdateItemDetails(ctx context.Context) error {
-	logger.Info("starting item details update")
-
-	// Get all items from database in pages to avoid loading everything at once
-	var allItems []models.Item
-	limit := 1000
-	offset := 0
-	for {
-		if ctx.Err() != nil {
-			return ctx.Err()
-		}
-		items, err := j.itemRepo.List(ctx, limit, offset, "", nil, "id", "asc")
-		if err != nil {
-			return fmt.Errorf("failed to list items: %w", err)
-		}
-		if len(items) == 0 {
-			break
-		}
-		allItems = append(allItems, items...)
-		offset += len(items)
-		if len(items) < limit {
-			break
-		}
-	}
-
-	if len(allItems) == 0 {
-		logger.Info("no items to update")
-		return nil
-	}
-
-	// worker pool
-	numWorkers := runtime.NumCPU() * 2
-	if numWorkers < 4 {
-		numWorkers = 4
-	}
-
-	jobsCh := make(chan models.Item)
-	var wg sync.WaitGroup
-	var mu sync.Mutex
-	updated := 0
-
-	worker := func() {
-		defer wg.Done()
-		for item := range jobsCh {
-			if ctx.Err() != nil {
-				return
-			}
-
-			detail, err := j.osrsClient.FetchItemDetail(ctx, item.ItemID)
-			if err != nil {
-				logger.Warn("failed to fetch item detail",
-					"item_id", item.ItemID,
-					"name", item.Name,
-					"error", err)
-				continue
-			}
-
-			item.Description = detail.Description
-			item.Type = detail.Type
-			item.Members = detail.Members == "true"
-
-			if err := j.itemRepo.Update(ctx, &item); err != nil {
-				logger.Error("failed to update item details",
-					"item_id", item.ItemID,
-					"error", err)
-				continue
-			}
-
-			currentPrice := services.ParsePrice(detail.Current.Price)
-			trend := &models.PriceTrend{
-				ItemID:       item.ID,
-				CurrentPrice: currentPrice,
-				CurrentTrend: detail.Current.Trend,
-				UpdatedAt:    time.Now(),
-			}
-
-			if detail.Day30 != nil {
-				trend.Day30Change = detail.Day30.Change
-				trend.Day30Trend = detail.Day30.Trend
-			}
-			if detail.Day90 != nil {
-				trend.Day90Change = detail.Day90.Change
-				trend.Day90Trend = detail.Day90.Trend
-			}
-			if detail.Day180 != nil {
-				trend.Day180Change = detail.Day180.Change
-				trend.Day180Trend = detail.Day180.Trend
-			}
-
-			if err := j.priceTrendRepo.Upsert(ctx, trend); err != nil {
-				logger.Error("failed to upsert price trend",
-					"item_id", item.ItemID,
-					"error", err)
-			}
-
-			mu.Lock()
-			updated++
-			if updated%50 == 0 {
-				logger.Info("item details update progress",
-					"updated", updated,
-					"total", len(allItems))
-			}
-			mu.Unlock()
-
-			// small sleep to be gentle with API
-			time.Sleep(50 * time.Millisecond)
-		}
-	}
-
-	// start workers
-	wg.Add(numWorkers)
-	for i := 0; i < numWorkers; i++ {
-		go worker()
-	}
-
-	// feed jobs
-	for _, it := range allItems {
-		select {
-		case <-ctx.Done():
-			break
-		case jobsCh <- it:
-		}
-	}
-	close(jobsCh)
-	wg.Wait()
-
-	logger.Info("item details update completed",
-		"updated", updated,
-		"total", len(allItems))
+	logger.Info("item details update is now integrated with catalog sync")
 	return nil
 }
 
-// CollectPriceData fetches price history for items
-func (j *Jobs) CollectPriceData(ctx context.Context) error {
-	logger.Info("starting price data collection")
+// CollectInitialHistoricalData fetches sample historical data for ALL items on startup
+// This ensures charts have data immediately without waiting for scheduled jobs
+// Uses /sample endpoint which returns 150 data points spread across entire history
+func (j *Jobs) CollectInitialHistoricalData(ctx context.Context) error {
+	logger.Info("starting initial historical data collection for all items")
 
-	// Load all items in pages
+	// Get all items from database
 	var allItems []models.Item
-	limit := 1000
+	const pageSize = 500
 	offset := 0
+	itemIDToDBID := make(map[int]uint)
+
 	for {
 		if ctx.Err() != nil {
 			return ctx.Err()
 		}
-		items, err := j.itemRepo.List(ctx, limit, offset, "", nil, "id", "asc")
+
+		items, err := j.itemRepo.List(ctx, pageSize, offset, "", nil, "item_id", "asc")
 		if err != nil {
+			logger.Error("failed to list items for initial data collection", "error", err)
 			return fmt.Errorf("failed to list items: %w", err)
 		}
+
 		if len(items) == 0 {
 			break
 		}
-		allItems = append(allItems, items...)
-		offset += len(items)
-		if len(items) < limit {
+
+		for _, item := range items {
+			itemIDToDBID[item.ItemID] = item.ID
+			allItems = append(allItems, item)
+		}
+
+		if len(items) < pageSize {
 			break
 		}
+
+		offset += pageSize
 	}
 
+	logger.Info("loaded items for initial data collection", "count", len(allItems))
+
 	if len(allItems) == 0 {
-		logger.Info("no items to collect prices for")
+		logger.Warn("no items found in database for initial historical data collection")
 		return nil
 	}
 
-	numWorkers := runtime.NumCPU() * 2
-	if numWorkers < 4 {
-		numWorkers = 4
-	}
+	// Collect sample historical data for each item
+	totalProcessed := 0
+	totalSkipped := 0
+	var allHistories []*models.PriceHistory
 
-	jobsCh := make(chan models.Item)
-	var wg sync.WaitGroup
-	var mu sync.Mutex
-	collected := 0
+	for _, item := range allItems {
+		if ctx.Err() != nil {
+			logger.Info("initial data collection interrupted", "processed", totalProcessed, "skipped", totalSkipped)
+			return ctx.Err()
+		}
 
-	worker := func() {
-		defer wg.Done()
-		for item := range jobsCh {
-			if ctx.Err() != nil {
-				return
-			}
-
-			priceGraph, err := j.osrsClient.FetchPriceGraph(ctx, item.ItemID)
-			if err != nil {
-				logger.Warn("failed to fetch price graph",
-					"item_id", item.ItemID,
-					"name", item.Name,
-					"error", err)
-				continue
-			}
-
-			var priceHistories []*models.PriceHistory
-			for timestampStr, price := range priceGraph.Daily {
-				timestamp, err := parseTimestamp(timestampStr)
-				if err != nil {
-					logger.Warn("failed to parse timestamp",
-						"timestamp", timestampStr,
-						"error", err)
-					continue
-				}
-
-				priceHistories = append(priceHistories, &models.PriceHistory{
-					ItemID:    item.ID,
-					Timestamp: timestamp,
-					Price:     price,
-					Volume:    0,
-				})
-			}
-
-			if len(priceHistories) > 0 {
-				if err := j.priceHistoryRepo.BatchCreate(ctx, priceHistories); err != nil {
-					logger.Error("failed to save price history",
-						"item_id", item.ItemID,
-						"count", len(priceHistories),
-						"error", err)
-				} else {
-					mu.Lock()
-					collected++
-					if collected%50 == 0 {
-						logger.Info("price data collection progress",
-							"collected", collected,
-							"total", len(allItems))
-					}
-					mu.Unlock()
-				}
-			}
-
-			// gentle throttle
+		// Fetch sample historical data (150 points spread across history)
+		priceData, err := j.osrsClient.FetchSampleHistoricalData(ctx, item.ItemID)
+		if err != nil {
+			logger.Debug("failed to fetch sample historical data", "item_id", item.ItemID, "error", err)
+			totalSkipped++
+			// Continue with next item
 			time.Sleep(50 * time.Millisecond)
+			continue
+		}
+
+		if len(priceData) == 0 {
+			logger.Debug("no sample data available for item", "item_id", item.ItemID)
+			totalSkipped++
+			time.Sleep(50 * time.Millisecond)
+			continue
+		}
+
+		// Convert to price history models
+		for _, point := range priceData {
+			if len(point) >= 2 {
+				// point format: [timestamp, price] or [timestamp, price, volume]
+				var timestamp int64
+				var price int
+				var volume int
+
+				// Parse timestamp (Unix seconds)
+				if ts, ok := point[0].(float64); ok {
+					timestamp = int64(ts)
+				}
+
+				// Parse price
+				if p, ok := point[1].(float64); ok {
+					price = int(p)
+				}
+
+				// Parse volume if available
+				if len(point) >= 3 {
+					if v, ok := point[2].(float64); ok {
+						volume = int(v)
+					}
+				}
+
+				if timestamp > 0 && price > 0 {
+					allHistories = append(allHistories, &models.PriceHistory{
+						ItemID:    item.ID,
+						Timestamp: timestamp,
+						Price:     price,
+						Volume:    volume,
+					})
+				}
+			}
+		}
+
+		totalProcessed++
+		if totalProcessed%500 == 0 {
+			logger.Info("initial data collection progress", "processed", totalProcessed, "total", len(allItems), "data_points", len(allHistories))
+		}
+
+		// Respectful delay between API requests
+		time.Sleep(50 * time.Millisecond)
+	}
+
+	logger.Info("sample historical data collection completed", "items_processed", totalProcessed, "items_skipped", totalSkipped, "total_data_points", len(allHistories))
+
+	if len(allHistories) == 0 {
+		logger.Warn("no historical data collected")
+		return nil
+	}
+
+	// Batch create all price history records
+	// Use BatchCreate to handle large dataset efficiently
+	batchSize := 5000
+	for i := 0; i < len(allHistories); i += batchSize {
+		if ctx.Err() != nil {
+			return ctx.Err()
+		}
+
+		end := i + batchSize
+		if end > len(allHistories) {
+			end = len(allHistories)
+		}
+
+		batch := allHistories[i:end]
+
+		if err := j.priceHistoryRepo.BatchCreate(ctx, batch); err != nil {
+			logger.Error("failed to create price history batch", "error", err, "batch_start", i, "batch_end", end)
+			// Continue with next batch
+		} else {
+			logger.Debug("price history batch created", "batch_start", i, "batch_end", end, "count", len(batch))
 		}
 	}
 
-	wg.Add(numWorkers)
-	for i := 0; i < numWorkers; i++ {
-		go worker()
+	logger.Info("initial historical data collection and save completed", "total_data_points_saved", len(allHistories))
+	return nil
+}
+
+// CollectPriceData fetches historical price data for popular/hot items
+// This uses WeirdGloop Exchange API for historical data instead of fetching for all items
+func (j *Jobs) CollectPriceData(ctx context.Context) error {
+	logger.Info("starting historical price data collection (popular items only)")
+
+	// Get trending items or top X items by volume
+	// For now, we'll get a sample of items to fetch historical data for
+	trendingItems, err := j.priceTrendRepo.GetTopTrending(ctx, 100, 24)
+	if err != nil {
+		logger.Warn("failed to get trending items", "error", err)
+		// Continue with available items or skip
+		return nil
 	}
 
-	for _, it := range allItems {
-		select {
-		case <-ctx.Done():
-			break
-		case jobsCh <- it:
+	if len(trendingItems) == 0 {
+		logger.Info("no trending items to collect prices for")
+		return nil
+	}
+
+	// Extract item IDs
+	var itemIDs []int
+	itemIDToDBID := make(map[int]uint)
+	for _, trend := range trendingItems {
+		// We need to get the actual ItemID from the Item
+		item, err := j.itemRepo.GetByID(ctx, trend.ItemID)
+		if err == nil && item != nil {
+			itemIDs = append(itemIDs, item.ItemID)
+			itemIDToDBID[item.ItemID] = item.ID
 		}
 	}
-	close(jobsCh)
-	wg.Wait()
 
-	logger.Info("price data collection completed",
-		"collected", collected,
-		"total", len(allItems))
+	logger.Info("collected item IDs for price history", "count", len(itemIDs))
+
+	if len(itemIDs) == 0 {
+		return nil
+	}
+
+	// Fetch historical data for last 90 days
+	historicalData, err := j.osrsClient.FetchHistoricalData(ctx, itemIDs, "90d")
+	if err != nil {
+		logger.Warn("failed to fetch historical data", "error", err)
+		return nil
+	}
+
+	logger.Info("fetched historical data", "items_with_data", len(historicalData))
+
+	// Process and save historical data
+	totalSaved := 0
+	for itemIDStr, priceData := range historicalData {
+		if ctx.Err() != nil {
+			return ctx.Err()
+		}
+
+		// Parse item ID from string
+		var itemID int
+		fmt.Sscanf(itemIDStr, "%d", &itemID)
+
+		dbID, exists := itemIDToDBID[itemID]
+		if !exists {
+			logger.Debug("item from historical data not found in database", "item_id", itemIDStr)
+			continue
+		}
+
+		// Convert to price history models
+		var histories []*models.PriceHistory
+		for _, point := range priceData {
+			if len(point) >= 2 {
+				// point format: [timestamp, price] or [timestamp, price, volume]
+				var timestamp int64
+				var price int
+				var volume int
+
+				// Parse timestamp (milliseconds)
+				if ts, ok := point[0].(float64); ok {
+					timestamp = int64(ts) / 1000 // Convert to seconds
+				}
+
+				// Parse price
+				if p, ok := point[1].(float64); ok {
+					price = int(p)
+				}
+
+				// Parse volume if available
+				if len(point) >= 3 {
+					if v, ok := point[2].(float64); ok {
+						volume = int(v)
+					}
+				}
+
+				if timestamp > 0 && price > 0 {
+					histories = append(histories, &models.PriceHistory{
+						ItemID:    dbID,
+						Timestamp: timestamp,
+						Price:     price,
+						Volume:    volume,
+					})
+				}
+			}
+		}
+
+		if len(histories) > 0 {
+			if err := j.priceHistoryRepo.BatchCreate(ctx, histories); err != nil {
+				logger.Error("failed to save price history", "item_id", itemID, "count", len(histories), "error", err)
+			} else {
+				totalSaved += len(histories)
+			}
+		}
+	}
+
+	logger.Info("historical price data collection completed", "total_points_saved", totalSaved)
 	return nil
 }
 

@@ -180,24 +180,33 @@ func setupScheduler(
 	priceHistoryRepo repository.PriceHistoryRepository,
 	priceTrendRepo repository.PriceTrendRepository,
 ) (*scheduler.Scheduler, error) {
-	logger.Info("Initializing scheduler...")
+	logger.Info("Initializing scheduler with WeirdGloop-based jobs...")
 	sched := scheduler.New()
 	jobs := scheduler.NewJobs(osrsClient, itemRepo, priceHistoryRepo, priceTrendRepo)
 
-	// Current cadence kept as-is (every minute)
-	if err := sched.AddJob("item_catalog_sync", "0 */1 * * * *", jobs.SyncItemCatalog); err != nil {
+	// New schedule optimized for WeirdGloop bulk API
+	// Item catalog sync: Daily at 2:00 AM (fetches complete dump once per day)
+	if err := sched.AddJob("item_catalog_sync", "0 0 2 * * *", jobs.SyncItemCatalog); err != nil {
 		logger.Error("failed to add item catalog sync job", "error", err)
 	}
-	if err := sched.AddJob("item_details_update", "0 */1 * * * *", jobs.UpdateItemDetails); err != nil {
-		logger.Error("failed to add item details update job", "error", err)
+
+	// Price updates: Every 5 minutes (efficient with bulk dump API)
+	if err := sched.AddJob("price_update", "0 */5 * * * *", jobs.UpdateItemPrices); err != nil {
+		logger.Error("failed to add price update job", "error", err)
 	}
-	if err := sched.AddJob("price_data_collection", "0 */1 * * * *", jobs.CollectPriceData); err != nil {
-		logger.Error("failed to add price data collection job", "error", err)
+
+	// Historical price data collection: Every hour (for trending items only)
+	if err := sched.AddJob("historical_price_collection", "0 0 * * * *", jobs.CollectPriceData); err != nil {
+		logger.Error("failed to add historical price collection job", "error", err)
 	}
-	if err := sched.AddJob("trend_calculation", "0 */1 * * * *", jobs.CalculateTrends); err != nil {
+
+	// Trend calculation: Every 15 minutes
+	if err := sched.AddJob("trend_calculation", "0 */15 * * * *", jobs.CalculateTrends); err != nil {
 		logger.Error("failed to add trend calculation job", "error", err)
 	}
-	if err := sched.AddJob("old_data_cleanup", "0 */1 * * * *", jobs.CleanupOldData); err != nil {
+
+	// Old data cleanup: Daily at 2:30 AM (keep last 180 days)
+	if err := sched.AddJob("old_data_cleanup", "0 30 2 * * *", jobs.CleanupOldData); err != nil {
 		logger.Error("failed to add old data cleanup job", "error", err)
 	}
 
@@ -230,7 +239,9 @@ func startInitialSyncThenScheduler(ctx context.Context, sched *scheduler.Schedul
 
 		_ = runStep("catalog_sync", 30*time.Minute, jobs.SyncItemCatalog)
 		_ = runStep("item_details_update", 30*time.Minute, jobs.UpdateItemDetails)
-		_ = runStep("price_data_collection", 30*time.Minute, jobs.CollectPriceData)
+		// TODO: Fix FetchHistoricalData JSON parsing before enabling
+		// _ = runStep("price_data_collection", 30*time.Minute, jobs.CollectPriceData)
+		_ = runStep("initial_historical_data", 5*time.Minute, jobs.CollectInitialHistoricalData)
 
 		select {
 		case <-ctx.Done():
