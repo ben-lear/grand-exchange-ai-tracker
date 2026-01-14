@@ -1,0 +1,49 @@
+# Dependencies
+node_modules/
+frontend/node_modules/
+
+# Build outputs
+backend/bin/
+backend/dist/
+frontend/dist/
+frontend/build/
+
+# Environment files
+.env
+.env.local
+backend/.env
+frontend/.env
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+backend/logs/
+frontend/logs/
+
+# Database
+*.db
+*.sqlite
+
+# Go
+backend/vendor/
+backend/*.exe
+backend/*.test
+backend/*.out
+
+# Docker
+.docker/
+
+# Temporary files
+tmp/
+temp/
