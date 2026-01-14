@@ -26,16 +26,8 @@ type Config struct {
 	RedisPassword string
 	RedisDB       int
 
-	// OSRS API
-	OSRSBulkDumpURL string
-	OSRSHistoryURL  string
-	OSRSDetailURL   string
-	OSRSUserAgent   string
-
-	// Scheduler
-	PricePollInterval  string // Default: "*/1 * * * *" (every 1 minute)
-	HistoricalSyncCron string // Default: "0 * * * *" (every hour)
-	FullHistoricalCron string // Default: "0 0 * * *" (daily)
+	// OSRS Wiki Real-time Prices API
+	WikiPricesBaseURL string
 }
 
 func LoadConfig() (*Config, error) {
@@ -77,14 +69,7 @@ func LoadConfig() (*Config, error) {
 		RedisPassword: viper.GetString("REDIS_PASSWORD"),
 		RedisDB:       viper.GetInt("REDIS_DB"),
 
-		OSRSBulkDumpURL: viper.GetString("OSRS_BULK_DUMP_URL"),
-		OSRSHistoryURL:  viper.GetString("OSRS_HISTORY_URL"),
-		OSRSDetailURL:   viper.GetString("OSRS_DETAIL_URL"),
-		OSRSUserAgent:   viper.GetString("OSRS_USER_AGENT"),
-
-		PricePollInterval:  viper.GetString("PRICE_POLL_INTERVAL"),
-		HistoricalSyncCron: viper.GetString("HISTORICAL_SYNC_CRON"),
-		FullHistoricalCron: viper.GetString("FULL_HISTORICAL_CRON"),
+		WikiPricesBaseURL: viper.GetString("WIKI_PRICES_BASE_URL"),
 	}
 
 	return config, nil
@@ -110,14 +95,6 @@ func setDefaults() {
 	viper.SetDefault("REDIS_PASSWORD", "")
 	viper.SetDefault("REDIS_DB", 0)
 
-	// OSRS API defaults
-	viper.SetDefault("OSRS_BULK_DUMP_URL", "https://chisel.weirdgloop.org/gazproj/gazbot/os_dump.json")
-	viper.SetDefault("OSRS_HISTORY_URL", "https://api.weirdgloop.org/exchange/history/osrs")
-	viper.SetDefault("OSRS_DETAIL_URL", "https://secure.runescape.com/m=itemdb_oldschool/api/catalogue/detail.json")
-	viper.SetDefault("OSRS_USER_AGENT", "OSRS-GE-Tracker/1.0")
-
-	// Scheduler defaults
-	viper.SetDefault("PRICE_POLL_INTERVAL", "*/1 * * * *") // Every 1 minute
-	viper.SetDefault("HISTORICAL_SYNC_CRON", "0 * * * *")  // Every hour
-	viper.SetDefault("FULL_HISTORICAL_CRON", "0 0 * * *")  // Daily at midnight
+	// OSRS Wiki prices API defaults
+	viper.SetDefault("WIKI_PRICES_BASE_URL", "https://prices.runescape.wiki/api/v1/osrs")
 }

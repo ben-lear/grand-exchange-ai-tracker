@@ -54,13 +54,12 @@ func main() {
 
 	// Initialize services
 	cacheService := services.NewCacheService(redis, logger)
-	osrsClient := services.NewOSRSClient(logger)
-	itemService := services.NewItemService(itemRepo, cacheService, logger)
-	priceService := services.NewPriceService(priceRepo, itemRepo, cacheService, osrsClient, logger)
+	itemService := services.NewItemService(itemRepo, cacheService, cfg.WikiPricesBaseURL, logger)
+	priceService := services.NewPriceService(priceRepo, itemRepo, cacheService, cfg.WikiPricesBaseURL, logger)
 
 	// Initialize handlers
 	healthHandler := handlers.NewHealthHandler(db, redis, logger)
-	itemHandler := handlers.NewItemHandler(itemService, logger)
+	itemHandler := handlers.NewItemHandler(itemService, priceService, logger)
 	priceHandler := handlers.NewPriceHandler(priceService, logger)
 
 	// Create Fiber app
@@ -114,8 +113,7 @@ func main() {
 
 	// Admin/sync routes (with stricter rate limiting)
 	sync := api.Group("/sync", middleware.NewSyncRateLimiter())
-	sync.Post("/prices", priceHandler.SyncCurrentPrices)                // POST /api/v1/sync/prices
-	sync.Post("/prices/history/:id", priceHandler.SyncHistoricalPrices) // POST /api/v1/sync/prices/history/:id?full=true
+	sync.Post("/prices", priceHandler.SyncCurrentPrices) // POST /api/v1/sync/prices
 
 	// Initialize and start scheduler
 	sched := scheduler.NewScheduler(priceService, itemService, logger)

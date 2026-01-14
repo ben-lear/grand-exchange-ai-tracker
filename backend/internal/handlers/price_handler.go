@@ -146,7 +146,10 @@ func (h *PriceHandler) GetPriceHistory(c *fiber.Ctx) error {
 	// Parse period
 	period := models.TimePeriod(periodStr)
 	validPeriods := map[models.TimePeriod]bool{
+		models.Period1Hour:   true,
+		models.Period12Hours: true,
 		models.Period24Hours: true,
+		models.Period3Days:   true,
 		models.Period7Days:   true,
 		models.Period30Days:  true,
 		models.Period90Days:  true,
@@ -156,7 +159,7 @@ func (h *PriceHandler) GetPriceHistory(c *fiber.Ctx) error {
 
 	if !validPeriods[period] {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "invalid period, must be one of: 24h, 7d, 30d, 90d, 1y, all",
+			"error": "invalid period, must be one of: 1h, 12h, 24h, 3d, 7d, 30d, 90d, 1y, all",
 		})
 	}
 
@@ -217,36 +220,5 @@ func (h *PriceHandler) SyncCurrentPrices(c *fiber.Ctx) error {
 
 	return c.JSON(fiber.Map{
 		"message": "current prices synced successfully",
-	})
-}
-
-// SyncHistoricalPrices handles POST /api/v1/prices/sync/history/:id (admin endpoint)
-func (h *PriceHandler) SyncHistoricalPrices(c *fiber.Ctx) error {
-	ctx := c.Context()
-
-	// Parse item ID
-	itemIDStr := c.Params("id")
-	itemID, err := strconv.Atoi(itemIDStr)
-	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "invalid item ID",
-		})
-	}
-
-	// Parse query parameter for period type
-	fullHistory := c.QueryBool("full", false)
-
-	err = h.priceService.SyncHistoricalPrices(ctx, itemID, fullHistory)
-	if err != nil {
-		h.logger.Errorf("Failed to sync historical prices for item %d: %v", itemID, err)
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "failed to sync historical prices",
-		})
-	}
-
-	return c.JSON(fiber.Map{
-		"message": "historical prices synced successfully",
-		"item_id": itemID,
-		"full":    fullHistory,
 	})
 }

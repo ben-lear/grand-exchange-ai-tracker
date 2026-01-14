@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"time"
 
 	"github.com/guavi/osrs-ge-tracker/internal/models"
 )
@@ -56,18 +57,26 @@ type PriceRepository interface {
 	// BulkUpsertCurrentPrices creates or updates multiple current prices
 	BulkUpsertCurrentPrices(ctx context.Context, prices []models.BulkPriceUpdate) error
 
-	// GetHistory returns price history for an item
-	GetHistory(ctx context.Context, params models.PriceHistoryParams) ([]models.PriceHistory, error)
+	// InsertTimeseriesPoints inserts bucketed /timeseries points for a timestep (append-only).
+	// timestep must be one of: 5m, 1h, 6h, 24h.
+	InsertTimeseriesPoints(ctx context.Context, timestep string, points []models.PriceTimeseriesPoint) error
 
-	// InsertHistory inserts a price history record
-	InsertHistory(ctx context.Context, history *models.PriceHistory) error
+	// InsertDailyPoints inserts daily rollup points (append-only).
+	InsertDailyPoints(ctx context.Context, points []models.PriceTimeseriesDaily) error
 
-	// BulkInsertHistory inserts multiple price history records
-	BulkInsertHistory(ctx context.Context, history []models.BulkHistoryInsert) error
+	// GetTimeseriesPoints returns bucketed points for an item and timestep.
+	GetTimeseriesPoints(ctx context.Context, itemID int, timestep string, params models.PriceHistoryParams) ([]models.PriceTimeseriesPoint, error)
 
-	// GetLatestHistoryTimestamp returns the most recent timestamp for an item's history
-	GetLatestHistoryTimestamp(ctx context.Context, itemID int) (*models.PriceHistory, error)
+	// GetDailyPoints returns daily rollup points for an item.
+	GetDailyPoints(ctx context.Context, itemID int, params models.PriceHistoryParams) ([]models.PriceTimeseriesDaily, error)
 
-	// DeleteOldHistory deletes price history older than the specified time
-	DeleteOldHistory(ctx context.Context, itemID int, beforeTime int64) error
+	// Rollup24hToDailyBefore inserts daily rollups for 24h buckets older than the cutoff.
+	Rollup24hToDailyBefore(ctx context.Context, cutoff time.Time) (int64, error)
+
+	// PrunePriceLatestBefore deletes price_latest snapshots older than the cutoff.
+	PrunePriceLatestBefore(ctx context.Context, cutoff time.Time) (int64, error)
+
+	// PruneTimeseriesBefore deletes bucketed timeseries points older than the cutoff for a timestep.
+	// timestep must be one of: 5m, 1h, 6h, 24h.
+	PruneTimeseriesBefore(ctx context.Context, timestep string, cutoff time.Time) (int64, error)
 }

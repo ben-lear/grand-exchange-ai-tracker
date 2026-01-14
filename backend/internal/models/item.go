@@ -12,6 +12,9 @@ type Item struct {
 	ItemID    int            `gorm:"uniqueIndex;not null" json:"itemId" validate:"required"`
 	Name      string         `gorm:"size:255;not null;index" json:"name" validate:"required"`
 	IconURL   string         `gorm:"type:text" json:"iconUrl"`
+	Examine   *string        `gorm:"type:text" json:"examine,omitempty"`
+	Value     *int           `gorm:"type:integer" json:"value,omitempty"`
+	IconName  *string        `gorm:"type:text" json:"iconName,omitempty"`
 	Members   bool           `gorm:"default:false" json:"members"`
 	BuyLimit  *int           `gorm:"type:integer" json:"buyLimit"`
 	HighAlch  *int           `gorm:"type:integer" json:"highAlch"`

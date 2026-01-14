@@ -10,7 +10,10 @@ import (
 type TimePeriod string
 
 const (
+	Period1Hour   TimePeriod = "1h"
+	Period12Hours TimePeriod = "12h"
 	Period24Hours TimePeriod = "24h"
+	Period3Days   TimePeriod = "3d"
 	Period7Days   TimePeriod = "7d"
 	Period30Days  TimePeriod = "30d"
 	Period90Days  TimePeriod = "90d"
@@ -21,7 +24,7 @@ const (
 // IsValid checks if the time period is valid
 func (p TimePeriod) IsValid() bool {
 	switch p {
-	case Period24Hours, Period7Days, Period30Days, Period90Days, Period1Year, PeriodAll:
+	case Period1Hour, Period12Hours, Period24Hours, Period3Days, Period7Days, Period30Days, Period90Days, Period1Year, PeriodAll:
 		return true
 	default:
 		return false
@@ -31,8 +34,14 @@ func (p TimePeriod) IsValid() bool {
 // Duration returns the time.Duration for the period
 func (p TimePeriod) Duration() time.Duration {
 	switch p {
+	case Period1Hour:
+		return 1 * time.Hour
+	case Period12Hours:
+		return 12 * time.Hour
 	case Period24Hours:
 		return 24 * time.Hour
+	case Period3Days:
+		return 3 * 24 * time.Hour
 	case Period7Days:
 		return 7 * 24 * time.Hour
 	case Period30Days:

@@ -21,7 +21,8 @@ const (
 // priceService implements PriceService
 type priceService struct {
 	priceRepo  repository.PriceRepository
-	osrsClient OSRSClient
+	itemRepo   repository.ItemRepository
+	wikiClient WikiPricesClient
 	cache      CacheService
 	logger     *zap.SugaredLogger
 }
@@ -31,12 +32,13 @@ func NewPriceService(
 	priceRepo repository.PriceRepository,
 	itemRepo repository.ItemRepository,
 	cache CacheService,
-	osrsClient OSRSClient,
+	wikiPricesBaseURL string,
 	logger *zap.SugaredLogger,
 ) PriceService {
 	return &priceService{
 		priceRepo:  priceRepo,
-		osrsClient: osrsClient,
+		itemRepo:   itemRepo,
+		wikiClient: NewWikiPricesClient(logger, wikiPricesBaseURL),
 		cache:      cache,
 		logger:     logger,
 	}
@@ -115,54 +117,88 @@ func (s *priceService) GetPriceHistory(ctx context.Context, params models.PriceH
 		}
 	}
 
-	// Fetch from database
-	history, err := s.priceRepo.GetHistory(ctx, params)
-	if err != nil {
-		return nil, err
-	}
+	source := periodToTimeseriesSource(params.Period)
 
-	// If no rows exist for this period, immediately seed from WeirdGloop/OSRS history API
-	// so the frontend chart doesn't stay empty.
-	if len(history) == 0 {
-		seedErr := s.seedHistoryOnDemand(ctx, params.ItemID, params.Period)
-		if seedErr != nil {
-			s.logger.Warnw("Failed to seed history on demand", "itemID", params.ItemID, "period", params.Period, "error", seedErr)
-		} else {
-			// Re-query once after seeding.
-			history, err = s.priceRepo.GetHistory(ctx, params)
+	var dataPoints []models.PricePoint
+	var firstDate, lastDate *time.Time
+
+	if source.useDaily {
+		points, err := s.priceRepo.GetDailyPoints(ctx, params.ItemID, params)
+		if err != nil {
+			return nil, err
+		}
+
+		if len(points) == 0 {
+			if err := s.seedDailyFromWikiTimeseries(ctx, params.ItemID); err != nil {
+				s.logger.Warnw("Failed to seed daily timeseries", "itemID", params.ItemID, "error", err)
+			}
+			points, err = s.priceRepo.GetDailyPoints(ctx, params.ItemID, params)
 			if err != nil {
 				return nil, err
 			}
 		}
-	}
 
-	// Convert to PricePoint format
-	dataPoints := make([]models.PricePoint, len(history))
-	var firstDate, lastDate *time.Time
+		dataPoints = make([]models.PricePoint, 0, len(points))
+		for _, p := range points {
+			high := int64(0)
+			low := int64(0)
+			if p.AvgHighPrice != nil {
+				high = *p.AvgHighPrice
+			}
+			if p.AvgLowPrice != nil {
+				low = *p.AvgLowPrice
+			}
 
-	for i, h := range history {
-		highPrice := int64(0)
-		lowPrice := int64(0)
-		if h.HighPrice != nil {
-			highPrice = *h.HighPrice
+			ts := time.Date(p.Day.Year(), p.Day.Month(), p.Day.Day(), 0, 0, 0, 0, time.UTC)
+			dataPoints = append(dataPoints, models.PricePoint{Timestamp: ts, HighPrice: high, LowPrice: low})
+
+			if firstDate == nil || ts.Before(*firstDate) {
+				t := ts
+				firstDate = &t
+			}
+			if lastDate == nil || ts.After(*lastDate) {
+				t := ts
+				lastDate = &t
+			}
 		}
-		if h.LowPrice != nil {
-			lowPrice = *h.LowPrice
-		}
-		dataPoints[i] = models.PricePoint{
-			Timestamp: h.Timestamp,
-			HighPrice: highPrice,
-			LowPrice:  lowPrice,
+	} else {
+		points, err := s.priceRepo.GetTimeseriesPoints(ctx, params.ItemID, source.timestep, params)
+		if err != nil {
+			return nil, err
 		}
 
-		// Track earliest and latest timestamps (repo returns DESC order)
-		if firstDate == nil || h.Timestamp.Before(*firstDate) {
-			t := h.Timestamp
-			firstDate = &t
+		if len(points) == 0 {
+			if err := s.seedTimeseriesFromWiki(ctx, params.ItemID, source.timestep); err != nil {
+				s.logger.Warnw("Failed to seed timeseries", "itemID", params.ItemID, "timestep", source.timestep, "error", err)
+			}
+			points, err = s.priceRepo.GetTimeseriesPoints(ctx, params.ItemID, source.timestep, params)
+			if err != nil {
+				return nil, err
+			}
 		}
-		if lastDate == nil || h.Timestamp.After(*lastDate) {
-			t := h.Timestamp
-			lastDate = &t
+
+		dataPoints = make([]models.PricePoint, 0, len(points))
+		for _, p := range points {
+			high := int64(0)
+			low := int64(0)
+			if p.AvgHighPrice != nil {
+				high = *p.AvgHighPrice
+			}
+			if p.AvgLowPrice != nil {
+				low = *p.AvgLowPrice
+			}
+
+			ts := p.Timestamp.UTC()
+			dataPoints = append(dataPoints, models.PricePoint{Timestamp: ts, HighPrice: high, LowPrice: low})
+
+			if firstDate == nil || ts.Before(*firstDate) {
+				t := ts
+				firstDate = &t
+			}
+			if lastDate == nil || ts.After(*lastDate) {
+				t := ts
+				lastDate = &t
+			}
 		}
 	}
 
@@ -183,78 +219,98 @@ func (s *priceService) GetPriceHistory(ctx context.Context, params models.PriceH
 	return response, nil
 }
 
-func (s *priceService) seedHistoryOnDemand(ctx context.Context, itemID int, period models.TimePeriod) error {
-	// Cooldown so repeated requests for an empty item don't hammer the external API.
-	// This is best-effort (no strict locking) since CacheService doesn't expose SETNX.
-	cooldownKey := fmt.Sprintf("price:history:seed:cooldown:%d", itemID)
-	exists, err := s.cache.Exists(ctx, cooldownKey)
-	if err == nil && exists {
-		return nil
-	}
-	_ = s.cache.Set(ctx, cooldownKey, "1", 2*time.Minute)
+type timeseriesSource struct {
+	timestep string
+	useDaily bool
+	seedStep string
+}
 
-	// For any short-range chart (and as a general baseline), seed with last90d.
-	// This ensures 24h/7d/30d/90d queries have recent data.
-	dataPoints, err := s.osrsClient.FetchHistoricalData(itemID, "90d")
+func periodToTimeseriesSource(period models.TimePeriod) timeseriesSource {
+	switch period {
+	case models.Period1Hour:
+		return timeseriesSource{timestep: "5m"}
+	case models.Period12Hours:
+		return timeseriesSource{timestep: "6h"}
+	case models.Period24Hours:
+		return timeseriesSource{timestep: "6h"}
+	case models.Period3Days, models.Period7Days:
+		return timeseriesSource{timestep: "24h"}
+	case models.Period30Days, models.Period90Days, models.Period1Year, models.PeriodAll:
+		// Seed daily from 24h buckets (daily granularity).
+		return timeseriesSource{useDaily: true, seedStep: "24h"}
+	default:
+		// Default to 7d behavior.
+		return timeseriesSource{timestep: "24h"}
+	}
+}
+
+func (s *priceService) seedTimeseriesFromWiki(ctx context.Context, itemID int, timestep string) error {
+	points, err := s.wikiClient.FetchTimeseries(ctx, itemID, timestep)
 	if err != nil {
-		return fmt.Errorf("fetch last90d history: %w", err)
+		return err
 	}
 
-	// If last90d returns nothing, fall back to the sampled endpoint.
-	if len(dataPoints) == 0 {
-		dataPoints, err = s.osrsClient.FetchSampleData(itemID)
-		if err != nil {
-			return fmt.Errorf("fetch sample history: %w", err)
-		}
-	}
-
-	// For long-range views, also add sampled points (cheap) to widen coverage.
-	if (period == models.Period1Year || period == models.PeriodAll) && len(dataPoints) > 0 {
-		more, moreErr := s.osrsClient.FetchSampleData(itemID)
-		if moreErr == nil && len(more) > 0 {
-			dataPoints = append(dataPoints, more...)
-		}
-	}
-
-	if len(dataPoints) == 0 {
-		s.logger.Warnw("No history data points returned during on-demand seed", "itemID", itemID, "period", period)
-		return nil
-	}
-
-	inserts := make([]models.BulkHistoryInsert, 0, len(dataPoints))
-	for _, point := range dataPoints {
-		timestamp := point.Timestamp
-
-		if timestamp.Year() < 1970 || timestamp.Year() > 2100 {
-			s.logger.Warnw("Skipping invalid timestamp during on-demand seed",
-				"itemID", itemID,
-				"timestamp", timestamp,
-				"raw", point.Timestamp)
-			continue
-		}
-
-		high := point.Price
-		low := point.Price
-		inserts = append(inserts, models.BulkHistoryInsert{
-			ItemID:    itemID,
-			HighPrice: &high,
-			LowPrice:  &low,
-			Timestamp: timestamp,
+	now := time.Now().UTC()
+	inserts := make([]models.PriceTimeseriesPoint, 0, len(points))
+	for _, p := range points {
+		ts := UnixSecondsToTime(p.Timestamp)
+		inserts = append(inserts, models.PriceTimeseriesPoint{
+			ItemID:          itemID,
+			Timestamp:       ts,
+			AvgHighPrice:    p.AvgHighPrice,
+			AvgLowPrice:     p.AvgLowPrice,
+			HighPriceVolume: p.HighPriceVolume,
+			LowPriceVolume:  p.LowPriceVolume,
+			InsertedAt:      now,
 		})
 	}
 
-	if len(inserts) == 0 {
+	if err := s.priceRepo.InsertTimeseriesPoints(ctx, timestep, inserts); err != nil {
+		return err
+	}
+
+	_ = s.cache.DeletePattern(ctx, fmt.Sprintf("price:history:%d:*", itemID))
+	return nil
+}
+
+func (s *priceService) seedDailyFromWikiTimeseries(ctx context.Context, itemID int) error {
+	step := "24h"
+	points, err := s.wikiClient.FetchTimeseries(ctx, itemID, step)
+	if err != nil {
+		return err
+	}
+
+	now := time.Now().UTC()
+	byDay := make(map[string]models.PriceTimeseriesDaily, len(points))
+	for _, p := range points {
+		ts := UnixSecondsToTime(p.Timestamp)
+		day := time.Date(ts.Year(), ts.Month(), ts.Day(), 0, 0, 0, 0, time.UTC)
+		key := day.Format("2006-01-02")
+		byDay[key] = models.PriceTimeseriesDaily{
+			ItemID:          itemID,
+			Day:             day,
+			AvgHighPrice:    p.AvgHighPrice,
+			AvgLowPrice:     p.AvgLowPrice,
+			HighPriceVolume: p.HighPriceVolume,
+			LowPriceVolume:  p.LowPriceVolume,
+			InsertedAt:      now,
+		}
+	}
+
+	if len(byDay) == 0 {
 		return nil
 	}
 
-	if err := s.priceRepo.BulkInsertHistory(ctx, inserts); err != nil {
-		return fmt.Errorf("bulk insert seeded history: %w", err)
+	inserts := make([]models.PriceTimeseriesDaily, 0, len(byDay))
+	for _, v := range byDay {
+		inserts = append(inserts, v)
 	}
 
-	// Invalidate history cache for this item so the next read can return seeded data.
-	_ = s.cache.DeletePattern(ctx, fmt.Sprintf("price:history:%d:*", itemID))
+	if err := s.priceRepo.InsertDailyPoints(ctx, inserts); err != nil {
+		return err
+	}
 
-	s.logger.Infow("Seeded price history on-demand", "itemID", itemID, "inserted", len(inserts), "period", period)
+	_ = s.cache.DeletePattern(ctx, fmt.Sprintf("price:history:%d:*", itemID))
 	return nil
 }
 
@@ -272,116 +328,126 @@ func (s *priceService) UpdateCurrentPrice(ctx context.Context, price *models.Cur
 	return nil
 }
 
-// SyncCurrentPrices fetches and updates all current prices from the bulk dump (alias for SyncBulkPrices)
+// SyncCurrentPrices fetches and updates all current prices from OSRS Wiki /latest.
 func (s *priceService) SyncCurrentPrices(ctx context.Context) error {
-	return s.SyncBulkPrices(ctx)
-}
+	s.logger.Info("Starting price_latest sync from OSRS Wiki /latest")
 
-// SyncBulkPrices fetches and updates all prices from the bulk dump
-func (s *priceService) SyncBulkPrices(ctx context.Context) error {
-	s.logger.Info("Starting bulk price sync from OSRS API")
-
-	// Fetch bulk dump
-	bulkData, err := s.osrsClient.FetchBulkDump()
+	latest, err := s.wikiClient.FetchLatestAll(ctx)
 	if err != nil {
-		return fmt.Errorf("failed to fetch bulk dump: %w", err)
+		return fmt.Errorf("fetch wiki latest: %w", err)
 	}
 
-	// Convert to bulk update format
-	updates := make([]models.BulkPriceUpdate, 0, len(bulkData))
-	now := time.Now()
+	// Fetch all existing item IDs to filter out prices for non-existent items
+	allItems, _, err := s.itemRepo.GetAll(ctx, models.ItemListParams{
+		Page:  1,
+		Limit: 10000, // Get all items
+	})
+	if err != nil {
+		return fmt.Errorf("fetch existing items: %w", err)
+	}
 
-	for itemID, item := range bulkData {
-		// Skip items without price data
-		if item.Price == nil && item.Last == nil {
+	s.logger.Infow("Fetched items for price sync validation", "item_count", len(allItems))
+
+	// Build a set of valid item IDs
+	validItemIDs := make(map[int]struct{}, len(allItems))
+	for _, item := range allItems {
+		validItemIDs[item.ItemID] = struct{}{}
+	}
+
+	updates := make([]models.BulkPriceUpdate, 0, len(latest))
+	skipped := 0
+	for itemID, item := range latest {
+		// Skip if item doesn't exist in our database
+		if _, exists := validItemIDs[itemID]; !exists {
+			skipped++
 			continue
 		}
 
-		// Use the current price as both high and low
-		// The API returns 'price' and 'last' but not separate high/low values
-		var highPrice, lowPrice int64
-		if item.Price != nil {
-			highPrice = *item.Price
+		if item.High == nil && item.Low == nil {
+			continue
 		}
-		if item.Last != nil {
-			lowPrice = *item.Last
+
+		var highTime *time.Time
+		if item.HighTime != nil {
+			t := UnixSecondsToTime(*item.HighTime)
+			highTime = &t
+		}
+		var lowTime *time.Time
+		if item.LowTime != nil {
+			t := UnixSecondsToTime(*item.LowTime)
+			lowTime = &t
 		}
 
 		updates = append(updates, models.BulkPriceUpdate{
 			ItemID:        itemID,
-			HighPrice:     &highPrice,
-			HighPriceTime: &now,
-			LowPrice:      &lowPrice,
-			LowPriceTime:  &now,
+			HighPrice:     item.High,
+			HighPriceTime: highTime,
+			LowPrice:      item.Low,
+			LowPriceTime:  lowTime,
 		})
 	}
 
-	// Bulk upsert to database
-	if err := s.priceRepo.BulkUpsertCurrentPrices(ctx, updates); err != nil {
-		return fmt.Errorf("failed to bulk upsert prices: %w", err)
+	if skipped > 0 {
+		s.logger.Infow("Skipped prices for items not in database", "skipped_count", skipped)
 	}
 
-	// Invalidate all price caches
+	if err := s.priceRepo.BulkUpsertCurrentPrices(ctx, updates); err != nil {
+		return fmt.Errorf("insert price_latest snapshots: %w", err)
+	}
+
 	_ = s.cache.DeletePattern(ctx, "price:current:*")
 
-	s.logger.Infow("Successfully synced bulk prices", "count", len(updates))
+	s.logger.Infow("Successfully synced price_latest from /latest", "count", len(updates))
 	return nil
 }
 
-// SyncHistoricalPrices fetches and stores historical price data for an item
-func (s *priceService) SyncHistoricalPrices(ctx context.Context, itemID int, fullHistory bool) error {
-	s.logger.Infow("Syncing historical prices", "itemID", itemID, "fullHistory", fullHistory)
+func (s *priceService) RunMaintenance(ctx context.Context) error {
+	// Retention policy (can be moved to config later):
+	// - price_latest: keep 36h
+	// - timeseries 5m: keep 7d
+	// - timeseries 1h: keep 90d
+	// - timeseries 6h: keep 30d
+	// - timeseries 24h: keep 30d (supports up to 7d charts with buffer)
+	// - daily: currently kept indefinitely
+	now := time.Now().UTC()
 
-	var dataPoints []models.HistoricalDataPoint
-	var err error
-
-	// Fetch based on fullHistory flag
-	if fullHistory {
-		dataPoints, err = s.osrsClient.FetchAllHistoricalData(itemID)
-	} else {
-		dataPoints, err = s.osrsClient.FetchSampleData(itemID)
-	}
-
+	rollupCutoff := now.Add(-30 * 24 * time.Hour)
+	rolledUp, err := s.priceRepo.Rollup24hToDailyBefore(ctx, rollupCutoff)
 	if err != nil {
-		return fmt.Errorf("failed to fetch historical data: %w", err)
+		return err
 	}
 
-	if len(dataPoints) == 0 {
-		s.logger.Warnw("No historical data points returned", "itemID", itemID)
-		return nil
+	prunedLatest, err := s.priceRepo.PrunePriceLatestBefore(ctx, now.Add(-36*time.Hour))
+	if err != nil {
+		return err
 	}
 
-	// Convert to bulk insert format
-	inserts := make([]models.BulkHistoryInsert, 0, len(dataPoints))
-	for _, point := range dataPoints {
-		timestamp := point.Timestamp
-
-		// Validate timestamp is within PostgreSQL's valid range (1970-2100 for safety)
-		if timestamp.Year() < 1970 || timestamp.Year() > 2100 {
-			s.logger.Warnw("Skipping invalid timestamp",
-				"itemID", itemID,
-				"timestamp", timestamp,
-				"raw", point.Timestamp)
-			continue
-		}
-
-		price := point.Price
-		inserts = append(inserts, models.BulkHistoryInsert{
-			ItemID:    itemID,
-			HighPrice: &price,
-			LowPrice:  &price,
-			Timestamp: timestamp,
-		})
+	pruned5m, err := s.priceRepo.PruneTimeseriesBefore(ctx, "5m", now.Add(-7*24*time.Hour))
+	if err != nil {
+		return err
+	}
+	pruned1h, err := s.priceRepo.PruneTimeseriesBefore(ctx, "1h", now.Add(-90*24*time.Hour))
+	if err != nil {
+		return err
+	}
+	pruned6h, err := s.priceRepo.PruneTimeseriesBefore(ctx, "6h", now.Add(-30*24*time.Hour))
+	if err != nil {
+		return err
+	}
+	pruned24h, err := s.priceRepo.PruneTimeseriesBefore(ctx, "24h", now.Add(-30*24*time.Hour))
+	if err != nil {
+		return err
 	}
 
-	// Bulk insert to database
-	if err := s.priceRepo.BulkInsertHistory(ctx, inserts); err != nil {
-		return fmt.Errorf("failed to bulk insert history: %w", err)
-	}
+	s.logger.Infow(
+		"Price maintenance completed",
+		"rolledUp24hToDaily", rolledUp,
+		"prunedPriceLatest", prunedLatest,
+		"pruned5m", pruned5m,
+		"pruned1h", pruned1h,
+		"pruned6h", pruned6h,
+		"pruned24h", pruned24h,
+	)
 
-	// Invalidate history cache for this item
-	_ = s.cache.DeletePattern(ctx, fmt.Sprintf("price:history:%d:*", itemID))
-
-	s.logger.Infow("Successfully synced historical prices", "itemID", itemID, "count", len(inserts))
 	return nil
 }

@@ -13,15 +13,17 @@ import (
 
 // ItemHandler handles item-related endpoints
 type ItemHandler struct {
-	itemService services.ItemService
-	logger      *zap.SugaredLogger
+	itemService  services.ItemService
+	priceService services.PriceService
+	logger       *zap.SugaredLogger
 }
 
 // NewItemHandler creates a new item handler
-func NewItemHandler(itemService services.ItemService, logger *zap.SugaredLogger) *ItemHandler {
+func NewItemHandler(itemService services.ItemService, priceService services.PriceService, logger *zap.SugaredLogger) *ItemHandler {
 	return &ItemHandler{
-		itemService: itemService,
-		logger:      logger,
+		itemService:  itemService,
+		priceService: priceService,
+		logger:       logger,
 	}
 }
 
@@ -86,17 +88,27 @@ func (h *ItemHandler) GetItemByID(c *fiber.Ctx) error {
 		})
 	}
 
-	// Get item with current price
-	item, err := h.itemService.GetItemWithPrice(ctx, itemID)
-	if err != nil {
-		h.logger.Errorf("Failed to get item %d: %v", itemID, err)
+	item, err := h.itemService.GetItemByItemID(ctx, itemID)
+	if err != nil || item == nil {
+		if err != nil {
+			h.logger.Errorf("Failed to get item %d: %v", itemID, err)
+		}
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
 			"error": "item not found",
 		})
 	}
 
+	price, err := h.priceService.GetCurrentPrice(ctx, itemID)
+	if err != nil {
+		// Item exists; if price is missing/unavailable, return the item without a price.
+		h.logger.Warnf("Failed to get current price for item %d: %v", itemID, err)
+		price = nil
+	}
+
+	result := &models.ItemWithCurrentPrice{Item: *item, CurrentPrice: price}
+
 	return c.JSON(fiber.Map{
-		"data": item,
+		"data": result,
 	})
 }
 

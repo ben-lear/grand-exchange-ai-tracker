@@ -113,3 +113,28 @@ func TestPriceHistoryModel(t *testing.T) {
 	assert.Equal(t, int64(900), *history.LowPrice)
 	assert.Equal(t, "price_history", history.TableName())
 }
+
+func TestPriceLatestModel(t *testing.T) {
+	highPrice := int64(1000)
+	lowPrice := int64(900)
+	now := time.Now().UTC().Truncate(time.Minute)
+
+	pl := models.PriceLatest{
+		ItemID:     2,
+		ObservedAt: now,
+		HighPrice:  &highPrice,
+		LowPrice:   &lowPrice,
+		UpdatedAt:  now,
+	}
+
+	assert.Equal(t, 2, pl.ItemID)
+	assert.Equal(t, "price_latest", pl.TableName())
+}
+
+func TestPriceTimeseriesModelTableNames(t *testing.T) {
+	assert.Equal(t, "price_timeseries_5m", models.PriceTimeseries5m{}.TableName())
+	assert.Equal(t, "price_timeseries_1h", models.PriceTimeseries1h{}.TableName())
+	assert.Equal(t, "price_timeseries_6h", models.PriceTimeseries6h{}.TableName())
+	assert.Equal(t, "price_timeseries_24h", models.PriceTimeseries24h{}.TableName())
+	assert.Equal(t, "price_timeseries_daily", models.PriceTimeseriesDaily{}.TableName())
+}

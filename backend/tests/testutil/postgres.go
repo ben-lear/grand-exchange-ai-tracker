@@ -3,11 +3,12 @@ package testutil
 import (
 	"context"
 	"fmt"
-	"sync"
 	"os"
 	"path/filepath"
 	"runtime"
+	"sort"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -173,13 +174,31 @@ func NewPostgresTestDB(t *testing.T) *PostgresTestDB {
 }
 
 func RunMigrations(ctx context.Context, db *gorm.DB) error {
-	migrationPath, err := repoRootRelative("backend", "migrations", "001_init.sql")
+	migrationsDir, err := repoRootRelative("backend", "migrations")
 	if err != nil {
 		return err
 	}
-	contents, err := os.ReadFile(migrationPath)
+
+	entries, err := os.ReadDir(migrationsDir)
 	if err != nil {
-		return fmt.Errorf("read migration %s: %w", migrationPath, err)
+		return fmt.Errorf("read migrations dir %s: %w", migrationsDir, err)
+	}
+
+	var migrationFiles []string
+	for _, entry := range entries {
+		if entry.IsDir() {
+			continue
+		}
+		name := entry.Name()
+		if !strings.HasSuffix(strings.ToLower(name), ".sql") {
+			continue
+		}
+		migrationFiles = append(migrationFiles, filepath.Join(migrationsDir, name))
+	}
+
+	sort.Strings(migrationFiles)
+	if len(migrationFiles) == 0 {
+		return fmt.Errorf("no .sql migrations found in %s", migrationsDir)
 	}
 
 	sqlDB, err := db.DB()
@@ -188,8 +207,14 @@ func RunMigrations(ctx context.Context, db *gorm.DB) error {
 	}
 
 	// Postgres supports multi-statement execution, including $$ blocks.
-	if _, err := sqlDB.ExecContext(ctx, string(contents)); err != nil {
-		return fmt.Errorf("exec migrations: %w", err)
+	for _, migrationPath := range migrationFiles {
+		contents, readErr := os.ReadFile(migrationPath)
+		if readErr != nil {
+			return fmt.Errorf("read migration %s: %w", migrationPath, readErr)
+		}
+		if _, execErr := sqlDB.ExecContext(ctx, string(contents)); execErr != nil {
+			return fmt.Errorf("exec migration %s: %w", filepath.Base(migrationPath), execErr)
+		}
 	}
 	return nil
 }
@@ -197,9 +222,15 @@ func RunMigrations(ctx context.Context, db *gorm.DB) error {
 func TruncateAllTables(t *testing.T, db *gorm.DB) {
 	t.Helper()
 
-	// Truncate parent partitioned table; partitions truncate too.
+	// Truncate parent partitioned tables; partitions truncate too.
 	// Order is irrelevant due to CASCADE.
-	if err := db.Exec("TRUNCATE TABLE price_history, current_prices, items CASCADE").Error; err != nil {
+	if err := db.Exec(
+		"TRUNCATE TABLE " +
+			"price_history, current_prices, " +
+			"price_latest, " +
+			"price_timeseries_5m, price_timeseries_1h, price_timeseries_6h, price_timeseries_24h, price_timeseries_daily, " +
+			"items CASCADE",
+	).Error; err != nil {
 		t.Fatalf("failed to truncate tables: %v", err)
 	}
 }

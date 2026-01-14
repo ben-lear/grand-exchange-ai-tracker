@@ -13,17 +13,19 @@ A full-stack application for tracking and visualizing **Old School RuneScape (OS
 
 ## 📋 Overview
 
-This application polls the official OSRS Grand Exchange API every minute, stores pricing data in PostgreSQL, and presents it through a modern React-based frontend. The main interface is a comprehensive data table displaying all ~15,000 tradeable items with advanced filtering, sorting, and export capabilities.
+This application fetches real-time OSRS Grand Exchange prices from the **OSRS Wiki Real-time Prices API**, stores pricing data in PostgreSQL with high/low price tracking, and presents it through a modern React-based frontend. The system tracks **4,500+ tradeable items** with minute-by-minute price updates.
 
 ### Key Features
 
-- **📊 Real-time Price Tracking** - Polls all OSRS items every 1 minute
+- **📊 Real-time Price Tracking** - Fetches all item prices every 1 minute from OSRS Wiki API
+- **💰 High/Low Price Tracking** - Tracks both high and low prices with timestamps
 - **📈 Interactive Price Charts** - Time-series visualization with Recharts
-- **🔍 Advanced Search & Filtering** - Filter by name, category, price range, volume
-- **📋 Comprehensive Data Table** - View all items with sortable columns
-- **💾 Data Persistence** - Historical data preserved across restarts
-- **⚡ High Performance** - Redis caching for sub-200ms responses
+- **🔍 Advanced Search & Filtering** - Filter by name, category, price range
+- **📋 Comprehensive Data Table** - View all 4,500+ items with sortable columns
+- **💾 Data Persistence** - Historical data preserved in PostgreSQL
+- **⚡ High Performance** - Redis caching for fast API responses
 - **📱 Responsive Design** - Works on desktop and mobile
+- **🔄 Automated Sync** - Scheduled jobs handle data updates automatically
 
 ## 🛠️ Tech Stack
 
@@ -80,7 +82,7 @@ docker-compose logs -f
 ```
 
 The application will be available at:
-- **Frontend**: http://localhost:5173
+- **Frontend**: http://localhost:3000
 - **Backend API**: http://localhost:8080/api/v1
 - **Health Check**: http://localhost:8080/health
 
@@ -119,7 +121,36 @@ cp .env.example .env
 npm run dev
 ```
 
-## 📁 Project Structure
+## � API Endpoints
+
+### Data Source
+
+The backend fetches data from the **OSRS Wiki Real-time Prices API**:
+- **Current Prices**: `GET https://prices.runescape.wiki/api/v1/osrs/latest`
+- **Mapping Data**: `GET https://prices.runescape.wiki/api/v1/osrs/mapping`
+
+### Backend API
+
+#### Health
+- `GET /health` - Service health check with database and cache status
+
+#### Items
+- `GET /api/v1/items` - List all items (paginated)
+  - Query params: `page`, `limit`, `search`, `members`
+- `GET /api/v1/items/:id` - Get single item details
+- `GET /api/v1/items/search` - Search items by name
+
+#### Prices
+- `GET /api/v1/prices/current` - Get all current prices
+  - Query params: `limit` (optional)
+- `GET /api/v1/prices/current/:id` - Get current price for specific item
+
+### Scheduled Jobs
+
+- **Every 1 minute**: Fetch and sync current prices from OSRS Wiki `/latest` endpoint
+- **On Startup**: Initial data load of items and prices
+
+## �📁 Project Structure
 
 ```
 osrs-ge-tracker/
@@ -148,31 +179,6 @@ osrs-ge-tracker/
 │   │   ├── types/                # TypeScript types
 │   │   └── utils/                # Utility functions
 │   └── tests/                    # Test files
-├── docker-compose.yml
-└── README.md
-```
-
-## 🔌 API Endpoints
-
-### Items
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/v1/items` | List all items (paginated) |
-| GET | `/api/v1/items/:id` | Get item by ID |
-| GET | `/api/v1/items/search?q=` | Search items by name |
-
-### Prices
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/v1/prices/current` | Get current prices (all items) |
-| GET | `/api/v1/prices/current/:id` | Get current price for item |
-| GET | `/api/v1/prices/history/:id` | Get historical prices |
-| GET | `/api/v1/prices/batch?ids=` | Get prices for multiple items |
-
-### Query Parameters for History
-- `period`: `24h`, `7d`, `30d`, `90d`, `1y`, `all`
-- `sample`: `true` for sampled data (150 points)
-
 ## ⚙️ Configuration
 
 ### Backend Environment Variables
@@ -180,26 +186,22 @@ osrs-ge-tracker/
 ```env
 # Server
 PORT=8080
-ENV=development
+ENVIRONMENT=development
+CORS_ORIGINS=http://localhost:3000
 
 # Database
 POSTGRES_HOST=localhost
 POSTGRES_PORT=5432
 POSTGRES_USER=osrs_tracker
-POSTGRES_PASSWORD=your_password
+POSTGRES_PASSWORD=changeme
 POSTGRES_DB=osrs_ge_tracker
+POSTGRES_SSL_MODE=disable
 
 # Redis
 REDIS_HOST=localhost
 REDIS_PORT=6379
-
-# OSRS API
-OSRS_BULK_DUMP_URL=https://chisel.weirdgloop.org/gazproj/gazbot/os_dump.json
-OSRS_HISTORY_API_URL=https://api.weirdgloop.org/exchange/history/osrs
-
-# Scheduler
-PRICE_POLL_INTERVAL=@every 1m
-HISTORICAL_SYNC_INTERVAL=@every 1h
+REDIS_PASSWORD=
+REDIS_DB=0
 ```
 
 ### Frontend Environment Variables
@@ -215,8 +217,14 @@ VITE_API_BASE_URL=http://localhost:8080/api/v1
 ```bash
 cd backend
 
-# Standard validation: run BOTH suites
-go test ./... -count=1
+# Run all tests
+go test ./... -v
+
+# Run with coverage
+go test ./... -cover
+
+# Run specific package
+go test ./internal/services/... -v
 go test ./... -tags=slow -count=1
 
 # Coverage (recommended via scripts)

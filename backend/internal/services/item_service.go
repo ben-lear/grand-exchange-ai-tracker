@@ -14,7 +14,7 @@ import (
 // itemService implements ItemService
 type itemService struct {
 	itemRepo   repository.ItemRepository
-	osrsClient OSRSClient
+	wikiClient WikiPricesClient
 	cache      CacheService
 	logger     *zap.SugaredLogger
 }
@@ -61,11 +61,12 @@ func normalizeItemIconURL(itemID int, iconURL string) string {
 func NewItemService(
 	itemRepo repository.ItemRepository,
 	cache CacheService,
+	wikiPricesBaseURL string,
 	logger *zap.SugaredLogger,
 ) ItemService {
 	return &itemService{
 		itemRepo:   itemRepo,
-		osrsClient: NewOSRSClient(logger),
+		wikiClient: NewWikiPricesClient(logger, wikiPricesBaseURL),
 		cache:      cache,
 		logger:     logger,
 	}
@@ -187,86 +188,79 @@ func (s *itemService) BulkUpsertItems(ctx context.Context, items []models.Item) 
 	return nil
 }
 
-// SyncItemFromAPI fetches item details from OSRS API and updates the database
-func (s *itemService) SyncItemFromAPI(ctx context.Context, itemID int) (*models.Item, error) {
-	s.logger.Infow("Syncing item from OSRS API", "itemID", itemID)
+// SyncItemsFromMapping fetches the OSRS Wiki /mapping list and syncs all items to the database.
+func (s *itemService) SyncItemsFromMapping(ctx context.Context) error {
+	s.logger.Info("Starting items sync from OSRS Wiki mapping")
 
-	// Fetch item detail from API
-	detail, err := s.osrsClient.FetchItemDetail(itemID)
+	mappingItems, err := s.wikiClient.FetchMapping(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch item detail: %w", err)
+		return fmt.Errorf("fetch wiki mapping: %w", err)
 	}
 
-	// Convert to Item model
-	members := detail.Members == "true"
-	item := &models.Item{
-		ItemID:  detail.ID,
-		Name:    detail.Name,
-		IconURL: normalizeItemIconURL(detail.ID, detail.Icon),
-		Members: members,
-	}
+	s.logger.Infow("Fetched wiki mapping", "itemCount", len(mappingItems))
 
-	// Upsert to database
-	if err := s.UpsertItem(ctx, item); err != nil {
-		return nil, fmt.Errorf("failed to upsert item: %w", err)
-	}
-
-	s.logger.Infow("Successfully synced item from API", "itemID", itemID, "name", item.Name)
-	return item, nil
-}
-
-// SyncItemsFromBulkDump fetches the bulk dump and syncs all items to the database
-func (s *itemService) SyncItemsFromBulkDump(ctx context.Context) error {
-	s.logger.Info("Starting bulk sync of items from OSRS API")
-
-	// Fetch bulk dump
-	bulkData, err := s.osrsClient.FetchBulkDump()
-	if err != nil {
-		return fmt.Errorf("failed to fetch bulk dump: %w", err)
-	}
-
-	s.logger.Infow("Fetched bulk dump", "itemCount", len(bulkData))
-
-	// Convert to Item models
-	items := make([]models.Item, 0, len(bulkData))
-	for _, bulkItem := range bulkData {
-		members := false
-		if bulkItem.Members != nil {
-			members = *bulkItem.Members
+	items := make([]models.Item, 0, len(mappingItems))
+	for _, m := range mappingItems {
+		if m.ID <= 0 {
+			continue
+		}
+		name := strings.TrimSpace(m.Name)
+		if name == "" {
+			continue
 		}
 
-		// Convert int64 pointers to int pointers
-		var buyLimit, lowAlch, highAlch *int
-		if bulkItem.Limit != nil {
-			limit := int(*bulkItem.Limit)
+		var buyLimit *int
+		if m.Limit > 0 {
+			limit := m.Limit
 			buyLimit = &limit
 		}
-		if bulkItem.LowAlch != nil {
-			low := int(*bulkItem.LowAlch)
-			lowAlch = &low
-		}
-		if bulkItem.HighAlch != nil {
-			high := int(*bulkItem.HighAlch)
-			highAlch = &high
+
+		var lowAlch *int
+		if m.LowAlch > 0 {
+			v := int(m.LowAlch)
+			lowAlch = &v
 		}
 
-		item := models.Item{
-			ItemID:   bulkItem.ItemID,
-			Name:     bulkItem.Name,
-			IconURL:  normalizeItemIconURL(bulkItem.ItemID, bulkItem.Icon),
-			Members:  members,
+		var highAlch *int
+		if m.HighAlch > 0 {
+			v := int(m.HighAlch)
+			highAlch = &v
+		}
+
+		var examine *string
+		if ex := strings.TrimSpace(m.Examine); ex != "" {
+			examine = &ex
+		}
+
+		var value *int
+		if m.Value > 0 {
+			v := int(m.Value)
+			value = &v
+		}
+
+		var iconName *string
+		if icon := strings.TrimSpace(m.Icon); icon != "" {
+			iconName = &icon
+		}
+
+		items = append(items, models.Item{
+			ItemID:   m.ID,
+			Name:     name,
+			IconURL:  normalizeItemIconURL(m.ID, m.Icon),
+			Members:  m.Members,
 			BuyLimit: buyLimit,
 			LowAlch:  lowAlch,
 			HighAlch: highAlch,
-		}
-		items = append(items, item)
+			Examine:  examine,
+			Value:    value,
+			IconName: iconName,
+		})
 	}
 
-	// Bulk upsert to database
 	if err := s.BulkUpsertItems(ctx, items); err != nil {
-		return fmt.Errorf("failed to bulk upsert items: %w", err)
+		return fmt.Errorf("bulk upsert wiki mapping items: %w", err)
 	}
 
-	s.logger.Infow("Successfully synced items from bulk dump", "itemCount", len(items))
+	s.logger.Infow("Successfully synced items from wiki mapping", "itemCount", len(items))
 	return nil
 }
