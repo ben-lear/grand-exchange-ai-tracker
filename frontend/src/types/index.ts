@@ -37,6 +37,7 @@ export interface PriceTrend {
 }
 
 export interface ItemDetail extends Item {
+  trend?: PriceTrend;
   price_trend?: PriceTrend;
   price_history?: PriceHistory[];
 }
@@ -63,4 +64,74 @@ export interface OSRSAPIItemResponse {
 export interface OSRSAPIGraphResponse {
   daily: Record<string, number>;
   average: Record<string, number>;
+}
+
+// ===== API Response Types =====
+export interface APIResponse<T> {
+  data: T;
+  status: 'success' | 'error';
+  message?: string;
+  timestamp: string;
+}
+
+export interface PaginatedResponse<T> {
+  data: T[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    total_pages: number;
+  };
+}
+
+export interface PriceGraphData {
+  timestamps: number[];
+  prices: number[];
+  averages?: number[];
+}
+
+export interface TrendingItem {
+  item: Item;
+  trend: PriceTrend;
+  volume_change: number;
+  price_change_percent: number;
+}
+
+export interface BiggestMover {
+  item: Item;
+  trend: PriceTrend;
+  price_change: number;
+  price_change_percent: number;
+}
+
+export interface StatsResponse {
+  total_items: number;
+  total_tracked: number;
+  last_update: string;
+}
+
+// ===== Filter & Search Types =====
+export interface ItemFilters {
+  search: string;
+  type: string;
+  members: boolean | null;
+  sortBy: 'name' | 'price' | 'item_id';
+  sortOrder: 'asc' | 'desc';
+}
+
+export type TimeRange = '7d' | '30d' | '90d' | '180d';
+
+export type TrendDirection = 'positive' | 'negative' | 'neutral';
+
+// ===== UI State Types =====
+export interface AppSettings {
+  theme: 'dark' | 'light';
+  chartType: 'line' | 'area';
+  showVolume: boolean;
+  refreshInterval: number;
+}
+
+export interface WatchlistItem {
+  itemId: number;
+  addedAt: string;
 }

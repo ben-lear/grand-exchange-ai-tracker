@@ -37,18 +37,18 @@ func NewJobs(
 // SyncItemCatalog fetches all items from OSRS API and syncs to database
 func (j *Jobs) SyncItemCatalog(ctx context.Context) error {
 	logger.Info("starting item catalog sync")
-	
+
 	totalItems := 0
 	letters := "abcdefghijklmnopqrstuvwxyz"
-	
+
 	for _, letter := range letters {
 		if ctx.Err() != nil {
 			return ctx.Err()
 		}
-		
+
 		letterStr := string(letter)
 		page := 1
-		
+
 		for {
 			// Fetch items for this letter and page
 			itemsList, err := j.osrsClient.FetchItemsList(ctx, 1, letterStr, page)
@@ -59,12 +59,12 @@ func (j *Jobs) SyncItemCatalog(ctx context.Context) error {
 					"error", err)
 				break // Move to next letter
 			}
-			
+
 			// If no items, we're done with this letter
 			if len(itemsList.Items) == 0 {
 				break
 			}
-			
+
 			// Save items to database
 			for _, apiItem := range itemsList.Items {
 				item := &models.Item{
@@ -76,7 +76,7 @@ func (j *Jobs) SyncItemCatalog(ctx context.Context) error {
 					Type:         apiItem.Type,
 					Members:      apiItem.Members == "true",
 				}
-				
+
 				// Check if item already exists
 				existing, err := j.itemRepo.GetByItemID(ctx, item.ItemID)
 				if err == nil && existing != nil {
@@ -97,31 +97,31 @@ func (j *Jobs) SyncItemCatalog(ctx context.Context) error {
 							"error", err)
 					}
 				}
-				
+
 				totalItems++
 			}
-			
+
 			logger.Info("synced items page",
 				"letter", letterStr,
 				"page", page,
 				"items", len(itemsList.Items),
 				"total_so_far", totalItems)
-			
+
 			// Check if there are more pages
 			if page >= itemsList.Total {
 				break
 			}
-			
+
 			page++
-			
+
 			// Rate limiting - small delay between pages
 			time.Sleep(100 * time.Millisecond)
 		}
-		
+
 		// Delay between letters
 		time.Sleep(200 * time.Millisecond)
 	}
-	
+
 	logger.Info("item catalog sync completed", "total_items", totalItems)
 	return nil
 }
@@ -129,24 +129,24 @@ func (j *Jobs) SyncItemCatalog(ctx context.Context) error {
 // UpdateItemDetails fetches detailed information for items
 func (j *Jobs) UpdateItemDetails(ctx context.Context) error {
 	logger.Info("starting item details update")
-	
+
 	// Get all items from database
 	items, err := j.itemRepo.List(ctx, 1000, 0, "", nil, "id", "asc")
 	if err != nil {
 		return fmt.Errorf("failed to list items: %w", err)
 	}
-	
+
 	if len(items) == 0 {
 		logger.Info("no items to update")
 		return nil
 	}
-	
+
 	updated := 0
 	for _, item := range items {
 		if ctx.Err() != nil {
 			return ctx.Err()
 		}
-		
+
 		// Fetch item detail from OSRS API
 		detail, err := j.osrsClient.FetchItemDetail(ctx, item.ItemID)
 		if err != nil {
@@ -156,19 +156,19 @@ func (j *Jobs) UpdateItemDetails(ctx context.Context) error {
 				"error", err)
 			continue
 		}
-		
+
 		// Update item with detailed info
 		item.Description = detail.Description
 		item.Type = detail.Type
 		item.Members = detail.Members == "true"
-		
+
 		if err := j.itemRepo.Update(ctx, &item); err != nil {
 			logger.Error("failed to update item details",
 				"item_id", item.ItemID,
 				"error", err)
 			continue
 		}
-		
+
 		// Also update price trend
 		currentPrice := services.ParsePrice(detail.Current.Price)
 		trend := &models.PriceTrend{
@@ -183,15 +183,15 @@ func (j *Jobs) UpdateItemDetails(ctx context.Context) error {
 			Day180Trend:  detail.Day180.Trend,
 			UpdatedAt:    time.Now(),
 		}
-		
+
 		if err := j.priceTrendRepo.Upsert(ctx, trend); err != nil {
 			logger.Error("failed to upsert price trend",
 				"item_id", item.ItemID,
 				"error", err)
 		}
-		
+
 		updated++
-		
+
 		// Rate limiting
 		if updated%10 == 0 {
 			logger.Info("item details update progress",
@@ -202,7 +202,7 @@ func (j *Jobs) UpdateItemDetails(ctx context.Context) error {
 			time.Sleep(100 * time.Millisecond)
 		}
 	}
-	
+
 	logger.Info("item details update completed",
 		"updated", updated,
 		"total", len(items))
@@ -212,24 +212,24 @@ func (j *Jobs) UpdateItemDetails(ctx context.Context) error {
 // CollectPriceData fetches price history for items
 func (j *Jobs) CollectPriceData(ctx context.Context) error {
 	logger.Info("starting price data collection")
-	
+
 	// Get all items
 	items, err := j.itemRepo.List(ctx, 1000, 0, "", nil, "id", "asc")
 	if err != nil {
 		return fmt.Errorf("failed to list items: %w", err)
 	}
-	
+
 	if len(items) == 0 {
 		logger.Info("no items to collect prices for")
 		return nil
 	}
-	
+
 	collected := 0
 	for _, item := range items {
 		if ctx.Err() != nil {
 			return ctx.Err()
 		}
-		
+
 		// Fetch price graph from OSRS API
 		priceGraph, err := j.osrsClient.FetchPriceGraph(ctx, item.ItemID)
 		if err != nil {
@@ -239,7 +239,7 @@ func (j *Jobs) CollectPriceData(ctx context.Context) error {
 				"error", err)
 			continue
 		}
-		
+
 		// Convert daily prices to price history entries
 		var priceHistories []*models.PriceHistory
 		for timestampStr, price := range priceGraph.Daily {
@@ -250,7 +250,7 @@ func (j *Jobs) CollectPriceData(ctx context.Context) error {
 					"error", err)
 				continue
 			}
-			
+
 			priceHistories = append(priceHistories, &models.PriceHistory{
 				ItemID:    item.ID,
 				Timestamp: timestamp,
@@ -258,7 +258,7 @@ func (j *Jobs) CollectPriceData(ctx context.Context) error {
 				Volume:    0, // OSRS API doesn't provide volume in graph
 			})
 		}
-		
+
 		// Batch insert price histories
 		if len(priceHistories) > 0 {
 			if err := j.priceHistoryRepo.BatchCreate(ctx, priceHistories); err != nil {
@@ -270,7 +270,7 @@ func (j *Jobs) CollectPriceData(ctx context.Context) error {
 				collected++
 			}
 		}
-		
+
 		// Rate limiting
 		if collected%5 == 0 {
 			logger.Info("price data collection progress",
@@ -281,7 +281,7 @@ func (j *Jobs) CollectPriceData(ctx context.Context) error {
 			time.Sleep(200 * time.Millisecond)
 		}
 	}
-	
+
 	logger.Info("price data collection completed",
 		"collected", collected,
 		"total", len(items))
@@ -291,36 +291,36 @@ func (j *Jobs) CollectPriceData(ctx context.Context) error {
 // CalculateTrends calculates price trends based on historical data
 func (j *Jobs) CalculateTrends(ctx context.Context) error {
 	logger.Info("starting trend calculation")
-	
+
 	// Get all items
 	items, err := j.itemRepo.List(ctx, 1000, 0, "", nil, "id", "asc")
 	if err != nil {
 		return fmt.Errorf("failed to list items: %w", err)
 	}
-	
+
 	if len(items) == 0 {
 		logger.Info("no items to calculate trends for")
 		return nil
 	}
-	
+
 	calculated := 0
 	now := time.Now().Unix()
-	
+
 	for _, item := range items {
 		if ctx.Err() != nil {
 			return ctx.Err()
 		}
-		
+
 		// Get latest price
 		latest, err := j.priceHistoryRepo.GetLatest(ctx, item.ID)
 		if err != nil {
 			continue
 		}
-		
+
 		// Get price from 1 day ago
 		oneDayAgo := now - (24 * 60 * 60)
 		dayAgoHistory, _ := j.priceHistoryRepo.GetByItemID(ctx, item.ID, oneDayAgo, now, 1)
-		
+
 		var todayChange int
 		var todayTrend string
 		if len(dayAgoHistory) > 0 && dayAgoHistory[0].Price > 0 {
@@ -333,7 +333,7 @@ func (j *Jobs) CalculateTrends(ctx context.Context) error {
 				todayTrend = "neutral"
 			}
 		}
-		
+
 		// Update or create trend
 		trend := &models.PriceTrend{
 			ItemID:           item.ID,
@@ -343,7 +343,7 @@ func (j *Jobs) CalculateTrends(ctx context.Context) error {
 			TodayTrend:       todayTrend,
 			UpdatedAt:        time.Now(),
 		}
-		
+
 		if err := j.priceTrendRepo.Upsert(ctx, trend); err != nil {
 			logger.Error("failed to upsert trend",
 				"item_id", item.ItemID,
@@ -352,7 +352,7 @@ func (j *Jobs) CalculateTrends(ctx context.Context) error {
 			calculated++
 		}
 	}
-	
+
 	logger.Info("trend calculation completed",
 		"calculated", calculated,
 		"total", len(items))
@@ -362,14 +362,14 @@ func (j *Jobs) CalculateTrends(ctx context.Context) error {
 // CleanupOldData removes price history older than 180 days
 func (j *Jobs) CleanupOldData(ctx context.Context) error {
 	logger.Info("starting old data cleanup")
-	
+
 	// Calculate timestamp for 180 days ago
 	cutoffTime := time.Now().AddDate(0, 0, -180).Unix()
-	
+
 	if err := j.priceHistoryRepo.DeleteOlderThan(ctx, cutoffTime); err != nil {
 		return fmt.Errorf("failed to cleanup old data: %w", err)
 	}
-	
+
 	logger.Info("old data cleanup completed", "cutoff_days", 180)
 	return nil
 }

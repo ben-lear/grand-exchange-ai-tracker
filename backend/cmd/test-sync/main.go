@@ -163,7 +163,7 @@ func updateLimitedDetails(ctx context.Context, client *services.OSRSAPIClient, i
 			CurrentTrend: detail.Current.Trend,
 			UpdatedAt:    time.Now(),
 		}
-		
+
 		// Set trend data if available
 		if detail.Day30 != nil {
 			trend.Day30Change = detail.Day30.Change

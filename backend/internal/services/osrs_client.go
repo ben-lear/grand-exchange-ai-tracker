@@ -106,7 +106,7 @@ func (c *OSRSAPIClient) FetchItemsList(ctx context.Context, category int, letter
 	logger.Info("fetching items list from API", "category", category, "letter", letter, "page", page)
 
 	var response OSRSItemResponse
-	
+
 	resp, err := c.client.R().
 		SetContext(ctx).
 		SetQueryParams(map[string]string{
@@ -133,7 +133,7 @@ func (c *OSRSAPIClient) FetchItemsList(ctx context.Context, category int, letter
 	} else {
 		logger.Debug("API response body", "body", bodyStr)
 	}
-	
+
 	// Try manual parsing if SetResult didn't work
 	if len(response.Items) == 0 {
 		logger.Debug("SetResult gave empty items, trying manual JSON unmarshal")

@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import { Toaster } from 'sonner'
+import { ItemsListPage } from './pages'
 
 function App() {
   return (
@@ -17,16 +18,18 @@ function App() {
 
         <main className="container mx-auto px-4 py-8">
           <Routes>
-            <Route path="/" element={
-              <div className="text-center">
-                <h2 className="text-3xl font-bold mb-4">Welcome</h2>
-                <p className="text-gray-400">
-                  Frontend skeleton is ready. Start building!
-                </p>
-              </div>
-            } />
+            <Route path="/" element={<ItemsListPage />} />
+            <Route path="/items" element={<ItemsListPage />} />
           </Routes>
         </main>
+
+        <footer className="bg-gray-800 border-t border-gray-700 mt-12">
+          <div className="container mx-auto px-4 py-6">
+            <p className="text-center text-gray-400 text-sm">
+              OSRS Grand Exchange Tracker • Phase 4 - Frontend Foundation Complete
+            </p>
+          </div>
+        </footer>
       </div>
     </Router>
   )
