@@ -1,14 +1,16 @@
-# Phase 1 Complete - Next Steps
+# Phase 2 Complete - Next Steps
 
 ## ✅ What's Done
 
-Phase 1 (Project Setup & Infrastructure) is **100% complete**:
-- Backend Go project initialized with Fiber, GORM, Redis
-- Frontend React project initialized with TypeScript, Vite, TanStack
-- Docker configuration for all services
-- Database schema with partitioning
-- Configuration management
-- All dependencies installed
+**Phase 1** (Project Setup & Infrastructure) - **100% complete**
+**Phase 2** (Backend Core Development) - **100% complete**:
+- ✅ GORM models for Items and Prices with full validation
+- ✅ Repository layer with comprehensive CRUD operations
+- ✅ OSRS API client with retry logic and rate limiting
+- ✅ Service layer with business logic and caching
+- ✅ Structured logging with Zap
+- ✅ Unit tests for models
+- ✅ All code compiles and builds successfully
 
 ## 🚀 Quick Start
 
@@ -42,62 +44,78 @@ npm run dev
 ./start.ps1
 ```
 
-## 📋 What's Next: Phase 2
+## 📋 What's Next: Phase 3
 
-**Phase 2: Backend Core Development** (Days 5-10 in the plan)
+**Phase 3: Backend API & Scheduler** (Days 11-14 in the plan)
 
 ### Priority Tasks:
-1. **Create GORM Models** (`backend/internal/models/`)
-   - [ ] `item.go` - Item model with validation tags
-   - [ ] `price.go` - Current price and historical price models
-   - [ ] `types.go` - Common types and enums
 
-2. **Implement Repositories** (`backend/internal/repository/`)
-   - [ ] `item_repository.go` - Item CRUD operations
-   - [ ] `price_repository.go` - Price queries with time ranges
-   - [ ] Interface definitions for testability
+1. **HTTP Handlers** (`backend/internal/handlers/`)
+   - [ ] `item_handler.go` - Item endpoints (list, get, search)
+   - [ ] `price_handler.go` - Price endpoints (current, history)
+   - [ ] `health_handler.go` - Health check endpoint
+   - [ ] Request validation and error handling
 
-3. **Build OSRS API Client** (`backend/internal/services/`)
-   - [ ] `osrs_client.go` - HTTP client for OSRS APIs
-   - [ ] Bulk dump endpoint integration
-   - [ ] Historical data endpoint integration
-   - [ ] Rate limiting and retry logic
+2. **Middleware** (`backend/internal/middleware/`)
+   - [ ] `cors.go` - CORS configuration for frontend
+   - [ ] `logger.go` - Request/response logging
+   - [ ] `rate_limit.go` - Rate limiting per IP
+   - [ ] `error_handler.go` - Standardized error responses
 
-4. **Write Tests** (`backend/tests/unit/`)
-   - [ ] Repository tests with mock DB
-   - [ ] Service tests with mock HTTP
-   - [ ] Aim for 80%+ coverage
+3. **Scheduler Jobs** (`backend/internal/scheduler/`)
+   - [ ] `jobs.go` - Job definitions
+   - [ ] Job 1: Sync bulk prices every 1 minute
+   - [ ] Job 2: Sync historical data every 1 hour (top items)
+   - [ ] Job 3: Full historical sync every 24 hours
 
-### Files to Create in Phase 2:
+4. **API Integration** (`backend/cmd/api/main.go`)
+   - [ ] Wire up all handlers with routes
+   - [ ] Initialize services and repositories
+   - [ ] Start scheduler
+   - [ ] Test all endpoints
+
+### Files to Create in Phase 3:
 
 ```
-backend/internal/models/
-  ├── item.go          # Item struct with GORM tags
-  ├── price.go         # CurrentPrice and PriceHistory structs
-  └── types.go         # Enums and constants
+backend/internal/handlers/
+  ├── item_handler.go       # GET /api/v1/items/*
+  ├── price_handler.go      # GET /api/v1/prices/*
+  └── health_handler.go     # GET /health
 
-backend/internal/repository/
-  ├── interfaces.go    # Repository interfaces
-  ├── item_repo.go     # Item CRUD implementation
-  └── price_repo.go    # Price CRUD implementation
+backend/internal/middleware/
+  ├── cors.go              # CORS middleware
+  ├── logger.go            # Request logger
+  ├── rate_limit.go        # Rate limiter
+  └── error_handler.go     # Error handling
 
-backend/internal/services/
-  ├── osrs_client.go   # OSRS API client
-  └── interfaces.go    # Service interfaces
-
-backend/tests/unit/
-  ├── repository_test.go
-  └── services_test.go
+backend/internal/scheduler/
+  └── jobs.go              # Cron job definitions
 ```
 
-## 🎯 Phase 2 Goals
+## 🎯 Phase 3 Goals
 
-By end of Phase 2, you should have:
-- ✅ All database models defined
-- ✅ Repository layer with CRUD operations
-- ✅ OSRS API client that can fetch bulk price data
-- ✅ Unit tests for repositories and services
-- ✅ Ability to fetch and store price data in PostgreSQL
+By end of Phase 3, you should have:
+- ✅ Complete REST API for items and prices
+- ✅ All middleware configured and tested
+- ✅ Scheduler automatically syncing data from OSRS
+- ✅ Health check endpoint
+- ✅ Fully functional backend ready for frontend integration
+
+### API Endpoints to Implement:
+
+**Items:**
+- `GET /api/v1/items` - List all items (paginated)
+- `GET /api/v1/items/:id` - Get item by ID
+- `GET /api/v1/items/search?q=` - Search items by name
+
+**Prices:**
+- `GET /api/v1/prices/current` - Get all current prices
+- `GET /api/v1/prices/current/:id` - Get current price for item
+- `GET /api/v1/prices/history/:id` - Get price history
+  - Query params: `?period=24h|7d|30d|90d|1y|all&sample=true`
+
+**Health:**
+- `GET /health` - Health check (database, redis status)
 
 ## 📚 Resources
 
