@@ -1,5 +1,15 @@
 # GitHub Copilot Instructions for OSRS Grand Exchange Tracker
 
+## 🚨 CRITICAL RULES
+
+### Git Operations
+**NEVER commit or push code without explicit user permission.**
+- Do NOT run `git commit` on your own
+- Do NOT run `git push` on your own
+- ALWAYS wait for the user to say "commit and push" or "push the changes" or similar explicit permission
+- You MAY stage files with `git add` when preparing changes
+- You MAY show `git status` and `git diff` to preview changes
+
 ## Project Overview
 
 This is a full-stack application for tracking and visualizing **Old School RuneScape (OSRS)** Grand Exchange item prices and trends. The backend fetches data from the OSRS API, stores it in PostgreSQL, and serves it via REST API. The frontend displays interactive price charts and item information.

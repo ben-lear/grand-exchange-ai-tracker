@@ -13,6 +13,7 @@ import (
 type Scheduler struct {
 	cron    *cron.Cron
 	jobs    map[string]cron.EntryID
+	runningJobs map[string]bool
 	mu      sync.RWMutex
 	running bool
 }
@@ -25,6 +26,7 @@ func New() *Scheduler {
 	return &Scheduler{
 		cron: cron.New(cron.WithSeconds()),
 		jobs: make(map[string]cron.EntryID),
+		runningJobs: make(map[string]bool),
 	}
 }
 
@@ -34,6 +36,22 @@ func (s *Scheduler) AddJob(name, schedule string, fn JobFunc) error {
 	defer s.mu.Unlock()
 
 	entryID, err := s.cron.AddFunc(schedule, func() {
+		// Prevent overlapping runs of the same job
+		s.mu.Lock()
+		if s.runningJobs[name] {
+			s.mu.Unlock()
+			logger.Warn("scheduled job already running, skipping", "job", name)
+			return
+		}
+		s.runningJobs[name] = true
+		s.mu.Unlock()
+
+		defer func() {
+			s.mu.Lock()
+			s.runningJobs[name] = false
+			s.mu.Unlock()
+		}()
+
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 		defer cancel()
 

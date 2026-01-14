@@ -3,22 +3,15 @@ package api
 import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/guavi/grand-exchange-ai-tracker/internal/api/handlers"
-	"github.com/guavi/grand-exchange-ai-tracker/internal/repository"
-	"github.com/guavi/grand-exchange-ai-tracker/internal/services"
 )
 
 // SetupRoutes configures all API routes
-func SetupRoutes(app *fiber.App, osrsClient *services.OSRSAPIClient) {
-	// Initialize repositories
-	itemRepo := repository.NewItemRepository(repository.DB)
-	priceHistoryRepo := repository.NewPriceHistoryRepository(repository.DB)
-	priceTrendRepo := repository.NewPriceTrendRepository(repository.DB)
-
-	// Initialize handlers
-	itemHandler := handlers.NewItemHandler(itemRepo, priceHistoryRepo, priceTrendRepo, osrsClient)
-	priceHandler := handlers.NewPriceHandler(priceHistoryRepo, priceTrendRepo, itemRepo)
-	healthHandler := handlers.NewHealthHandler(repository.DB, repository.RedisClient)
-
+func SetupRoutes(
+	app *fiber.App,
+	itemHandler *handlers.ItemHandler,
+	priceHandler *handlers.PriceHandler,
+	healthHandler *handlers.HealthHandler,
+) {
 	// API v1 routes
 	api := app.Group("/api")
 	v1 := api.Group("/v1")

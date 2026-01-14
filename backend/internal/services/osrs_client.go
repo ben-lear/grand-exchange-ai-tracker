@@ -136,9 +136,15 @@ func (c *OSRSAPIClient) FetchItemsList(ctx context.Context, category int, letter
 
 	// Try manual parsing if SetResult didn't work
 	if len(response.Items) == 0 {
+		// If body is empty, it's a valid case for letters with no items.
+		if len(resp.Body()) == 0 || string(resp.Body()) == "" || string(resp.Body()) == "{}" {
+			logger.Debug("API returned empty body, likely no items for this letter/page", "letter", letter, "page", page)
+			return &OSRSItemResponse{Items: []OSRSItemDetail{}}, nil
+		}
+
 		logger.Debug("SetResult gave empty items, trying manual JSON unmarshal")
 		if err := json.Unmarshal(resp.Body(), &response); err != nil {
-			logger.Error("manual JSON unmarshal failed", "error", err)
+			logger.Error("manual JSON unmarshal failed", "error", err, "body", string(resp.Body()))
 			return nil, fmt.Errorf("failed to parse response: %w", err)
 		}
 	}
@@ -226,6 +232,11 @@ func (c *OSRSAPIClient) FetchPriceGraph(ctx context.Context, itemID int) (*OSRSG
 
 	if resp.StatusCode() != 200 {
 		return nil, fmt.Errorf("API returned status %d", resp.StatusCode())
+	}
+
+	// If the graph is empty, log debug to help diagnostics
+	if len(response.Daily) == 0 && len(response.Average) == 0 {
+		logger.Debug("price graph empty for item", "itemId", itemID)
 	}
 
 	// Cache the response

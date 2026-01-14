@@ -9,10 +9,8 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-var RedisClient *redis.Client
-
 // InitRedis initializes the Redis connection
-func InitRedis(cfg *config.RedisConfig) error {
+func InitRedis(cfg *config.RedisConfig) (*redis.Client, error) {
 	logger.Info("connecting to redis", "host", cfg.Host, "port", cfg.Port)
 
 	client := redis.NewClient(&redis.Options{
@@ -24,19 +22,17 @@ func InitRedis(cfg *config.RedisConfig) error {
 	// Test connection
 	ctx := context.Background()
 	if err := client.Ping(ctx).Err(); err != nil {
-		return fmt.Errorf("failed to connect to redis: %w", err)
+		return nil, fmt.Errorf("failed to connect to redis: %w", err)
 	}
 
 	logger.Info("redis connection established successfully")
-
-	RedisClient = client
-	return nil
+	return client, nil
 }
 
 // CloseRedis closes the Redis connection
-func CloseRedis() error {
-	if RedisClient != nil {
-		return RedisClient.Close()
+func CloseRedis(client *redis.Client) error {
+	if client == nil {
+		return nil
 	}
-	return nil
+	return client.Close()
 }

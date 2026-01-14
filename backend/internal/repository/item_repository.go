@@ -33,6 +33,10 @@ func (r *itemRepository) GetByItemID(ctx context.Context, itemID int) (*models.I
 	var item models.Item
 	err := r.db.WithContext(ctx).Where("item_id = ?", itemID).First(&item).Error
 	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			// Not finding an item is expected during initial sync; return nil without error
+			return nil, nil
+		}
 		return nil, err
 	}
 	return &item, nil

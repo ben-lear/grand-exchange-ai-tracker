@@ -28,24 +28,34 @@ func main() {
 	logger.Info("Starting OSRS Data Sync Test")
 
 	// Initialize database connection
-	if err := repository.InitDatabase(&cfg.Database); err != nil {
+	db, err := repository.InitDatabase(&cfg.Database)
+	if err != nil {
 		logger.Fatal("Failed to initialize database", "error", err)
 	}
-	defer repository.CloseDatabase()
+	defer func() {
+		if err := repository.CloseDatabase(db); err != nil {
+			logger.Error("failed to close database", "error", err)
+		}
+	}()
 
 	// Initialize Redis connection
-	if err := repository.InitRedis(&cfg.Redis); err != nil {
+	redisClient, err := repository.InitRedis(&cfg.Redis)
+	if err != nil {
 		logger.Fatal("Failed to initialize Redis", "error", err)
 	}
-	defer repository.CloseRedis()
+	defer func() {
+		if err := repository.CloseRedis(redisClient); err != nil {
+			logger.Error("failed to close redis", "error", err)
+		}
+	}()
 
 	// Initialize OSRS API client
-	osrsClient := services.NewOSRSAPIClient(&cfg.OSRSAPI, repository.RedisClient)
+	osrsClient := services.NewOSRSAPIClient(&cfg.OSRSAPI, redisClient)
 
 	// Initialize repositories
-	itemRepo := repository.NewItemRepository(repository.DB)
-	priceHistoryRepo := repository.NewPriceHistoryRepository(repository.DB)
-	priceTrendRepo := repository.NewPriceTrendRepository(repository.DB)
+	itemRepo := repository.NewItemRepository(db)
+	priceHistoryRepo := repository.NewPriceHistoryRepository(db)
+	priceTrendRepo := repository.NewPriceTrendRepository(db)
 
 	// Create jobs instance
 	jobs := scheduler.NewJobs(osrsClient, itemRepo, priceHistoryRepo, priceTrendRepo)

@@ -36,6 +36,12 @@ export const Header = () => {
             >
               Watchlist
             </Link>
+            <Link 
+              to="/about" 
+              className="text-gray-300 hover:text-osrs-gold transition-colors"
+            >
+              About
+            </Link>
           </nav>
 
           {/* Mobile menu button */}
