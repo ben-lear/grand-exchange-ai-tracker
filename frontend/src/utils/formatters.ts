@@ -33,6 +33,11 @@ export const formatGP = (value: number, decimals: number = 1): string => {
 };
 
 /**
+ * Alias for formatGP to maintain compatibility
+ */
+export const formatGold = formatGP;
+
+/**
  * Format a number with thousand separators
  * @param value - The number to format
  * @returns Formatted string with commas

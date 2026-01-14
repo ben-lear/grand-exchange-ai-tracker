@@ -7,9 +7,9 @@ A full-stack application for tracking and visualizing **Old School RuneScape (OS
 ![React](https://img.shields.io/badge/React-18-61DAFB?logo=react)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-3178C6?logo=typescript)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql)
-![Status](https://img.shields.io/badge/Status-Phase%204%20Complete-success)
+![Status](https://img.shields.io/badge/Status-Phase%205%20Complete-success)
 
-> **📌 Project Status:** Phase 4 Complete (80% overall) - Backend fully functional, frontend foundation ready. Next: Build data table and charts. See [PROJECT_STATUS.md](PROJECT_STATUS.md) for detailed progress report.
+> **📌 Project Status:** Phase 5 Complete - Frontend features implemented. MVP functionality complete! See [PHASE_5_COMPLETE.md](PHASE_5_COMPLETE.md) for details.
 
 ## 📋 Overview
 

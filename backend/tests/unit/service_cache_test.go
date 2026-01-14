@@ -106,8 +106,8 @@ type fakeItemRepo struct {
 	bulkUpsertCalls int
 	bulkUpsertErr   error
 
-	countAll          int64
-	countMembersTrue  int64
+	countAll         int64
+	countMembersTrue int64
 	countMembersFalse int64
 }
 
@@ -192,9 +192,7 @@ func (r *fakePriceRepo) GetHistory(_ context.Context, _ models.PriceHistoryParam
 
 func (r *fakePriceRepo) InsertHistory(_ context.Context, _ *models.PriceHistory) error { return nil }
 
-func (r *fakePriceRepo) BulkInsertHistory(_ context.Context, _ []models.BulkHistoryInsert) error {
-	return nil
-}
+func (r *fakePriceRepo) BulkInsertHistory(_ context.Context, _ []models.BulkHistoryInsert) error { return nil }
 
 func (r *fakePriceRepo) GetLatestHistoryTimestamp(_ context.Context, _ int) (*models.PriceHistory, error) {
 	return nil, nil

@@ -24,18 +24,12 @@ import (
 
 type stubOSRSClient struct{}
 
-func (s stubOSRSClient) FetchBulkDump() (map[int]models.BulkDumpItem, error) {
-	return map[int]models.BulkDumpItem{}, nil
-}
-func (s stubOSRSClient) FetchLatestPrices(itemIDs []int) (map[int]models.HistoricalDataPoint, error) {
-	return map[int]models.HistoricalDataPoint{}, nil
-}
+func (s stubOSRSClient) FetchBulkDump() (map[int]models.BulkDumpItem, error)                         { return map[int]models.BulkDumpItem{}, nil }
+func (s stubOSRSClient) FetchLatestPrices(itemIDs []int) (map[int]models.HistoricalDataPoint, error) { return map[int]models.HistoricalDataPoint{}, nil }
 func (s stubOSRSClient) FetchHistoricalData(itemID int, period string) ([]models.HistoricalDataPoint, error) {
 	return []models.HistoricalDataPoint{}, nil
 }
-func (s stubOSRSClient) FetchSampleData(itemID int) ([]models.HistoricalDataPoint, error) {
-	return []models.HistoricalDataPoint{}, nil
-}
+func (s stubOSRSClient) FetchSampleData(itemID int) ([]models.HistoricalDataPoint, error)     { return []models.HistoricalDataPoint{}, nil }
 func (s stubOSRSClient) FetchAllHistoricalData(itemID int) ([]models.HistoricalDataPoint, error) {
 	return []models.HistoricalDataPoint{}, nil
 }

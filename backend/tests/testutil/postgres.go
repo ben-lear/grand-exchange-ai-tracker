@@ -3,11 +3,11 @@ package testutil
 import (
 	"context"
 	"fmt"
+	"sync"
 	"os"
 	"path/filepath"
 	"runtime"
 	"strings"
-	"sync"
 	"testing"
 	"time"
 

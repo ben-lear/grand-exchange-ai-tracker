@@ -2,7 +2,7 @@
  * Common component exports
  */
 
-export { Loading, InlineLoading } from './Loading';
+export { Loading as LoadingSpinner, InlineLoading } from './Loading';
 export type { LoadingProps } from './Loading';
 
 export { ErrorDisplay, EmptyState } from './ErrorDisplay';

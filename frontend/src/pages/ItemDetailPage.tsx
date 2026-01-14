@@ -2,11 +2,14 @@
  * Item detail page - Shows detailed information about a single item
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
-import { Loading, ErrorDisplay } from '../components/common';
-import { useItem, useCurrentPrice } from '../hooks';
+import { ArrowLeft, TrendingUp } from 'lucide-react';
+import { PriceChart, TimePeriodSelector } from '@/components/charts';
+import { LoadingSpinner, ErrorDisplay } from '@/components/common';
+import { useItem, useCurrentPrice, usePriceHistory } from '@/hooks';
+import { formatGold } from '@/utils/formatters';
+import type { TimePeriod } from '@/types';
 
 /**
  * Item detail page component
@@ -16,6 +19,7 @@ export const ItemDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const itemId = id ? parseInt(id, 10) : 0;
+  const [selectedPeriod, setSelectedPeriod] = useState<TimePeriod>('30d');
 
   // Fetch item data
   const {
@@ -30,18 +34,29 @@ export const ItemDetailPage: React.FC = () => {
     isLoading: priceLoading,
   } = useCurrentPrice(itemId);
 
+  // Fetch price history
+  const {
+    data: priceHistory,
+    isLoading: historyLoading,
+    error: historyError,
+  } = usePriceHistory(itemId, selectedPeriod);
+
   // Handle loading state
   if (itemLoading || priceLoading) {
-    return <Loading size="lg" message="Loading item details..." />;
+    return (
+      <div className="flex items-center justify-center h-96">
+        <LoadingSpinner size="lg" message="Loading item details..." />
+      </div>
+    );
   }
 
   // Handle errors
   if (itemError) {
     return (
       <ErrorDisplay
-        error={itemError}
         title="Failed to load item"
-        onRetry={() => window.location.reload()}
+        message={itemError.message}
+        retry={() => window.location.reload()}
       />
     );
   }
@@ -49,8 +64,8 @@ export const ItemDetailPage: React.FC = () => {
   if (!item) {
     return (
       <ErrorDisplay
-        error="Item not found"
         title="Item Not Found"
+        message="The requested item could not be found."
       />
     );
   }
@@ -60,7 +75,7 @@ export const ItemDetailPage: React.FC = () => {
       {/* Back Button */}
       <button
         onClick={() => navigate(-1)}
-        className="inline-flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+        className="inline-flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
       >
         <ArrowLeft className="w-4 h-4" />
         Back
@@ -68,85 +83,146 @@ export const ItemDetailPage: React.FC = () => {
 
       {/* Item Header */}
       <div className="flex items-start gap-4">
-        <img
-          src={item.iconUrl}
-          alt={item.name}
-          className="w-16 h-16 rounded-lg border border-gray-200 dark:border-gray-800"
-        />
+        {item.iconUrl && (
+          <img
+            src={item.iconUrl}
+            alt={item.name}
+            className="w-16 h-16 rounded-lg border border-gray-200 dark:border-gray-800"
+          />
+        )}
         <div className="flex-1">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
               {item.name}
             </h1>
             {item.members && (
-              <span className="px-2 py-1 text-xs font-medium bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 rounded">
-                Members
+              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200">
+                P2P
               </span>
             )}
           </div>
-          {item.description && (
-            <p className="mt-2 text-gray-600 dark:text-gray-400">
-              {item.description}
-            </p>
-          )}
+          <div className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+            Item ID: {item.itemId}
+          </div>
         </div>
       </div>
 
       {/* Current Price Card */}
       {currentPrice && (
         <div className="rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-6">
-          <h2 className="text-lg font-semibold mb-4">Current Price</h2>
-          <div className="text-3xl font-bold text-gray-900 dark:text-white">
-            {currentPrice.price.toLocaleString()} GP
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                Current Prices
+              </h2>
+              <p className="text-xs text-gray-500 mt-1">
+                Updated: {new Date(currentPrice.lastUpdated).toLocaleString()}
+              </p>
+            </div>
+            <TrendingUp className="w-5 h-5 text-green-500" />
+          </div>
+          <div className="mt-4 grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div>
+              <div className="text-sm text-gray-600 dark:text-gray-400">High Price</div>
+              <div className="text-2xl font-bold text-green-600 dark:text-green-400">
+                {currentPrice.highPrice ? formatGold(currentPrice.highPrice) : '—'}
+              </div>
+            </div>
+            <div>
+              <div className="text-sm text-gray-600 dark:text-gray-400">Low Price</div>
+              <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">
+                {currentPrice.lowPrice ? formatGold(currentPrice.lowPrice) : '—'}
+              </div>
+            </div>
+            <div>
+              <div className="text-sm text-gray-600 dark:text-gray-400">Average</div>
+              <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                {currentPrice.highPrice && currentPrice.lowPrice 
+                  ? formatGold(Math.round((currentPrice.highPrice + currentPrice.lowPrice) / 2))
+                  : currentPrice.highPrice 
+                    ? formatGold(currentPrice.highPrice)
+                    : currentPrice.lowPrice 
+                      ? formatGold(currentPrice.lowPrice)
+                      : '—'
+                }
+              </div>
+            </div>
+            <div>
+              <div className="text-sm text-gray-600 dark:text-gray-400">Volume</div>
+              <div className="text-2xl font-bold text-gray-900 dark:text-gray-100 bg-gray-100 dark:bg-gray-800 rounded px-2 py-1 inline-block mt-1">
+                {currentPrice.volume ? currentPrice.volume.toLocaleString() : '—'}
+              </div>
+            </div>
           </div>
         </div>
       )}
 
+      {/* Price Chart */}
+      <div className="rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-6">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+            Price History
+          </h2>
+          <TimePeriodSelector
+            activePeriod={selectedPeriod}
+            onPeriodChange={setSelectedPeriod}
+            disabled={historyLoading}
+          />
+        </div>
+        
+        <PriceChart
+          data={priceHistory || []}
+          isLoading={historyLoading}
+          error={historyError}
+          period={selectedPeriod}
+          itemName={item.name}
+          height={400}
+        />
+      </div>
+
       {/* Item Details */}
       <div className="rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-6">
-        <h2 className="text-lg font-semibold mb-4">Item Details</h2>
-        <dl className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <dt className="text-sm font-medium text-gray-600 dark:text-gray-400">
-              Item ID
-            </dt>
-            <dd className="mt-1 text-sm text-gray-900 dark:text-white">
-              {item.itemId}
-            </dd>
-          </div>
+        <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">
+          Item Details
+        </h2>
+        <dl className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <dt className="text-sm font-medium text-gray-600 dark:text-gray-400">
               Buy Limit
             </dt>
-            <dd className="mt-1 text-sm text-gray-900 dark:text-white">
-              {item.buyLimit.toLocaleString()} / 4 hours
+            <dd className="mt-1 text-lg font-semibold text-gray-900 dark:text-white">
+              {item.buyLimit ? `${item.buyLimit.toLocaleString()} / 4 hours` : 'Unknown'}
             </dd>
           </div>
           <div>
             <dt className="text-sm font-medium text-gray-600 dark:text-gray-400">
-              High Alch
+              Membership
             </dt>
-            <dd className="mt-1 text-sm text-gray-900 dark:text-white">
-              {item.highAlch.toLocaleString()} GP
+            <dd className="mt-1 text-lg font-semibold text-gray-900 dark:text-white">
+              {item.members ? 'Members Only' : 'Free-to-Play'}
             </dd>
           </div>
-          <div>
-            <dt className="text-sm font-medium text-gray-600 dark:text-gray-400">
-              Low Alch
-            </dt>
-            <dd className="mt-1 text-sm text-gray-900 dark:text-white">
-              {item.lowAlch.toLocaleString()} GP
-            </dd>
-          </div>
+          {item.highAlch && (
+            <div>
+              <dt className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                High Alchemy Value
+              </dt>
+              <dd className="mt-1 text-lg font-semibold text-gray-900 dark:text-white">
+                {formatGold(item.highAlch)}
+              </dd>
+            </div>
+          )}
+          {item.lowAlch && (
+            <div>
+              <dt className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                Low Alchemy Value
+              </dt>
+              <dd className="mt-1 text-lg font-semibold text-gray-900 dark:text-white">
+                {formatGold(item.lowAlch)}
+              </dd>
+            </div>
+          )}
         </dl>
-      </div>
-
-      {/* Placeholder for charts */}
-      <div className="rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-8">
-        <div className="text-center text-gray-600 dark:text-gray-400">
-          <p className="text-lg font-medium mb-2">Price Chart</p>
-          <p className="text-sm">Coming in Phase 5 - Frontend Features</p>
-        </div>
       </div>
     </div>
   );

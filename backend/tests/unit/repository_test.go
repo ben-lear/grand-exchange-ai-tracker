@@ -287,5 +287,5 @@ func TestPriceRepository_HistoryLifecycle(t *testing.T) {
 	remaining, err := priceRepo.GetHistory(ctx, models.PriceHistoryParams{ItemID: 42, Period: models.PeriodAll})
 	require.NoError(t, err)
 	assert.Len(t, remaining, 1)
-
+	
 }

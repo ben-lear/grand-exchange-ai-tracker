@@ -79,25 +79,25 @@ go test ./... -v -count=1 -tags=slow
 
 ## Coverage
 
-Coverage is generated via Go's built-in coverage tooling using the `-coverprofile` flag.
+Coverage is generated via Go's built-in coverage tooling.
 
-**Important**: We use `-coverpkg=./...` so that coverage reflects execution of code across the whole backend module, not just the package under test.
+Important: we use `-coverpkg=./...` so that coverage reflects execution of code across the whole backend module, not just the package under test.
+
+Note: To generate a *combined* coverage profile across many packages, the scripts use `GOCOVERDIR` + `go tool covdata` under the hood.
 
 ### Fast Coverage (No Docker)
 
 ```bash
 mkdir -p coverage
-go test ./... -v -count=1 -coverprofile=coverage/fast.out -covermode=atomic -coverpkg=./...
+rm -rf coverage/cov_fast
+mkdir -p coverage/cov_fast
+
+GOCOVERDIR="$(pwd)/coverage/cov_fast" go test ./... -v -count=1 -cover -covermode=atomic -coverpkg=./...
+go tool covdata textfmt -i coverage/cov_fast -o coverage/fast.out
 go tool cover -html=coverage/fast.out -o coverage/fast.html
 ```
 
 ### Full Coverage (Includes Docker/Postgres)
-
-```bash
-mkdir -p coverage
-go test ./... -v -count=1 -tags=slow -coverprofile=coverage/full.out -covermode=atomic -coverpkg=./...
-go tool cover -html=coverage/full.out -o coverage/full.html
-```
 
 ```bash
 mkdir -p coverage
@@ -113,25 +113,23 @@ go tool cover -html=coverage/full.out -o coverage/full.html
 
 **Linux/macOS:**
 ```bash
-./test.sh                     # Run all tests
-./test.sh --coverage          # Run all tests with coverage report
+./test.sh --coverage
+./test.sh --fast --coverage
 ```
 
 **Windows PowerShell:**
 ```powershell
-.\test.ps1                    # Run all tests
-.\test.ps1 -Coverage          # Run all tests with coverage report
+./test.ps1 -Coverage
+./test.ps1 -Fast -Coverage
 ```
 
-### Windows PowerShell (Manual Commands)
+### Windows PowerShell
 ```powershell
-# Run all tests
+# Fast
 go test ./... -v -count=1
 
-# Run all tests with coverage
-mkdir coverage -Force
-go test ./... -v -count=1 -coverprofile=coverage/coverage.out -covermode=atomic -coverpkg=./...
-go tool cover -html=coverage/coverage.out -o coverage/coverage.html
+# Full (includes Postgres/Testcontainers)
+go test ./... -v -count=1 -tags=slow
 ```
 
 ### Model Tests Only (No Database)
