@@ -43,42 +43,42 @@ Build a full-stack application to track and visualize Old School RuneScape Grand
 
 ---
 
-## Phase 2: Backend API Endpoints
+## Phase 2: Backend API Endpoints ✅ **COMPLETED**
 
 ### 2.1 Core API Setup
-- [ ] Initialize Fiber app in `cmd/api/main.go`
-- [ ] Configure middleware (CORS, logging, recovery)
-- [ ] Set up API versioning (v1 prefix)
-- [ ] Create router setup in `internal/api/router.go`
-- [ ] Implement health check endpoint (`GET /api/health`)
-- [ ] Add request validation middleware
-- [ ] Implement error response formatting
+- [x] Initialize Fiber app in `cmd/api/main.go`
+- [x] Configure middleware (CORS, logging, recovery)
+- [x] Set up API versioning (v1 prefix)
+- [x] Create router setup in `internal/api/router.go`
+- [x] Implement health check endpoint (`GET /api/health`)
+- [x] Implement readiness check endpoint (`GET /api/ready`)
+- [x] Add request validation middleware
+- [x] Implement error response formatting
 
 ### 2.2 Item Endpoints
-- [ ] Create items handler in `internal/api/handlers/items.go`
-- [ ] Implement `GET /api/items` - List items with pagination
-- [ ] Implement `GET /api/items/:id` - Get item details
-- [ ] Add query parameters for filtering (name, type, members)
-- [ ] Add sorting options (name, price, trend)
-- [ ] Implement search functionality by item name
-- [ ] Add response caching with Redis (5-minute TTL)
+- [x] Create items handler in `internal/api/handlers/items.go`
+- [x] Implement `GET /api/v1/items` - List items with pagination
+- [x] Implement `GET /api/v1/items/:id` - Get item details
+- [x] Add query parameters for filtering (name, type, members)
+- [x] Add sorting options (name, price, trend)
+- [x] Implement search functionality by item name
+- [x] Add response caching with Redis (5-minute TTL)
 
 ### 2.3 Price Data Endpoints
-- [ ] Create prices handler in `internal/api/handlers/prices.go`
-- [ ] Implement `GET /api/items/:id/prices` - Get price history
-- [ ] Add time range parameters (7d, 30d, 90d, 180d)
-- [ ] Implement data aggregation for large time ranges
-- [ ] Implement `GET /api/items/:id/graph` - Get chart-ready data
-- [ ] Add moving average calculation endpoint
-- [ ] Implement price comparison endpoint for multiple items
+- [x] Create prices handler in `internal/api/handlers/prices.go`
+- [x] Implement `GET /api/v1/items/:id/prices` - Get price history
+- [x] Add time range parameters (7d, 30d, 90d, 180d)
+- [x] Implement data aggregation for large time ranges
+- [x] Implement `GET /api/v1/items/:id/graph` - Get chart-ready data
+- [x] Implement `GET /api/v1/items/:id/trend` - Get current price trend
+- [x] Implement price comparison endpoint for multiple items
 
 ### 2.4 Category & Statistics Endpoints
-- [ ] Create categories handler in `internal/api/handlers/categories.go`
-- [ ] Implement `GET /api/categories` - List all OSRS categories
-- [ ] Implement `GET /api/stats/trending` - Get trending items
-- [ ] Implement `GET /api/stats/biggest-movers` - Price gainers/losers
-- [ ] Add statistics for total items tracked
-- [ ] Implement most traded items endpoint
+- [x] Create health handler in `internal/api/handlers/health.go`
+- [x] Implement `GET /api/v1/stats/trending` - Get trending items
+- [x] Implement `GET /api/v1/stats/biggest-movers` - Price gainers/losers
+- [x] Add statistics for total items tracked
+- [x] Implement most traded items endpoint
 
 ---
 

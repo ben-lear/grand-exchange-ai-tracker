@@ -27,7 +27,7 @@ type PriceHistory struct {
 	Price     int       `gorm:"not null" json:"price"`
 	Volume    int       `json:"volume"`
 	CreatedAt time.Time `json:"created_at"`
-	Item      Item      `gorm:"foreignKey:ItemID" json:"-"`
+	Item      Item      `gorm:"constraint:OnDelete:CASCADE;foreignKey:ItemID;references:ID" json:"-"`
 }
 
 // PriceTrend represents current price trends for an item
@@ -45,7 +45,7 @@ type PriceTrend struct {
 	Day180Change     string    `gorm:"size:20" json:"day180_change"`
 	Day180Trend      string    `gorm:"size:20" json:"day180_trend"`
 	UpdatedAt        time.Time `json:"updated_at"`
-	Item             Item      `gorm:"foreignKey:ItemID" json:"-"`
+	Item             Item      `gorm:"constraint:OnDelete:CASCADE;foreignKey:ItemID;references:ID" json:"-"`
 }
 
 // TableName overrides

@@ -412,14 +412,57 @@ VITE_API_URL=http://localhost:8080/api
 
 ## Priority for MVP
 
-Focus on these core features first:
-1. OSRS API client with caching
-2. Database layer (items, price history)
-3. REST API endpoints (items list, detail, prices)
-4. Scheduled job for data collection
-5. Frontend: Dashboard and item list pages
-6. Price history charts
-7. Basic search and filtering
+Phase 1-2 are complete! Focus on these remaining core features:
+
+### ✅ COMPLETED
+1. ✅ OSRS API client with caching
+2. ✅ Database layer (items, price history, price trends)
+3. ✅ REST API endpoints (all routes)
+4. ✅ Health check endpoints
+5. ✅ Frontend: Basic structure exists
+
+### 🎯 NEXT (Phase 3)
+1. Scheduled job system for data collection
+2. Background jobs to fetch item catalog from OSRS API
+3. Price update jobs (popular items every 5 min, all items hourly)
+4. Trend calculation jobs
+5. Old data cleanup jobs
+
+### 📋 UPCOMING (Phase 4+)
+6. Frontend: Dashboard and item list pages
+7. Price history charts (Recharts integration)
+8. Basic search and filtering
+9. Trending items display
+10. Real-time price updates
+
+## Current API Endpoints (Phase 2 ✅)
+
+### Health & Readiness
+- `GET /api/health` - Basic health check
+- `GET /api/ready` - Database + Redis readiness check
+
+### Items (v1)
+- `GET /api/v1/items` - List items (pagination, search, filtering, sorting)
+- `GET /api/v1/items/:id` - Get item detail with trend
+
+### Prices (v1)
+- `GET /api/v1/items/:id/prices?range=30d` - Price history
+- `GET /api/v1/items/:id/graph?range=90d` - Chart-ready data
+- `GET /api/v1/items/:id/trend` - Current price trend
+
+### Statistics (v1)
+- `GET /api/v1/stats/trending?limit=10&timeframe=24h` - Trending items
+- `GET /api/v1/stats/biggest-movers?direction=gainers&limit=10` - Price movers
+
+## Recent Architecture Decisions
+
+1. **Import Paths**: Using full module path `github.com/guavi/grand-exchange-ai-tracker` throughout
+2. **Repository Pattern**: All database access through repository interfaces
+3. **Middleware Stack**: Request ID → Recovery → CORS → Fiber Logger → Custom Logger
+4. **API Versioning**: All endpoints under `/api/v1/` prefix
+5. **Error Handling**: Centralized error handler in Fiber config
+6. **Response Format**: Consistent JSON with `status`, `data`, `timestamp`
+7. **Pagination**: Standard `page`, `limit`, `total`, `total_pages` format
 
 ---
 

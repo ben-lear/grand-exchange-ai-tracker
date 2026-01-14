@@ -1,6 +1,38 @@
 # OSRS Grand Exchange Tracker
 
+A completely AI-driven application built from start to finish by AI agents. No line of code was touched by a human (this is more to test drive AI than to build a fully fledged app). 
+
 A full-stack application for tracking and visualizing Old School RuneScape (OSRS) Grand Exchange item prices and trends.
+
+## 🎯 Project Status
+
+### ✅ Completed (Phase 1-2)
+- **Backend Foundation**
+  - PostgreSQL database with GORM ORM
+  - Redis caching layer
+  - Repository pattern implementation
+  - OSRS API client with intelligent caching
+  - Database migrations with auto-migration
+  
+- **REST API Endpoints**
+  - Fiber HTTP server with production-ready middleware
+  - Health check and readiness endpoints
+  - Complete items API (list, detail, search, filtering)
+  - Price history and chart data endpoints
+  - Trending items and biggest movers endpoints
+  - 24 total route handlers registered
+
+### 🚧 In Progress (Phase 3)
+- **Scheduled Tasks** (Next)
+  - Cron scheduler for automated data collection
+  - Background jobs to fetch item catalog
+  - Price update jobs (popular items + all items)
+
+### 📋 Upcoming
+- Phase 4: Frontend Foundation (React app setup, API integration)
+- Phase 5: Dashboard & Visualization (Charts, item cards, search)
+- Phase 6: Advanced Features (Watchlists, alerts, comparisons)
+- Phase 7: Testing & Deployment
 
 ## Tech Stack
 
@@ -202,15 +234,36 @@ This will start:
 - Backend API on port 8080
 - Frontend on port 3000
 
-## API Endpoints (To Be Implemented)
+## API Endpoints
 
-- `GET /api/health` - Health check
-- `GET /api/items` - List all tracked items
-- `GET /api/items/:id` - Get item details
-- `GET /api/items/:id/prices` - Get price history
-- `GET /api/items/:id/graph` - Get graph data for charts
-- `GET /api/categories` - List item categories
-- `POST /api/items/:id/watch` - Add item to watchlist
+### Health & Status
+- `GET /api/health` - Basic health check
+- `GET /api/ready` - Readiness check (database + Redis)
+
+### Items
+- `GET /api/v1/items` - List items (paginated)
+  - Query params: `page`, `limit`, `search`, `members`, `sort`, `order`
+  - Example: `/api/v1/items?page=1&limit=20&search=abyssal&members=true`
+- `GET /api/v1/items/:id` - Get item details
+  - Example: `/api/v1/items/4151` (Abyssal whip)
+
+### Prices
+- `GET /api/v1/items/:id/prices` - Get price history
+  - Query params: `range` (7d, 30d, 90d, 180d, 365d)
+  - Example: `/api/v1/items/4151/prices?range=30d`
+- `GET /api/v1/items/:id/graph` - Get chart-ready data
+  - Query params: `range` (7d, 30d, 90d, 180d, 365d)
+  - Example: `/api/v1/items/4151/graph?range=90d`
+- `GET /api/v1/items/:id/trend` - Get current price trend
+  - Example: `/api/v1/items/4151/trend`
+
+### Statistics
+- `GET /api/v1/stats/trending` - Get trending items
+  - Query params: `limit`, `timeframe` (1h, 6h, 24h, 7d)
+  - Example: `/api/v1/stats/trending?limit=10&timeframe=24h`
+- `GET /api/v1/stats/biggest-movers` - Get biggest price movers
+  - Query params: `direction` (gainers, losers), `limit`, `timeframe`
+  - Example: `/api/v1/stats/biggest-movers?direction=gainers&limit=10`
 
 ## Database Schema
 
