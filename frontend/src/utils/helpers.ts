@@ -1,0 +1,186 @@
+/**
+ * Data transformation and validation utilities
+ */
+
+import type { PriceTrend, CurrentPrice } from '../types';
+
+/**
+ * Calculate the trend based on price change
+ * @param priceChange - The price change value
+ * @param threshold - Threshold for neutral (default: 0)
+ * @returns Trend indicator
+ */
+export const calculateTrend = (
+  priceChange: number,
+  threshold: number = 0
+): PriceTrend => {
+  if (Math.abs(priceChange) <= threshold) return 'neutral';
+  return priceChange > 0 ? 'positive' : 'negative';
+};
+
+/**
+ * Get color class based on trend
+ * @param trend - The trend indicator
+ * @returns Tailwind color class
+ */
+export const getTrendColor = (trend: PriceTrend): string => {
+  switch (trend) {
+    case 'positive':
+      return 'text-green-600 dark:text-green-400';
+    case 'negative':
+      return 'text-red-600 dark:text-red-400';
+    case 'neutral':
+      return 'text-gray-600 dark:text-gray-400';
+  }
+};
+
+/**
+ * Get background color class based on trend
+ * @param trend - The trend indicator
+ * @returns Tailwind background color class
+ */
+export const getTrendBgColor = (trend: PriceTrend): string => {
+  switch (trend) {
+    case 'positive':
+      return 'bg-green-100 dark:bg-green-900';
+    case 'negative':
+      return 'bg-red-100 dark:bg-red-900';
+    case 'neutral':
+      return 'bg-gray-100 dark:bg-gray-800';
+  }
+};
+
+/**
+ * Get trend icon name
+ * @param trend - The trend indicator
+ * @returns Icon identifier (for use with icon libraries)
+ */
+export const getTrendIcon = (trend: PriceTrend): string => {
+  switch (trend) {
+    case 'positive':
+      return 'trending-up';
+    case 'negative':
+      return 'trending-down';
+    case 'neutral':
+      return 'minus';
+  }
+};
+
+/**
+ * Sort prices by different criteria
+ * @param prices - Array of prices to sort
+ * @param sortBy - Sort field
+ * @param sortOrder - Sort direction
+ * @returns Sorted array
+ */
+export const sortPrices = (
+  prices: CurrentPrice[],
+  sortBy: keyof CurrentPrice,
+  sortOrder: 'asc' | 'desc' = 'asc'
+): CurrentPrice[] => {
+  return [...prices].sort((a, b) => {
+    const aValue = a[sortBy];
+    const bValue = b[sortBy];
+    
+    if (aValue === bValue) return 0;
+    
+    const comparison = aValue < bValue ? -1 : 1;
+    return sortOrder === 'asc' ? comparison : -comparison;
+  });
+};
+
+/**
+ * Filter prices by criteria
+ * @param prices - Array of prices to filter
+ * @param filters - Filter criteria
+ * @returns Filtered array
+ */
+export const filterPrices = (
+  prices: CurrentPrice[],
+  filters: {
+    minPrice?: number;
+    maxPrice?: number;
+    minVolume?: number;
+    trend?: PriceTrend;
+  }
+): CurrentPrice[] => {
+  return prices.filter((price) => {
+    if (filters.minPrice !== undefined && price.price < filters.minPrice) {
+      return false;
+    }
+    if (filters.maxPrice !== undefined && price.price > filters.maxPrice) {
+      return false;
+    }
+    if (filters.minVolume !== undefined && price.volume < filters.minVolume) {
+      return false;
+    }
+    if (filters.trend !== undefined && price.trend !== filters.trend) {
+      return false;
+    }
+    return true;
+  });
+};
+
+/**
+ * Calculate percentage change
+ * @param oldValue - Original value
+ * @param newValue - New value
+ * @returns Percentage change
+ */
+export const calculatePercentageChange = (
+  oldValue: number,
+  newValue: number
+): number => {
+  if (oldValue === 0) return 0;
+  return ((newValue - oldValue) / oldValue) * 100;
+};
+
+/**
+ * Validate item ID
+ * @param id - The ID to validate
+ * @returns True if valid
+ */
+export const isValidItemId = (id: number): boolean => {
+  return Number.isInteger(id) && id > 0;
+};
+
+/**
+ * Debounce a function
+ * @param func - Function to debounce
+ * @param wait - Wait time in milliseconds
+ * @returns Debounced function
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const debounce = <T extends (...args: any[]) => any>(
+  func: T,
+  wait: number
+): ((...args: Parameters<T>) => void) => {
+  let timeout: ReturnType<typeof setTimeout> | null = null;
+  
+  return (...args: Parameters<T>) => {
+    if (timeout) clearTimeout(timeout);
+    timeout = setTimeout(() => func(...args), wait);
+  };
+};
+
+/**
+ * Throttle a function
+ * @param func - Function to throttle
+ * @param limit - Limit time in milliseconds
+ * @returns Throttled function
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const throttle = <T extends (...args: any[]) => any>(
+  func: T,
+  limit: number
+): ((...args: Parameters<T>) => void) => {
+  let inThrottle: boolean;
+  
+  return (...args: Parameters<T>) => {
+    if (!inThrottle) {
+      func(...args);
+      inThrottle = true;
+      setTimeout(() => (inThrottle = false), limit);
+    }
+  };
+};
