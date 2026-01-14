@@ -38,20 +38,22 @@ type ItemSearchParams struct {
 
 // ItemListParams contains parameters for listing items
 type ItemListParams struct {
-	Limit     int    `query:"limit" validate:"min=1,max=200"`
-	Offset    int    `query:"offset" validate:"min=0"`
-	SortBy    string `query:"sortBy" validate:"omitempty,oneof=name item_id members"`
-	SortOrder string `query:"sortOrder" validate:"omitempty,oneof=asc desc"`
-	Members   *bool  `query:"members"`
+	Page    int    `query:"page" validate:"min=1"`
+	Limit   int    `query:"limit" validate:"min=1,max=200"`
+	Offset  int    `query:"offset" validate:"min=0"`
+	SortBy  string `query:"sortBy" validate:"omitempty,oneof=name item_id members"`
+	Order   string `query:"order" validate:"omitempty,oneof=asc desc"`
+	Members *bool  `query:"members"`
 }
 
 // DefaultItemListParams returns default parameters for item listing
 func DefaultItemListParams() ItemListParams {
 	return ItemListParams{
-		Limit:     100,
-		Offset:    0,
-		SortBy:    "name",
-		SortOrder: "asc",
+		Page:   1,
+		Limit:  100,
+		Offset: 0,
+		SortBy: "name",
+		Order:  "asc",
 	}
 }
 

@@ -1,16 +1,21 @@
-# Phase 2 Complete - Next Steps
+# Phase 3 Complete - Next Steps
 
 ## ✅ What's Done
 
-**Phase 1** (Project Setup & Infrastructure) - **100% complete**
-**Phase 2** (Backend Core Development) - **100% complete**:
-- ✅ GORM models for Items and Prices with full validation
-- ✅ Repository layer with comprehensive CRUD operations
-- ✅ OSRS API client with retry logic and rate limiting
-- ✅ Service layer with business logic and caching
-- ✅ Structured logging with Zap
-- ✅ Unit tests for models
-- ✅ All code compiles and builds successfully
+**Phase 1** (Project Setup & Infrastructure) - **100% complete**  
+**Phase 2** (Backend Core Development) - **100% complete**  
+**Phase 3** (Backend API & Scheduler) - **100% complete**:
+- ✅ Health check handlers with comprehensive monitoring
+- ✅ Item handlers (list, get, search, count)
+- ✅ Price handlers (current, history, batch)
+- ✅ CORS middleware with configurable origins
+- ✅ Request logging middleware with structured logs
+- ✅ Rate limiting middleware (API & sync endpoints)
+- ✅ Error handling middleware with panic recovery
+- ✅ Cron scheduler with 3 background jobs
+- ✅ Complete API integration in main.go
+- ✅ Unit tests for handlers
+- ✅ All code compiles and tests pass
 
 ## 🚀 Quick Start
 
@@ -44,64 +49,103 @@ npm run dev
 ./start.ps1
 ```
 
-## 📋 What's Next: Phase 3
+## 📋 What's Next: Phase 4
 
-**Phase 3: Backend API & Scheduler** (Days 11-14 in the plan)
+**Phase 4: Frontend Foundation** (Days 15-19 in the plan)
 
 ### Priority Tasks:
 
-1. **HTTP Handlers** (`backend/internal/handlers/`)
-   - [ ] `item_handler.go` - Item endpoints (list, get, search)
-   - [ ] `price_handler.go` - Price endpoints (current, history)
-   - [ ] `health_handler.go` - Health check endpoint
-   - [ ] Request validation and error handling
+1. **React Project Setup** (`frontend/`)
+   - [ ] Configure Vite with React + TypeScript
+   - [ ] Set up TailwindCSS v3
+   - [ ] Configure TanStack Query v5
+   - [ ] Set up Zustand for state management
+   - [ ] Configure React Router v6
 
-2. **Middleware** (`backend/internal/middleware/`)
-   - [ ] `cors.go` - CORS configuration for frontend
-   - [ ] `logger.go` - Request/response logging
-   - [ ] `rate_limit.go` - Rate limiting per IP
-   - [ ] `error_handler.go` - Standardized error responses
+2. **API Client** (`frontend/src/api/`)
+   - [ ] Create axios client with interceptors
+   - [ ] Define TypeScript types for all endpoints
+   - [ ] Create API methods for items and prices
+   - [ ] Add error handling and retries
 
-3. **Scheduler Jobs** (`backend/internal/scheduler/`)
-   - [ ] `jobs.go` - Job definitions
-   - [ ] Job 1: Sync bulk prices every 1 minute
-   - [ ] Job 2: Sync historical data every 1 hour (top items)
-   - [ ] Job 3: Full historical sync every 24 hours
+3. **Core Components** (`frontend/src/components/`)
+   - [ ] MainLayout with header and navigation
+   - [ ] ItemsTable with TanStack Table
+   - [ ] PriceChart with Recharts
+   - [ ] SearchBar component
+   - [ ] FilterPanel component
 
-4. **API Integration** (`backend/cmd/api/main.go`)
-   - [ ] Wire up all handlers with routes
-   - [ ] Initialize services and repositories
-   - [ ] Start scheduler
-   - [ ] Test all endpoints
+4. **Pages** (`frontend/src/pages/`)
+   - [ ] DashboardPage - Main data table view
+   - [ ] ItemDetailPage - Item details with charts
+   - [ ] ErrorPage - 404 and error handling
 
-### Files to Create in Phase 3:
+5. **Hooks** (`frontend/src/hooks/`)
+   - [ ] useItems - Fetch and cache items
+   - [ ] usePrices - Fetch and cache prices
+   - [ ] usePriceHistory - Fetch chart data
+   - [ ] useSearch - Search functionality
+
+### Files to Create in Phase 4:
 
 ```
-backend/internal/handlers/
-  ├── item_handler.go       # GET /api/v1/items/*
-  ├── price_handler.go      # GET /api/v1/prices/*
-  └── health_handler.go     # GET /health
-
-backend/internal/middleware/
-  ├── cors.go              # CORS middleware
-  ├── logger.go            # Request logger
-  ├── rate_limit.go        # Rate limiter
-  └── error_handler.go     # Error handling
-
-backend/internal/scheduler/
-  └── jobs.go              # Cron job definitions
+frontend/src/
+  ├── api/
+  │   ├── client.ts          # Axios config
+  │   ├── items.ts           # Item API methods
+  │   └── prices.ts          # Price API methods
+  ├── components/
+  │   ├── common/
+  │   │   ├── Loading.tsx
+  │   │   ├── Error.tsx
+  │   │   └── Button.tsx
+  │   ├── layout/
+  │   │   ├── MainLayout.tsx
+  │   │   └── Header.tsx
+  │   ├── table/
+  │   │   ├── ItemsTable.tsx
+  │   │   ├── TableFilters.tsx
+  │   │   └── Pagination.tsx
+  │   └── charts/
+  │       ├── PriceChart.tsx
+  │       └── VolumeChart.tsx
+  ├── hooks/
+  │   ├── useItems.ts
+  │   ├── usePrices.ts
+  │   └── usePriceHistory.ts
+  ├── pages/
+  │   ├── DashboardPage.tsx
+  │   ├── ItemDetailPage.tsx
+  │   └── ErrorPage.tsx
+  ├── stores/
+  │   └── filterStore.ts     # Zustand store
+  ├── types/
+  │   └── api.ts             # TypeScript types
+  └── utils/
+      ├── formatters.ts      # Number/date formatters
+      └── constants.ts       # App constants
 ```
 
-## 🎯 Phase 3 Goals
+## 🎯 Phase 4 Goals
+Full health check with metrics
+- `GET /health/live` - Liveness probe
+- `GET /health/ready` - Readiness probe
 
-By end of Phase 3, you should have:
-- ✅ Complete REST API for items and prices
-- ✅ All middleware configured and tested
-- ✅ Scheduler automatically syncing data from OSRS
-- ✅ Health check endpoint
-- ✅ Fully functional backend ready for frontend integration
+**Admin/Sync:**
+- `POST /api/v1/sync/prices` - Manual sync
+- `POST /api/v1/sync/prices/history/:id` - Manual history sync
+By end of Phase 4, you should have:
+- ✅ Complete frontend project structure
+- ✅ API client connecting to backend
+- ✅ Basic data table displaying items
+- ✅ Search and filter functionality
+- ✅ Responsive layout with TailwindCSS
+- ✅ TypeScript strict mode enabled
+- ✅ Hot reload working in development
 
-### API Endpoints to Implement:
+## 📊 Current Backend Status
+
+All backend endpoints are ready and tested:
 
 **Items:**
 - `GET /api/v1/items` - List all items (paginated)

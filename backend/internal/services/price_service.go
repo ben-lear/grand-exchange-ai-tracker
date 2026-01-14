@@ -29,8 +29,9 @@ type priceService struct {
 // NewPriceService creates a new price service
 func NewPriceService(
 	priceRepo repository.PriceRepository,
-	osrsClient OSRSClient,
+	itemRepo repository.ItemRepository,
 	cache CacheService,
+	osrsClient OSRSClient,
 	logger *zap.SugaredLogger,
 ) PriceService {
 	return &priceService{
@@ -68,6 +69,11 @@ func (s *priceService) GetCurrentPrice(ctx context.Context, itemID int) (*models
 // GetCurrentPrices returns current prices for multiple items
 func (s *priceService) GetCurrentPrices(ctx context.Context, itemIDs []int) ([]models.CurrentPrice, error) {
 	return s.priceRepo.GetCurrentPrices(ctx, itemIDs)
+}
+
+// GetBatchCurrentPrices returns current prices for a batch of items (alias for GetCurrentPrices)
+func (s *priceService) GetBatchCurrentPrices(ctx context.Context, itemIDs []int) ([]models.CurrentPrice, error) {
+	return s.GetCurrentPrices(ctx, itemIDs)
 }
 
 // GetAllCurrentPrices returns all current prices
@@ -117,6 +123,8 @@ func (s *priceService) GetPriceHistory(ctx context.Context, params models.PriceH
 
 	// Convert to PricePoint format
 	dataPoints := make([]models.PricePoint, len(history))
+	var firstDate, lastDate *time.Time
+	
 	for i, h := range history {
 		highPrice := int64(0)
 		lowPrice := int64(0)
@@ -131,13 +139,23 @@ func (s *priceService) GetPriceHistory(ctx context.Context, params models.PriceH
 			HighPrice: highPrice,
 			LowPrice:  lowPrice,
 		}
+		
+		// Track first and last dates
+		if i == 0 {
+			firstDate = &h.Timestamp
+		}
+		if i == len(history)-1 {
+			lastDate = &h.Timestamp
+		}
 	}
 
 	response := &models.PriceHistoryResponse{
-		ItemID:     params.ItemID,
-		Period:     string(params.Period),
-		DataPoints: dataPoints,
-		Count:      len(dataPoints),
+		ItemID:    params.ItemID,
+		Period:    string(params.Period),
+		Data:      dataPoints,
+		Count:     len(dataPoints),
+		FirstDate: firstDate,
+		LastDate:  lastDate,
 	}
 
 	// Cache the result
@@ -160,6 +178,11 @@ func (s *priceService) UpdateCurrentPrice(ctx context.Context, price *models.Cur
 	_ = s.cache.Delete(ctx, "price:current:all")
 
 	return nil
+}
+
+// SyncCurrentPrices fetches and updates all current prices from the bulk dump (alias for SyncBulkPrices)
+func (s *priceService) SyncCurrentPrices(ctx context.Context) error {
+	return s.SyncBulkPrices(ctx)
 }
 
 // SyncBulkPrices fetches and updates all prices from the bulk dump
@@ -200,21 +223,16 @@ func (s *priceService) SyncBulkPrices(ctx context.Context) error {
 }
 
 // SyncHistoricalPrices fetches and stores historical price data for an item
-func (s *priceService) SyncHistoricalPrices(ctx context.Context, itemID int, period string) error {
-	s.logger.Infow("Syncing historical prices", "itemID", itemID, "period", period)
+func (s *priceService) SyncHistoricalPrices(ctx context.Context, itemID int, fullHistory bool) error {
+	s.logger.Infow("Syncing historical prices", "itemID", itemID, "fullHistory", fullHistory)
 
 	var dataPoints []models.HistoricalDataPoint
 	var err error
 
-	// Fetch based on period
-	switch period {
-	case "sample":
-		dataPoints, err = s.osrsClient.FetchSampleData(itemID)
-	case "90d", "last90d":
-		dataPoints, err = s.osrsClient.FetchHistoricalData(itemID, period)
-	case "all":
+	// Fetch based on fullHistory flag
+	if fullHistory {
 		dataPoints, err = s.osrsClient.FetchAllHistoricalData(itemID)
-	default:
+	} else {
 		dataPoints, err = s.osrsClient.FetchSampleData(itemID)
 	}
 

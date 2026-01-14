@@ -148,9 +148,9 @@ func (r *priceRepository) GetHistory(ctx context.Context, params models.PriceHis
 		return nil, fmt.Errorf("failed to get price history: %w", err)
 	}
 
-	// If sampling is requested and we have too many points, sample them
-	if params.Sample && len(history) > 150 {
-		history = samplePriceHistory(history, 150)
+	// If maxPoints is set and we have too many points, sample them
+	if params.MaxPoints != nil && len(history) > *params.MaxPoints {
+		history = samplePriceHistory(history, *params.MaxPoints)
 	}
 
 	return history, nil

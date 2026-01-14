@@ -39,16 +39,18 @@ type PriceHistoryParams struct {
 	Period    TimePeriod
 	StartTime *time.Time
 	EndTime   *time.Time
-	Sample    bool // Whether to sample data points
+	MaxPoints *int // Maximum number of points to return (for sampling)
 	Limit     int
 }
 
 // PriceHistoryResponse represents the response structure for historical prices
 type PriceHistoryResponse struct {
-	ItemID     int          `json:"itemId"`
-	Period     string       `json:"period"`
-	DataPoints []PricePoint `json:"dataPoints"`
-	Count      int          `json:"count"`
+	ItemID    int          `json:"itemId"`
+	Period    string       `json:"period"`
+	Data      []PricePoint `json:"data"`
+	Count     int          `json:"count"`
+	FirstDate *time.Time   `json:"firstDate,omitempty"`
+	LastDate  *time.Time   `json:"lastDate,omitempty"`
 }
 
 // CurrentPriceWithItem represents current price with item details

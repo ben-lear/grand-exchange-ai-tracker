@@ -9,6 +9,9 @@ import (
 
 // ItemService defines the interface for item business logic
 type ItemService interface {
+	// ListItems returns all items with pagination
+	ListItems(ctx context.Context, params models.ItemListParams) ([]models.Item, int64, error)
+
 	// GetAllItems returns all items with pagination
 	GetAllItems(ctx context.Context, params models.ItemListParams) ([]models.Item, int64, error)
 
@@ -18,8 +21,14 @@ type ItemService interface {
 	// GetItemByItemID returns an item by its OSRS item ID
 	GetItemByItemID(ctx context.Context, itemID int) (*models.Item, error)
 
+	// GetItemWithPrice returns an item with its current price
+	GetItemWithPrice(ctx context.Context, itemID int) (*models.ItemWithCurrentPrice, error)
+
 	// SearchItems searches for items by name
-	SearchItems(ctx context.Context, params models.ItemSearchParams) ([]models.Item, int64, error)
+	SearchItems(ctx context.Context, params models.ItemSearchParams) ([]models.Item, error)
+
+	// GetItemCount returns the count of items
+	GetItemCount(ctx context.Context, members *bool) (int64, error)
 
 	// UpsertItem creates or updates an item
 	UpsertItem(ctx context.Context, item *models.Item) error
@@ -39,6 +48,9 @@ type PriceService interface {
 	// GetCurrentPrices returns current prices for multiple items
 	GetCurrentPrices(ctx context.Context, itemIDs []int) ([]models.CurrentPrice, error)
 
+	// GetBatchCurrentPrices returns current prices for a batch of items
+	GetBatchCurrentPrices(ctx context.Context, itemIDs []int) ([]models.CurrentPrice, error)
+
 	// GetAllCurrentPrices returns all current prices
 	GetAllCurrentPrices(ctx context.Context) ([]models.CurrentPrice, error)
 
@@ -48,11 +60,14 @@ type PriceService interface {
 	// UpdateCurrentPrice updates the current price for an item
 	UpdateCurrentPrice(ctx context.Context, price *models.CurrentPrice) error
 
+	// SyncCurrentPrices fetches and updates all current prices from the bulk dump
+	SyncCurrentPrices(ctx context.Context) error
+
 	// SyncBulkPrices fetches and updates all prices from the bulk dump
 	SyncBulkPrices(ctx context.Context) error
 
 	// SyncHistoricalPrices fetches and stores historical price data for an item
-	SyncHistoricalPrices(ctx context.Context, itemID int, period string) error
+	SyncHistoricalPrices(ctx context.Context, itemID int, fullHistory bool) error
 }
 
 // CacheService defines the interface for caching operations

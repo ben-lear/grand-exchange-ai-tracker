@@ -8,13 +8,15 @@ import (
 	"syscall"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/cors"
-	fiberLogger "github.com/gofiber/fiber/v2/middleware/logger"
-	"github.com/gofiber/fiber/v2/middleware/recover"
 	"go.uber.org/zap"
 
 	"github.com/guavi/osrs-ge-tracker/internal/config"
 	"github.com/guavi/osrs-ge-tracker/internal/database"
+	"github.com/guavi/osrs-ge-tracker/internal/handlers"
+	"github.com/guavi/osrs-ge-tracker/internal/middleware"
+	"github.com/guavi/osrs-ge-tracker/internal/repository"
+	"github.com/guavi/osrs-ge-tracker/internal/scheduler"
+	"github.com/guavi/osrs-ge-tracker/internal/services"
 )
 
 func main() {
@@ -46,39 +48,81 @@ func main() {
 	}
 	defer redis.Close()
 
+	// Initialize repositories
+	itemRepo := repository.NewItemRepository(db, logger)
+	priceRepo := repository.NewPriceRepository(db, logger)
+
+	// Initialize services
+	cacheService := services.NewCacheService(redis, logger)
+	osrsClient := services.NewOSRSClient(logger)
+	itemService := services.NewItemService(itemRepo, cacheService, logger)
+	priceService := services.NewPriceService(priceRepo, itemRepo, cacheService, osrsClient, logger)
+
+	// Initialize handlers
+	healthHandler := handlers.NewHealthHandler(db, redis, logger)
+	itemHandler := handlers.NewItemHandler(itemService, logger)
+	priceHandler := handlers.NewPriceHandler(priceService, logger)
+
 	// Create Fiber app
 	app := fiber.New(fiber.Config{
 		AppName:      "OSRS GE Tracker API",
 		ServerHeader: "OSRS-GE-Tracker",
-		ErrorHandler: customErrorHandler,
+		ErrorHandler: middleware.NewErrorHandler(middleware.ErrorHandlerConfig{
+			Logger: logger,
+		}),
 	})
 
-	// Middleware
-	app.Use(recover.New())
-	app.Use(fiberLogger.New())
-	app.Use(cors.New(cors.Config{
-		AllowOrigins: cfg.CorsOrigins,
-		AllowMethods: "GET,POST,PUT,DELETE,OPTIONS",
-		AllowHeaders: "Origin,Content-Type,Accept,Authorization",
+	// Global middleware
+	app.Use(middleware.RecoverMiddleware(logger))
+	app.Use(middleware.NewRequestLogger(middleware.RequestLoggerConfig{
+		Logger: logger,
+	}))
+	app.Use(middleware.NewCORSMiddleware(middleware.CORSConfig{
+		AllowedOrigins: []string{cfg.CorsOrigins},
 	}))
 
-	// Health check endpoint
-	app.Get("/health", func(c *fiber.Ctx) error {
-		return c.JSON(fiber.Map{
-			"status":  "ok",
-			"service": "osrs-ge-tracker",
-		})
-	})
+	// Health check endpoints (no rate limiting)
+	app.Get("/health", healthHandler.Health)
+	app.Get("/health/live", healthHandler.Liveness)
+	app.Get("/health/ready", healthHandler.Readiness)
 
-	// API routes
-	api := app.Group("/api/v1")
+	// API routes with rate limiting
+	api := app.Group("/api/v1", middleware.NewAPIRateLimiter())
 
-	// TODO: Register route handlers here
+	// Root API endpoint
 	api.Get("/", func(c *fiber.Ctx) error {
 		return c.JSON(fiber.Map{
 			"message": "OSRS Grand Exchange Tracker API v1",
+			"version": "1.0.0",
+			"docs":    "/api/v1/docs",
 		})
 	})
+
+	// Item routes
+	items := api.Group("/items")
+	items.Get("/", itemHandler.ListItems)           // GET /api/v1/items
+	items.Get("/search", itemHandler.SearchItems)   // GET /api/v1/items/search?q=...
+	items.Get("/count", itemHandler.GetItemCount)   // GET /api/v1/items/count
+	items.Get("/:id", itemHandler.GetItemByID)      // GET /api/v1/items/:id
+
+	// Price routes
+	prices := api.Group("/prices")
+	prices.Get("/current", priceHandler.GetAllCurrentPrices)                 // GET /api/v1/prices/current
+	prices.Get("/current/batch", priceHandler.GetBatchCurrentPrices)         // GET /api/v1/prices/current/batch?ids=1,2,3
+	prices.Get("/current/:id", priceHandler.GetCurrentPrice)                 // GET /api/v1/prices/current/:id
+	prices.Get("/history/:id", priceHandler.GetPriceHistory)                 // GET /api/v1/prices/history/:id?period=7d&sample=150
+
+	// Admin/sync routes (with stricter rate limiting)
+	sync := api.Group("/sync", middleware.NewSyncRateLimiter())
+	sync.Post("/prices", priceHandler.SyncCurrentPrices)                     // POST /api/v1/sync/prices
+	sync.Post("/prices/history/:id", priceHandler.SyncHistoricalPrices)      // POST /api/v1/sync/prices/history/:id?full=true
+
+	// Initialize and start scheduler
+	sched := scheduler.NewScheduler(priceService, itemService, logger)
+	if err := sched.Start(); err != nil {
+		logger.Fatalf("Failed to start scheduler: %v", err)
+	}
+	defer sched.Stop()
 
 	// Start server in a goroutine
 	go func() {
@@ -106,18 +150,4 @@ func main() {
 	}
 
 	logger.Info("Server stopped")
-}
-
-func customErrorHandler(c *fiber.Ctx, err error) error {
-	code := fiber.StatusInternalServerError
-	message := "Internal Server Error"
-
-	if e, ok := err.(*fiber.Error); ok {
-		code = e.Code
-		message = e.Message
-	}
-
-	return c.Status(code).JSON(fiber.Map{
-		"error": message,
-	})
 }

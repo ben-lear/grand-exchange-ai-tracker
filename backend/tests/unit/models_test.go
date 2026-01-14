@@ -55,10 +55,11 @@ func TestTimePeriod_Duration(t *testing.T) {
 func TestDefaultItemListParams(t *testing.T) {
 	params := models.DefaultItemListParams()
 
+	assert.Equal(t, 1, params.Page)
 	assert.Equal(t, 100, params.Limit)
 	assert.Equal(t, 0, params.Offset)
 	assert.Equal(t, "name", params.SortBy)
-	assert.Equal(t, "asc", params.SortOrder)
+	assert.Equal(t, "asc", params.Order)
 	assert.Nil(t, params.Members)
 }
 

@@ -48,7 +48,7 @@ func (r *itemRepository) GetAll(ctx context.Context, params models.ItemListParam
 	if sortBy == "" {
 		sortBy = "name"
 	}
-	sortOrder := params.SortOrder
+	sortOrder := params.Order
 	if sortOrder == "" {
 		sortOrder = "asc"
 	}

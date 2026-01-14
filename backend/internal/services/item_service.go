@@ -21,16 +21,20 @@ type itemService struct {
 // NewItemService creates a new item service
 func NewItemService(
 	itemRepo repository.ItemRepository,
-	osrsClient OSRSClient,
 	cache CacheService,
 	logger *zap.SugaredLogger,
 ) ItemService {
 	return &itemService{
 		itemRepo:   itemRepo,
-		osrsClient: osrsClient,
+		osrsClient: NewOSRSClient(logger),
 		cache:      cache,
 		logger:     logger,
 	}
+}
+
+// ListItems returns all items with pagination (alias for GetAllItems)
+func (s *itemService) ListItems(ctx context.Context, params models.ItemListParams) ([]models.Item, int64, error) {
+	return s.GetAllItems(ctx, params)
 }
 
 // GetAllItems returns all items with pagination
@@ -67,9 +71,36 @@ func (s *itemService) GetItemByItemID(ctx context.Context, itemID int) (*models.
 	return dbItem, nil
 }
 
+// GetItemWithPrice returns an item with its current price
+func (s *itemService) GetItemWithPrice(ctx context.Context, itemID int) (*models.ItemWithCurrentPrice, error) {
+	// Get item
+	item, err := s.GetItemByItemID(ctx, itemID)
+	if err != nil {
+		return nil, err
+	}
+
+	result := &models.ItemWithCurrentPrice{
+		Item: *item,
+	}
+
+	return result, nil
+}
+
+// GetItemCount returns the count of items
+func (s *itemService) GetItemCount(ctx context.Context, members *bool) (int64, error) {
+	params := models.ItemListParams{
+		Members: members,
+		Limit:   1,
+		Offset:  0,
+	}
+	_, count, err := s.itemRepo.GetAll(ctx, params)
+	return count, err
+}
+
 // SearchItems searches for items by name
-func (s *itemService) SearchItems(ctx context.Context, params models.ItemSearchParams) ([]models.Item, int64, error) {
-	return s.itemRepo.Search(ctx, params)
+func (s *itemService) SearchItems(ctx context.Context, params models.ItemSearchParams) ([]models.Item, error) {
+	items, _, err := s.itemRepo.Search(ctx, params)
+	return items, err
 }
 
 // UpsertItem creates or updates an item
