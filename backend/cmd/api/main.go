@@ -65,14 +65,14 @@ func main() {
 	// Health check endpoint
 	app.Get("/health", func(c *fiber.Ctx) error {
 		return c.JSON(fiber.Map{
-			"status": "ok",
+			"status":  "ok",
 			"service": "osrs-ge-tracker",
 		})
 	})
 
 	// API routes
 	api := app.Group("/api/v1")
-	
+
 	// TODO: Register route handlers here
 	api.Get("/", func(c *fiber.Ctx) error {
 		return c.JSON(fiber.Map{

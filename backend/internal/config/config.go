@@ -33,9 +33,9 @@ type Config struct {
 	OSRSUserAgent   string
 
 	// Scheduler
-	PricePollInterval     string // Default: "*/1 * * * *" (every 1 minute)
-	HistoricalSyncCron    string // Default: "0 * * * *" (every hour)
-	FullHistoricalCron    string // Default: "0 0 * * *" (daily)
+	PricePollInterval  string // Default: "*/1 * * * *" (every 1 minute)
+	HistoricalSyncCron string // Default: "0 * * * *" (every hour)
+	FullHistoricalCron string // Default: "0 0 * * *" (daily)
 }
 
 func LoadConfig() (*Config, error) {
@@ -117,7 +117,7 @@ func setDefaults() {
 	viper.SetDefault("OSRS_USER_AGENT", "OSRS-GE-Tracker/1.0")
 
 	// Scheduler defaults
-	viper.SetDefault("PRICE_POLL_INTERVAL", "*/1 * * * *")     // Every 1 minute
-	viper.SetDefault("HISTORICAL_SYNC_CRON", "0 * * * *")      // Every hour
-	viper.SetDefault("FULL_HISTORICAL_CRON", "0 0 * * *")      // Daily at midnight
+	viper.SetDefault("PRICE_POLL_INTERVAL", "*/1 * * * *") // Every 1 minute
+	viper.SetDefault("HISTORICAL_SYNC_CRON", "0 * * * *")  // Every hour
+	viper.SetDefault("FULL_HISTORICAL_CRON", "0 0 * * *")  // Daily at midnight
 }
