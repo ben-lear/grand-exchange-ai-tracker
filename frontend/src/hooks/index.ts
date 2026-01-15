@@ -19,7 +19,6 @@ export {
   useBatchCurrentPrices,
   usePriceHistory,
   useSyncCurrentPrices,
-  useSyncHistoricalPrices,
   usePrefetchPriceHistory,
   priceKeys,
 } from './usePrices';

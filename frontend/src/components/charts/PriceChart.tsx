@@ -1,16 +1,15 @@
 /**
  * PriceChart - Interactive price chart for OSRS items
  * Features:
- * - Time-series line chart with Recharts
+ * - Dual-line time-series chart showing high and low prices
+ * - Spread area visualization between lines
  * - Responsive design
  * - Custom tooltip
- * - Gradient fill
  * - Price trend indicators
  */
 
 import { useMemo } from 'react';
 import {
-  LineChart,
   Line,
   XAxis,
   YAxis,
@@ -18,6 +17,8 @@ import {
   Tooltip,
   ResponsiveContainer,
   ReferenceLine,
+  Area,
+  ComposedChart,
 } from 'recharts';
 import { format } from 'date-fns';
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
@@ -33,7 +34,7 @@ export interface PriceChartProps {
   period: TimePeriod;
   itemName?: string;
   height?: number;
-  showVolume?: boolean;
+  showDualLines?: boolean; // Toggle between dual-line and single-line mode
 }
 
 export function PriceChart({
@@ -43,18 +44,31 @@ export function PriceChart({
   period,
   itemName,
   height = 400,
-  showVolume = false,
+  showDualLines = true, // Default to dual-line mode
 }: PriceChartProps) {
   // Process data for chart
   const chartData = useMemo(() => {
     if (!data || data.length === 0) return [];
 
     return data
-      .map((point, index) => ({
-        ...point,
-        timestamp: new Date(point.timestamp).getTime(),
-        previousPrice: index > 0 ? data[index - 1].price : null,
-      }))
+      .map((point, index) => {
+        // Use avgHighPrice/avgLowPrice if available, fallback to highPrice/lowPrice
+        const highPrice = point.avgHighPrice ?? point.highPrice ?? null;
+        const lowPrice = point.avgLowPrice ?? point.lowPrice ?? null;
+        const midPrice = highPrice && lowPrice 
+          ? (highPrice + lowPrice) / 2 
+          : highPrice || lowPrice || point.price || 0;
+        
+        return {
+          ...point,
+          timestamp: typeof point.timestamp === 'number' ? point.timestamp : new Date(point.timestamp).getTime(),
+          highPrice,
+          lowPrice,
+          midPrice,
+          previousPrice: index > 0 ? (data[index - 1].price || 0) : null,
+        };
+      })
+      .filter(point => point.timestamp > 0) // Filter out invalid timestamps
       .sort((a, b) => a.timestamp - b.timestamp);
   }, [data]);
 
@@ -62,7 +76,9 @@ export function PriceChart({
   const stats = useMemo(() => {
     if (chartData.length === 0) return null;
 
-    const prices = chartData.map(d => d.price);
+    const prices = chartData.map(d => d.midPrice || d.price || 0).filter(p => p > 0);
+    if (prices.length === 0) return null;
+    
     const firstPrice = prices[0];
     const lastPrice = prices[prices.length - 1];
     const minPrice = Math.min(...prices);
@@ -87,8 +103,11 @@ export function PriceChart({
     const date = new Date(timestamp);
     
     switch (period) {
+      case '1h':
+      case '12h':
       case '24h':
         return format(date, 'HH:mm');
+      case '3d':
       case '7d':
       case '30d':
         return format(date, 'MMM d');
@@ -211,7 +230,7 @@ export function PriceChart({
       {/* Chart */}
       <div style={{ height }}>
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart
+          <ComposedChart
             data={chartData}
             margin={{
               top: 5,
@@ -256,34 +275,74 @@ export function PriceChart({
               />
             )}
             
-            {/* Price line */}
-            <Line
-              type="monotone"
-              dataKey="price"
-              stroke={lineColor}
-              strokeWidth={2}
-              dot={false}
-              activeDot={{ 
-                r: 4, 
-                fill: lineColor,
-                stroke: '#fff',
-                strokeWidth: 2,
-              }}
-            />
-            
-            {/* Volume line if enabled */}
-            {showVolume && (
-              <Line
+            {/* Spread area (if dual-line mode) */}
+            {showDualLines && (
+              <Area
                 type="monotone"
-                dataKey="volume"
-                stroke="#9ca3af"
-                strokeWidth={1}
-                dot={false}
-                yAxisId="volume"
-                opacity={0.6}
+                dataKey="highPrice"
+                stroke="none"
+                fill="#10b981"
+                fillOpacity={0.1}
               />
             )}
-          </LineChart>
+            
+            {/* High price line (buy price) */}
+            {showDualLines && (
+              <Line
+                type="monotone"
+                dataKey="highPrice"
+                stroke="#10b981"
+                strokeWidth={2}
+                name="Buy Price"
+                dot={false}
+                activeDot={{ 
+                  r: 4, 
+                  fill: '#10b981',
+                  stroke: '#fff',
+                  strokeWidth: 2,
+                }}
+                connectNulls
+              />
+            )}
+            
+            {/* Low price line (sell price) */}
+            {showDualLines && (
+              <Line
+                type="monotone"
+                dataKey="lowPrice"
+                stroke="#f97316"
+                strokeWidth={2}
+                name="Sell Price"
+                dot={false}
+                activeDot={{ 
+                  r: 4, 
+                  fill: '#f97316',
+                  stroke: '#fff',
+                  strokeWidth: 2,
+                }}
+                connectNulls
+              />
+            )}
+            
+            {/* Single mid-price line (fallback mode) */}
+            {!showDualLines && (
+              <Line
+                type="monotone"
+                dataKey="midPrice"
+                stroke={lineColor}
+                strokeWidth={2}
+                name="Price"
+                dot={false}
+                activeDot={{ 
+                  r: 4, 
+                  fill: lineColor,
+                  stroke: '#fff',
+                  strokeWidth: 2,
+                }}
+                connectNulls
+              />
+            )}
+          </ComposedChart>
         </ResponsiveContainer>
       </div>
     </div>

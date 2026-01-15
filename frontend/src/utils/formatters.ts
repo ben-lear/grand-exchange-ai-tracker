@@ -138,3 +138,107 @@ export const formatCompact = (value: number): string => {
     maximumFractionDigits: 1,
   }).format(value);
 };
+/**
+ * Format the spread/margin between high and low prices
+ * @param highPrice - The high (buy) price
+ * @param lowPrice - The low (sell) price
+ * @returns Formatted spread string
+ * 
+ * @example
+ * formatSpread(150, 145) // "5 GP"
+ * formatSpread(null, 145) // "—"
+ */
+export const formatSpread = (
+  highPrice: number | null | undefined,
+  lowPrice: number | null | undefined
+): string => {
+  if (!highPrice || !lowPrice) return '—';
+  
+  const spread = highPrice - lowPrice;
+  if (spread < 0) return '—'; // Invalid data
+  
+  return `${formatGP(spread)} GP`;
+};
+
+/**
+ * Calculate and format the margin percentage between high and low prices
+ * Shows potential profit percentage for flipping
+ * @param highPrice - The high (buy) price
+ * @param lowPrice - The low (sell) price
+ * @returns Formatted margin percentage
+ * 
+ * @example
+ * formatMarginPercent(150, 145) // "3.45%"
+ * formatMarginPercent(null, 145) // "—"
+ */
+export const formatMarginPercent = (
+  highPrice: number | null | undefined,
+  lowPrice: number | null | undefined
+): string => {
+  if (!highPrice || !lowPrice || lowPrice === 0) return '—';
+  
+  const spread = highPrice - lowPrice;
+  if (spread < 0) return '—'; // Invalid data
+  
+  const marginPercent = (spread / lowPrice) * 100;
+  return `${marginPercent.toFixed(2)}%`;
+};
+
+/**
+ * Format a timestamp as a relative time string
+ * @param timestamp - ISO timestamp string or Date
+ * @returns Formatted relative time (e.g., "5 minutes ago", "2 hours ago")
+ * 
+ * @example
+ * formatRelativeTime("2026-01-14T12:00:00Z") // "5 minutes ago"
+ */
+export const formatRelativeTime = (timestamp: string | Date | null | undefined): string => {
+  if (!timestamp) return '—';
+  
+  const date = typeof timestamp === 'string' ? new Date(timestamp) : timestamp;
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffSeconds = Math.floor(diffMs / 1000);
+  
+  if (diffSeconds < 60) return 'just now';
+  if (diffSeconds < 3600) {
+    const minutes = Math.floor(diffSeconds / 60);
+    return `${minutes} minute${minutes !== 1 ? 's' : ''} ago`;
+  }
+  if (diffSeconds < 86400) {
+    const hours = Math.floor(diffSeconds / 3600);
+    return `${hours} hour${hours !== 1 ? 's' : ''} ago`;
+  }
+  if (diffSeconds < 604800) {
+    const days = Math.floor(diffSeconds / 86400);
+    return `${days} day${days !== 1 ? 's' : ''} ago`;
+  }
+  
+  return date.toLocaleDateString();
+};
+
+/**
+ * Calculate profit potential for flipping an item
+ * @param highPrice - The high (buy) price
+ * @param lowPrice - The low (sell) price
+ * @param quantity - Number of items (default: 1)
+ * @returns Object with profit details
+ * 
+ * @example
+ * calculateFlipProfit(150, 145, 100) // { profit: 500, margin: 3.45 }
+ */
+export const calculateFlipProfit = (
+  highPrice: number | null | undefined,
+  lowPrice: number | null | undefined,
+  quantity: number = 1
+): { profit: number; margin: number } | null => {
+  if (!highPrice || !lowPrice || lowPrice === 0) return null;
+  
+  const spread = highPrice - lowPrice;
+  if (spread < 0) return null;
+  
+  const profit = spread * quantity;
+  const margin = (spread / lowPrice) * 100;
+  
+  return { profit, margin };
+};

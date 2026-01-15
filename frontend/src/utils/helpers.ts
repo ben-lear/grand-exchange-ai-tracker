@@ -82,6 +82,11 @@ export const sortPrices = (
     const aValue = a[sortBy];
     const bValue = b[sortBy];
     
+    // Handle null/undefined values
+    if (aValue == null && bValue == null) return 0;
+    if (aValue == null) return 1;
+    if (bValue == null) return -1;
+    
     if (aValue === bValue) return 0;
     
     const comparison = aValue < bValue ? -1 : 1;
@@ -100,21 +105,16 @@ export const filterPrices = (
   filters: {
     minPrice?: number;
     maxPrice?: number;
-    minVolume?: number;
-    trend?: PriceTrend;
   }
 ): CurrentPrice[] => {
   return prices.filter((price) => {
-    if (filters.minPrice !== undefined && price.price < filters.minPrice) {
+    // Use highPrice for filtering, fallback to lowPrice
+    const priceValue = price.highPrice ?? price.lowPrice;
+    
+    if (filters.minPrice !== undefined && priceValue != null && priceValue < filters.minPrice) {
       return false;
     }
-    if (filters.maxPrice !== undefined && price.price > filters.maxPrice) {
-      return false;
-    }
-    if (filters.minVolume !== undefined && price.volume < filters.minVolume) {
-      return false;
-    }
-    if (filters.trend !== undefined && price.trend !== filters.trend) {
+    if (filters.maxPrice !== undefined && priceValue != null && priceValue > filters.maxPrice) {
       return false;
     }
     return true;

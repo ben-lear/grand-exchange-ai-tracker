@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Column definitions for the Items data table
  * Uses TanStack Table v8 column definitions
  */
@@ -113,24 +113,6 @@ export const columns = [
       size: 120,
     }
   ),
-
-  // Volume column
-  columnHelper.accessor((row) => row.currentPrice?.volume, {
-    id: 'volume',
-    header: 'Volume',
-    cell: (info) => {
-      const value = info.getValue();
-      return value ? (
-        <span className="font-mono text-gray-700 dark:text-gray-300">
-          {formatNumber(value)}
-        </span>
-      ) : (
-        <span className="text-gray-400">—</span>
-      );
-    },
-    enableSorting: true,
-    size: 100,
-  }),
 
   // Members column
   columnHelper.accessor('members', {

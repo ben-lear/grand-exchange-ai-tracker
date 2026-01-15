@@ -21,7 +21,7 @@ function convertToCSV(data: ItemWithPrice[]): string {
     'Name',
     'High Price',
     'Low Price',
-    'Volume',
+
     'Members',
     'Buy Limit',
     'High Alch',
@@ -34,7 +34,6 @@ function convertToCSV(data: ItemWithPrice[]): string {
     `"${item.name}"`, // Wrap in quotes to handle commas
     item.currentPrice?.highPrice ?? '',
     item.currentPrice?.lowPrice ?? '',
-    item.currentPrice?.volume ?? '',
     item.members ? 'Yes' : 'No',
     item.buyLimit ?? '',
     item.highAlch ?? '',
@@ -66,8 +65,7 @@ function convertToJSON(data: ItemWithPrice[]): string {
       ? {
           highPrice: item.currentPrice.highPrice,
           lowPrice: item.currentPrice.lowPrice,
-          volume: item.currentPrice.volume,
-          lastUpdated: item.currentPrice.lastUpdated,
+          updatedAt: item.currentPrice.updatedAt,
         }
       : null,
   }));

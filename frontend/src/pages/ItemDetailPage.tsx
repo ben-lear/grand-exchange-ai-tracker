@@ -8,7 +8,7 @@ import { ArrowLeft, TrendingUp } from 'lucide-react';
 import { PriceChart, TimePeriodSelector } from '@/components/charts';
 import { LoadingSpinner, ErrorDisplay } from '@/components/common';
 import { useItem, useCurrentPrice, usePriceHistory } from '@/hooks';
-import { formatGold } from '@/utils/formatters';
+import { formatGold, formatSpread, formatMarginPercent, formatRelativeTime } from '@/utils/formatters';
 import type { TimePeriod } from '@/types';
 
 /**
@@ -116,26 +116,36 @@ export const ItemDetailPage: React.FC = () => {
                 Current Prices
               </h2>
               <p className="text-xs text-gray-500 mt-1">
-                Updated: {new Date(currentPrice.lastUpdated).toLocaleString()}
+                Updated: {formatRelativeTime(currentPrice.updatedAt)}
               </p>
             </div>
             <TrendingUp className="w-5 h-5 text-green-500" />
           </div>
           <div className="mt-4 grid grid-cols-1 md:grid-cols-4 gap-6">
             <div>
-              <div className="text-sm text-gray-600 dark:text-gray-400">High Price</div>
+              <div className="text-sm text-gray-600 dark:text-gray-400">Buy Price (High)</div>
               <div className="text-2xl font-bold text-green-600 dark:text-green-400">
                 {currentPrice.highPrice ? formatGold(currentPrice.highPrice) : '—'}
               </div>
+              {currentPrice.highPriceTime && (
+                <div className="text-xs text-gray-500 mt-1">
+                  {formatRelativeTime(currentPrice.highPriceTime)}
+                </div>
+              )}
             </div>
             <div>
-              <div className="text-sm text-gray-600 dark:text-gray-400">Low Price</div>
+              <div className="text-sm text-gray-600 dark:text-gray-400">Sell Price (Low)</div>
               <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">
                 {currentPrice.lowPrice ? formatGold(currentPrice.lowPrice) : '—'}
               </div>
+              {currentPrice.lowPriceTime && (
+                <div className="text-xs text-gray-500 mt-1">
+                  {formatRelativeTime(currentPrice.lowPriceTime)}
+                </div>
+              )}
             </div>
             <div>
-              <div className="text-sm text-gray-600 dark:text-gray-400">Average</div>
+              <div className="text-sm text-gray-600 dark:text-gray-400">Mid Price</div>
               <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
                 {currentPrice.highPrice && currentPrice.lowPrice 
                   ? formatGold(Math.round((currentPrice.highPrice + currentPrice.lowPrice) / 2))
@@ -146,11 +156,17 @@ export const ItemDetailPage: React.FC = () => {
                       : '—'
                 }
               </div>
+              <div className="text-xs text-gray-500 mt-1">
+                Average of buy/sell
+              </div>
             </div>
             <div>
-              <div className="text-sm text-gray-600 dark:text-gray-400">Volume</div>
-              <div className="text-2xl font-bold text-gray-900 dark:text-gray-100 bg-gray-100 dark:bg-gray-800 rounded px-2 py-1 inline-block mt-1">
-                {currentPrice.volume ? currentPrice.volume.toLocaleString() : '—'}
+              <div className="text-sm text-gray-600 dark:text-gray-400">Flip Margin</div>
+              <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+                {formatSpread(currentPrice.highPrice, currentPrice.lowPrice)}
+              </div>
+              <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                {formatMarginPercent(currentPrice.highPrice, currentPrice.lowPrice)} profit
               </div>
             </div>
           </div>

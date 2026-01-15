@@ -6,7 +6,6 @@ import apiClient from './client';
 import type {
   CurrentPrice,
   PriceHistory,
-  BatchPriceRequest,
   BatchPriceResponse,
   TimePeriod,
 } from '../types';
@@ -30,6 +29,7 @@ export const fetchCurrentPrice = async (itemId: number): Promise<CurrentPrice> =
 /**
  * Fetch current prices for multiple items (batch request)
  * Maximum 100 items per request
+ * Backend uses GET with query params: /prices/current/batch?ids=1,2,3
  */
 export const fetchBatchCurrentPrices = async (
   itemIds: number[]
@@ -38,24 +38,34 @@ export const fetchBatchCurrentPrices = async (
     throw new Error('Cannot request more than 100 items at once');
   }
   
-  const request: BatchPriceRequest = { itemIds };
-  const response = await apiClient.post<BatchPriceResponse>('/prices/batch', request);
+  const idsParam = itemIds.join(',');
+  const response = await apiClient.get<BatchPriceResponse>(
+    `/prices/current/batch?ids=${idsParam}`
+  );
   return response.data;
 };
 
 /**
  * Fetch historical price data for an item
+ * Backend returns timeseries with avgHighPrice, avgLowPrice, and volumes
  */
 export const fetchPriceHistory = async (
   itemId: number,
   period: TimePeriod = '7d',
-  sample?: boolean
+  sample?: number
 ): Promise<PriceHistory> => {
+  const params: Record<string, string | number> = { period };
+  if (sample !== undefined) {
+    params.sample = sample;
+  }
+  
   const response = await apiClient.get<{ 
     data: Array<{
       timestamp: string;
-      highPrice: number;
-      lowPrice: number;
+      avgHighPrice?: number | null;
+      avgLowPrice?: number | null;
+      highPriceVolume?: number;
+      lowPriceVolume?: number;
     }>; 
     meta: { 
       item_id: number;
@@ -65,29 +75,41 @@ export const fetchPriceHistory = async (
       last_date?: string;
       sampled?: boolean;
     } 
-  }>(`/prices/history/${itemId}`, {
-    params: { period, sample },
-  });
+  }>(`/prices/history/${itemId}`, { params });
   
   // Transform backend response to match frontend PriceHistory interface
   const backendData = response.data.data;
   
   // Convert backend format to frontend format
-  const data = backendData.map(point => ({
-    timestamp: new Date(point.timestamp).getTime(), // Convert to milliseconds
-    price: point.highPrice || point.lowPrice || 0, // Use high price as primary
-    volume: undefined, // Backend doesn't provide volume in history
-  }));
+  const data = backendData.map(point => {
+    const avgHigh = point.avgHighPrice ?? 0;
+    const avgLow = point.avgLowPrice ?? 0;
+    const avgPrice = avgHigh && avgLow ? (avgHigh + avgLow) / 2 : avgHigh || avgLow || 0;
+    const totalVolume = (point.highPriceVolume ?? 0) + (point.lowPriceVolume ?? 0);
+    
+    return {
+      timestamp: new Date(point.timestamp).getTime(),
+      avgHighPrice: point.avgHighPrice,
+      avgLowPrice: point.avgLowPrice,
+      highPrice: point.avgHighPrice, // Alias for compatibility
+      lowPrice: point.avgLowPrice,   // Alias for compatibility
+      highPriceVolume: point.highPriceVolume,
+      lowPriceVolume: point.lowPriceVolume,
+      price: avgPrice, // Computed average for single-line charts
+      volume: totalVolume, // Computed total volume
+    };
+  });
   
   // Calculate summary statistics from the data
-  const prices = data.map(point => point.price || 0);
+  const prices = data.map(point => point.price || 0).filter(p => p > 0);
   const avgPrice = prices.length > 0 ? prices.reduce((a, b) => a + b, 0) / prices.length : 0;
   const maxPrice = prices.length > 0 ? Math.max(...prices) : 0;
-  const minPrice = prices.length > 0 ? Math.min(...prices.filter(p => p > 0)) : 0;
+  const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
   const firstPrice = prices[0] || 0;
   const lastPrice = prices[prices.length - 1] || 0;
   const priceChange = lastPrice - firstPrice;
   const priceChangePercent = firstPrice > 0 ? (priceChange / firstPrice) * 100 : 0;
+  const totalVolume = data.reduce((sum, point) => sum + (point.volume || 0), 0);
   
   return {
     itemId: response.data.meta.item_id,
@@ -97,7 +119,7 @@ export const fetchPriceHistory = async (
       avgPrice,
       maxPrice,
       minPrice,
-      totalVolume: 0, // Backend doesn't provide volume in history
+      totalVolume,
       priceChange,
       priceChangePercent,
     },
@@ -106,23 +128,11 @@ export const fetchPriceHistory = async (
 
 /**
  * Manually trigger a sync of current prices (admin endpoint)
+ * Backend endpoint: POST /api/v1/sync/prices
  */
-export const syncCurrentPrices = async (): Promise<{ message: string; count: number }> => {
-  const response = await apiClient.post<{ message: string; count: number }>(
-    '/prices/sync/current'
-  );
-  return response.data;
-};
-
-/**
- * Manually trigger a sync of historical prices (admin endpoint)
- */
-export const syncHistoricalPrices = async (
-  itemIds?: number[]
-): Promise<{ message: string; count: number }> => {
-  const response = await apiClient.post<{ message: string; count: number }>(
-    '/prices/sync/historical',
-    { itemIds }
+export const syncCurrentPrices = async (): Promise<{ message: string }> => {
+  const response = await apiClient.post<{ message: string }>(
+    '/sync/prices'
   );
   return response.data;
 };

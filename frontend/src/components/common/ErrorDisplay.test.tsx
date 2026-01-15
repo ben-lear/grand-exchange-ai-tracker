@@ -7,6 +7,15 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { ErrorDisplay } from './ErrorDisplay';
 import type { ApiError } from '../../types';
 
+// Helper to create ApiError objects with required Error properties
+const createApiError = (error: string, status: number, extras?: Partial<ApiError>): ApiError => ({
+  name: 'ApiError',
+  message: error,
+  error,
+  status,
+  ...extras,
+});
+
 describe('ErrorDisplay', () => {
   describe('Basic Rendering', () => {
     it('should render nothing when no error provided', () => {
@@ -26,10 +35,7 @@ describe('ErrorDisplay', () => {
     });
 
     it('should render ApiError object', () => {
-      const apiError: ApiError = {
-        error: 'API request failed',
-        status: 500,
-      };
+      const apiError: ApiError = createApiError('API request failed', 500);
       render(<ErrorDisplay error={apiError} />);
       expect(screen.getByText('API request failed')).toBeInTheDocument();
     });
@@ -52,10 +58,7 @@ describe('ErrorDisplay', () => {
     });
 
     it('should display status code with ApiError', () => {
-      const apiError: ApiError = {
-        error: 'Not found',
-        status: 404,
-      };
+      const apiError: ApiError = createApiError('Not found', 404);
       render(<ErrorDisplay error={apiError} />);
       expect(screen.getByText(/404/)).toBeInTheDocument();
     });
@@ -141,21 +144,13 @@ describe('ErrorDisplay', () => {
 
   describe('ApiError Details', () => {
     it('should handle ApiError with request ID', () => {
-      const apiError: ApiError = {
-        error: 'Server error',
-        status: 500,
-        requestId: 'req_12345',
-      };
+      const apiError: ApiError = createApiError('Server error', 500, { requestId: 'req_12345' });
       render(<ErrorDisplay error={apiError} />);
       expect(screen.getByText('Server error')).toBeInTheDocument();
     });
 
     it('should handle ApiError with details', () => {
-      const apiError: ApiError = {
-        error: 'Validation failed',
-        status: 400,
-        details: { field: 'email', message: 'Invalid email' },
-      };
+      const apiError: ApiError = createApiError('Validation failed', 400, { details: { field: 'email', message: 'Invalid email' } });
       render(<ErrorDisplay error={apiError} />);
       expect(screen.getByText('Validation failed')).toBeInTheDocument();
     });
@@ -170,10 +165,7 @@ describe('ErrorDisplay', () => {
     });
 
     it('should handle connection refused error', () => {
-      const apiError: ApiError = {
-        error: 'Connection refused',
-        status: 0,
-      };
+      const apiError: ApiError = createApiError('Connection refused', 0);
       render(<ErrorDisplay error={apiError} />);
       expect(screen.getByText('Connection refused')).toBeInTheDocument();
     });

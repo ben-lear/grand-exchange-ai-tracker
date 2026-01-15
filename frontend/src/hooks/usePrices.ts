@@ -9,7 +9,6 @@ import {
   fetchBatchCurrentPrices,
   fetchPriceHistory,
   syncCurrentPrices,
-  syncHistoricalPrices,
 } from '../api';
 import type {
   CurrentPrice,
@@ -29,7 +28,7 @@ export const priceKeys = {
   currentOne: (itemId: number) => [...priceKeys.current(), itemId] as const,
   currentBatch: (itemIds: number[]) => [...priceKeys.current(), 'batch', itemIds] as const,
   history: () => [...priceKeys.all, 'history'] as const,
-  historyOne: (itemId: number, period: TimePeriod, sample?: boolean) => 
+  historyOne: (itemId: number, period: TimePeriod, sample?: number) => 
     [...priceKeys.history(), itemId, period, sample] as const,
 };
 
@@ -89,7 +88,7 @@ export const useBatchCurrentPrices = (
 export const usePriceHistory = (
   itemId: number,
   period: TimePeriod = '7d',
-  sample?: boolean,
+  sample?: number,
   options?: Omit<UseQueryOptions<PriceHistory, ApiError>, 'queryKey' | 'queryFn'>
 ) => {
   return useQuery<PriceHistory, ApiError>({
@@ -117,27 +116,12 @@ export const useSyncCurrentPrices = () => {
 };
 
 /**
- * Hook to manually sync historical prices (admin)
- */
-export const useSyncHistoricalPrices = () => {
-  const queryClient = useQueryClient();
-  
-  return useMutation({
-    mutationFn: (itemIds?: number[]) => syncHistoricalPrices(itemIds),
-    onSuccess: () => {
-      // Invalidate all historical price queries
-      queryClient.invalidateQueries({ queryKey: priceKeys.history() });
-    },
-  });
-};
-
-/**
  * Hook to prefetch price history (useful for chart loading preparation)
  */
 export const usePrefetchPriceHistory = () => {
   const queryClient = useQueryClient();
   
-  return (itemId: number, period: TimePeriod = '7d', sample?: boolean) => {
+  return (itemId: number, period: TimePeriod = '7d', sample?: number) => {
     queryClient.prefetchQuery({
       queryKey: priceKeys.historyOne(itemId, period, sample),
       queryFn: () => fetchPriceHistory(itemId, period, sample),

@@ -38,8 +38,7 @@ export const DashboardPage: React.FC = () => {
     members: filters.members !== 'all' ? filters.members === 'members' : undefined,
     minPrice: filters.priceMin,
     maxPrice: filters.priceMax,
-    minVolume: filters.volumeMin,
-    maxVolume: filters.volumeMax,
+    // Note: Volume filters removed - volume not available in current prices
   }), [currentPage, pageSize, searchQuery, filters]);
 
   // Data fetching
@@ -67,12 +66,12 @@ export const DashboardPage: React.FC = () => {
     }));
   }, [itemsResponse?.data, pricesData]);
 
-  // Filter data based on price/volume filters (client-side filtering)
+  // Filter data based on price filters (client-side filtering)
   const filteredItems = useMemo(() => {
     return itemsWithPrices.filter(item => {
       const price = item.currentPrice;
       
-      // Price filters
+      // Price filters - use high price as reference
       if (filters.priceMin && (!price?.highPrice || price.highPrice < filters.priceMin)) {
         return false;
       }
@@ -80,13 +79,8 @@ export const DashboardPage: React.FC = () => {
         return false;
       }
       
-      // Volume filters
-      if (filters.volumeMin && (!price?.volume || price.volume < filters.volumeMin)) {
-        return false;
-      }
-      if (filters.volumeMax && (!price?.volume || price.volume > filters.volumeMax)) {
-        return false;
-      }
+      // Note: Volume filters removed - volume not available in current price snapshots
+      // Volume is only available in timeseries data
       
       return true;
     });

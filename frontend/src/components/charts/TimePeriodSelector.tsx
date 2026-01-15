@@ -16,7 +16,10 @@ export interface TimePeriodSelectorProps {
 }
 
 const PERIOD_OPTIONS = [
+  { value: '1h' as TimePeriod, label: '1H', description: 'Last hour' },
+  { value: '12h' as TimePeriod, label: '12H', description: 'Last 12 hours' },
   { value: '24h' as TimePeriod, label: '24H', description: 'Last 24 hours' },
+  { value: '3d' as TimePeriod, label: '3D', description: 'Last 3 days' },
   { value: '7d' as TimePeriod, label: '7D', description: 'Last 7 days' },
   { value: '30d' as TimePeriod, label: '30D', description: 'Last 30 days' },
   { value: '90d' as TimePeriod, label: '90D', description: 'Last 90 days' },

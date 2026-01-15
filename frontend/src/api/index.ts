@@ -21,5 +21,4 @@ export {
   fetchBatchCurrentPrices,
   fetchPriceHistory,
   syncCurrentPrices,
-  syncHistoricalPrices,
 } from './prices';

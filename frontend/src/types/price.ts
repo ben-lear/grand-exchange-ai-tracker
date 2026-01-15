@@ -3,52 +3,61 @@
  */
 
 /**
- * Trend direction for price changes
+ * Trend direction for price changes (computed on frontend)
  */
 export type PriceTrend = 'positive' | 'negative' | 'neutral';
 
 /**
- * Current price data for an item
+ * Current price data for an item from the Wiki API
+ * Represents instant-buy (high) and instant-sell (low) prices
  */
 export interface CurrentPrice {
-  /** Database primary key */
-  id: number;
   /** OSRS item ID */
   itemId: number;
-  /** Current price in GP */
-  price: number;
-  /** High price in GP */
-  highPrice: number;
-  /** Low price in GP */
-  lowPrice: number;
-  /** Trading volume */
-  volume: number;
-  /** Price change over 24 hours in GP */
-  priceChange24h: number;
-  /** Price change percentage over 24 hours */
-  priceChangePercent24h: number;
-  /** Trend indicator */
-  trend: PriceTrend;
-  /** When this price was last updated */
-  lastUpdated: string;
-  /** When this record was created */
-  createdAt: string;
-  /** When this record was last modified */
+  /** Instant-buy price in GP (nullable if no recent trades) */
+  highPrice: number | null;
+  /** Timestamp of the high price observation */
+  highPriceTime: string | null;
+  /** Instant-sell price in GP (nullable if no recent trades) */
+  lowPrice: number | null;
+  /** Timestamp of the low price observation */
+  lowPriceTime: string | null;
+  /** When this record was last updated */
   updatedAt: string;
 }
 
 /**
- * Single data point in price history
+ * Helper to calculate spread (margin) between high and low prices
+ */
+export interface PriceSpread {
+  /** Absolute spread in GP (high - low) */
+  spreadGP: number;
+  /** Spread as percentage of low price */
+  spreadPercent: number;
+}
+
+/**
+ * Single data point in price history (timeseries)
+ * Backend provides bucketed averages with volume per direction
  */
 export interface PricePoint {
   /** Unix timestamp in milliseconds */
   timestamp: number;
-  /** Price in GP */
-  price: number;
-  /** Trading volume (if available) */
+  /** Average high (instant-buy) price for the bucket */
+  avgHighPrice?: number | null;
+  /** Average low (instant-sell) price for the bucket */
+  avgLowPrice?: number | null;
+  /** Volume of high price trades (buy offers) */
+  highPriceVolume?: number;
+  /** Volume of low price trades (sell offers) */
+  lowPriceVolume?: number;
+  /** Legacy fields for backward compatibility */
+  highPrice?: number | null;
+  lowPrice?: number | null;
+  /** Computed average price (for single-line charts) */
+  price?: number;
+  /** Computed total volume */
   volume?: number;
-  /** Previous price point (if available) */
-  previousPrice?: number;
 }
 
 /**
@@ -78,27 +87,23 @@ export interface PriceHistory {
 }
 
 /**
- * Time period options for historical data
+ * Time period options for historical data (matches backend TimePeriod enum)
  */
-export type TimePeriod = '24h' | '7d' | '30d' | '90d' | '1y' | 'all';
+export type TimePeriod = '1h' | '12h' | '24h' | '3d' | '7d' | '30d' | '90d' | '1y' | 'all';
 
 /**
- * Batch price request
- */
-export interface BatchPriceRequest {
-  /** Array of item IDs (max 100) */
-  itemIds: number[];
-}
-
-/**
- * Batch price response
+ * Batch price response (from GET /prices/current/batch?ids=...)
  */
 export interface BatchPriceResponse {
-  prices: CurrentPrice[];
-  /** Number of items found */
-  count: number;
-  /** Number of items requested */
-  requested: number;
+  /** Array of current prices */
+  data: CurrentPrice[];
+  /** Metadata about the request */
+  meta: {
+    /** Number of items requested */
+    requested: number;
+    /** Number of items found */
+    found: number;
+  };
 }
 
 /**

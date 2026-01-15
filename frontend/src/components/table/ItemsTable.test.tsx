@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent, within } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { ItemsTable } from '@/components/table/ItemsTable';
 import type { ItemWithPrice } from '@/components/table/columns';
@@ -18,17 +18,11 @@ const mockItem: ItemWithPrice = {
   highAlch: 72000,
   lowAlch: 48000,
   currentPrice: {
-    id: 1,
     itemId: 1,
-    price: 2450000,
     highPrice: 2500000,
     lowPrice: 2400000,
-    volume: 3500,
-    priceChange24h: 0,
-    priceChangePercent24h: 0,
-    trend: 'neutral',
-    lastUpdated: '2024-01-15T10:00:00Z',
-    createdAt: '2024-01-15T10:00:00Z',
+    highPriceTime: '2024-01-15T10:00:00Z',
+    lowPriceTime: '2024-01-15T09:55:00Z',
     updatedAt: '2024-01-15T10:00:00Z',
   },
   id: 1,

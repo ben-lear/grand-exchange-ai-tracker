@@ -2,7 +2,7 @@
  * Tests for API client functions
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { AxiosError } from 'axios';
 import apiClient from './client';
 import { fetchItems, fetchItemById, searchItems, fetchItemCount } from './items';
@@ -253,10 +253,10 @@ describe('API Client - Prices', () => {
 
       vi.spyOn(apiClient, 'get').mockResolvedValue({ data: mockHistory });
 
-      const result = await fetchPriceHistory(1, '1y', true);
+      const result = await fetchPriceHistory(1, '1y', 150);
       
       expect(apiClient.get).toHaveBeenCalledWith('/prices/history/1', {
-        params: { period: '1y', sample: true },
+        params: { period: '1y', sample: 150 },
       });
       expect(result).toEqual(mockHistory);
     });

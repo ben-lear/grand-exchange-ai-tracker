@@ -18,7 +18,7 @@ export type {
   PriceHistory,
   TimePeriod,
   PriceTrend,
-  BatchPriceRequest,
+  PriceSpread,
   BatchPriceResponse,
   PriceStatistics,
 } from './price';
