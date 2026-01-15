@@ -185,37 +185,10 @@ export const formatMarginPercent = (
 };
 
 /**
- * Format a timestamp as a relative time string
- * @param timestamp - ISO timestamp string or Date
- * @returns Formatted relative time (e.g., "5 minutes ago", "2 hours ago")
- * 
- * @example
- * formatRelativeTime("2026-01-14T12:00:00Z") // "5 minutes ago"
+ * NOTE: formatRelativeTime is now exported from dateUtils.ts
+ * This duplicate implementation is kept here for backward compatibility
+ * but is not exported. Use the dateUtils version instead.
  */
-export const formatRelativeTime = (timestamp: string | Date | null | undefined): string => {
-  if (!timestamp) return '—';
-  
-  const date = typeof timestamp === 'string' ? new Date(timestamp) : timestamp;
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffSeconds = Math.floor(diffMs / 1000);
-  
-  if (diffSeconds < 60) return 'just now';
-  if (diffSeconds < 3600) {
-    const minutes = Math.floor(diffSeconds / 60);
-    return `${minutes} minute${minutes !== 1 ? 's' : ''} ago`;
-  }
-  if (diffSeconds < 86400) {
-    const hours = Math.floor(diffSeconds / 3600);
-    return `${hours} hour${hours !== 1 ? 's' : ''} ago`;
-  }
-  if (diffSeconds < 604800) {
-    const days = Math.floor(diffSeconds / 86400);
-    return `${days} day${days !== 1 ? 's' : ''} ago`;
-  }
-  
-  return date.toLocaleDateString();
-};
 
 /**
  * Calculate profit potential for flipping an item

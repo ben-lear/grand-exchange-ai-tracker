@@ -198,14 +198,91 @@ func sampleTimeseriesPoints(points []models.PriceTimeseriesPoint, targetPoints i
 
 	step := float64(len(points)) / float64(targetPoints)
 	sampled := make([]models.PriceTimeseriesPoint, targetPoints)
+
+	// First pass: select evenly-spaced sample points
+	sampleIndices := make([]int, targetPoints)
 	for i := 0; i < targetPoints; i++ {
 		idx := int(float64(i) * step)
 		if idx >= len(points) {
 			idx = len(points) - 1
 		}
+		sampleIndices[i] = idx
 		sampled[i] = points[idx]
 	}
+
+	// Second pass: fill missing values from neighbors
+	for i := 0; i < targetPoints; i++ {
+		currentIdx := sampleIndices[i]
+		point := &sampled[i]
+
+		// Determine the search range (neighbors closer to this sample than to others)
+		leftBound := 0
+		rightBound := len(points) - 1
+		if i > 0 {
+			leftBound = (sampleIndices[i-1] + currentIdx) / 2
+		}
+		if i < targetPoints-1 {
+			rightBound = (currentIdx + sampleIndices[i+1]) / 2
+		}
+
+		// Fill missing AvgHighPrice
+		if point.AvgHighPrice == nil {
+			if neighbor := findClosestNeighborWithHigh(points, currentIdx, leftBound, rightBound); neighbor != nil {
+				point.AvgHighPrice = neighbor.AvgHighPrice
+			}
+		}
+
+		// Fill missing AvgLowPrice
+		if point.AvgLowPrice == nil {
+			if neighbor := findClosestNeighborWithLow(points, currentIdx, leftBound, rightBound); neighbor != nil {
+				point.AvgLowPrice = neighbor.AvgLowPrice
+			}
+		}
+	}
+
 	return sampled
+}
+
+// findClosestNeighborWithHigh finds the nearest point with a non-nil AvgHighPrice
+func findClosestNeighborWithHigh(points []models.PriceTimeseriesPoint, centerIdx, leftBound, rightBound int) *models.PriceTimeseriesPoint {
+	closestDist := len(points)
+	var closest *models.PriceTimeseriesPoint
+
+	for i := leftBound; i <= rightBound; i++ {
+		if points[i].AvgHighPrice != nil {
+			dist := abs(i - centerIdx)
+			if dist < closestDist {
+				closestDist = dist
+				closest = &points[i]
+			}
+		}
+	}
+	return closest
+}
+
+// findClosestNeighborWithLow finds the nearest point with a non-nil AvgLowPrice
+func findClosestNeighborWithLow(points []models.PriceTimeseriesPoint, centerIdx, leftBound, rightBound int) *models.PriceTimeseriesPoint {
+	closestDist := len(points)
+	var closest *models.PriceTimeseriesPoint
+
+	for i := leftBound; i <= rightBound; i++ {
+		if points[i].AvgLowPrice != nil {
+			dist := abs(i - centerIdx)
+			if dist < closestDist {
+				closestDist = dist
+				closest = &points[i]
+			}
+		}
+	}
+	return closest
+}
+
+// abs returns the absolute value of an integer
+func abs(x int) int {
+	if x < 0 {
+		return -x
+	}
+	return x
 }
 
 func sampleDailyPoints(points []models.PriceTimeseriesDaily, targetPoints int) []models.PriceTimeseriesDaily {
@@ -215,14 +292,83 @@ func sampleDailyPoints(points []models.PriceTimeseriesDaily, targetPoints int) [
 
 	step := float64(len(points)) / float64(targetPoints)
 	sampled := make([]models.PriceTimeseriesDaily, targetPoints)
+
+	// First pass: select evenly-spaced sample points
+	sampleIndices := make([]int, targetPoints)
 	for i := 0; i < targetPoints; i++ {
 		idx := int(float64(i) * step)
 		if idx >= len(points) {
 			idx = len(points) - 1
 		}
+		sampleIndices[i] = idx
 		sampled[i] = points[idx]
 	}
+
+	// Second pass: fill missing values from neighbors
+	for i := 0; i < targetPoints; i++ {
+		currentIdx := sampleIndices[i]
+		point := &sampled[i]
+
+		// Determine the search range (neighbors closer to this sample than to others)
+		leftBound := 0
+		rightBound := len(points) - 1
+		if i > 0 {
+			leftBound = (sampleIndices[i-1] + currentIdx) / 2
+		}
+		if i < targetPoints-1 {
+			rightBound = (currentIdx + sampleIndices[i+1]) / 2
+		}
+
+		// Fill missing AvgHighPrice
+		if point.AvgHighPrice == nil {
+			if neighbor := findClosestDailyNeighborWithHigh(points, currentIdx, leftBound, rightBound); neighbor != nil {
+				point.AvgHighPrice = neighbor.AvgHighPrice
+			}
+		}
+
+		// Fill missing AvgLowPrice
+		if point.AvgLowPrice == nil {
+			if neighbor := findClosestDailyNeighborWithLow(points, currentIdx, leftBound, rightBound); neighbor != nil {
+				point.AvgLowPrice = neighbor.AvgLowPrice
+			}
+		}
+	}
+
 	return sampled
+}
+
+// findClosestDailyNeighborWithHigh finds the nearest daily point with a non-nil AvgHighPrice
+func findClosestDailyNeighborWithHigh(points []models.PriceTimeseriesDaily, centerIdx, leftBound, rightBound int) *models.PriceTimeseriesDaily {
+	closestDist := len(points)
+	var closest *models.PriceTimeseriesDaily
+
+	for i := leftBound; i <= rightBound; i++ {
+		if points[i].AvgHighPrice != nil {
+			dist := abs(i - centerIdx)
+			if dist < closestDist {
+				closestDist = dist
+				closest = &points[i]
+			}
+		}
+	}
+	return closest
+}
+
+// findClosestDailyNeighborWithLow finds the nearest daily point with a non-nil AvgLowPrice
+func findClosestDailyNeighborWithLow(points []models.PriceTimeseriesDaily, centerIdx, leftBound, rightBound int) *models.PriceTimeseriesDaily {
+	closestDist := len(points)
+	var closest *models.PriceTimeseriesDaily
+
+	for i := leftBound; i <= rightBound; i++ {
+		if points[i].AvgLowPrice != nil {
+			dist := abs(i - centerIdx)
+			if dist < closestDist {
+				closestDist = dist
+				closest = &points[i]
+			}
+		}
+	}
+	return closest
 }
 
 func (r *priceRepository) InsertTimeseriesPoints(ctx context.Context, timestep string, points []models.PriceTimeseriesPoint) error {

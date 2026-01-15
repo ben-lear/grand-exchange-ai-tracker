@@ -53,22 +53,41 @@ export function PriceChart({
     return data
       .map((point, index) => {
         // Use avgHighPrice/avgLowPrice if available, fallback to highPrice/lowPrice
-        const highPrice = point.avgHighPrice ?? point.highPrice ?? null;
-        const lowPrice = point.avgLowPrice ?? point.lowPrice ?? null;
-        const midPrice = highPrice && lowPrice 
-          ? (highPrice + lowPrice) / 2 
-          : highPrice || lowPrice || point.price || 0;
+        const highPriceRaw = point.avgHighPrice ?? point.highPrice ?? null;
+        const lowPriceRaw = point.avgLowPrice ?? point.lowPrice ?? null;
+        
+        // Convert to numbers (handle null/undefined)
+        const highPrice = highPriceRaw !== null && highPriceRaw !== undefined ? Number(highPriceRaw) : null;
+        const lowPrice = lowPriceRaw !== null && lowPriceRaw !== undefined ? Number(lowPriceRaw) : null;
+        
+        // Calculate midPrice: if both exist, average them; otherwise use whichever exists
+        // Note: 0 is a valid price, so check for null/undefined explicitly
+        let midPrice = 0;
+        if (highPrice !== null && lowPrice !== null) {
+          midPrice = (highPrice + lowPrice) / 2;
+        } else if (highPrice !== null) {
+          midPrice = highPrice;
+        } else if (lowPrice !== null) {
+          midPrice = lowPrice;
+        } else if (point.price !== null && point.price !== undefined) {
+          midPrice = Number(point.price);
+        }
         
         return {
           ...point,
           timestamp: typeof point.timestamp === 'number' ? point.timestamp : new Date(point.timestamp).getTime(),
-          highPrice,
-          lowPrice,
+          highPrice: highPrice ?? undefined,
+          lowPrice: lowPrice ?? undefined,
           midPrice,
           previousPrice: index > 0 ? (data[index - 1].price || 0) : null,
         };
       })
-      .filter(point => point.timestamp > 0) // Filter out invalid timestamps
+      .filter(point => {
+        // Only filter out points with invalid timestamps or no price data at all
+        const hasValidTimestamp = point.timestamp > 0;
+        const hasAnyPrice = point.highPrice !== undefined || point.lowPrice !== undefined || point.midPrice > 0;
+        return hasValidTimestamp && hasAnyPrice;
+      })
       .sort((a, b) => a.timestamp - b.timestamp);
   }, [data]);
 
@@ -293,10 +312,10 @@ export function PriceChart({
                 dataKey="highPrice"
                 stroke="#10b981"
                 strokeWidth={2}
-                name="Buy Price"
-                dot={false}
+                name="High Price"
+                dot={{ r: 3, fill: '#10b981', strokeWidth: 0 }}
                 activeDot={{ 
-                  r: 4, 
+                  r: 6, 
                   fill: '#10b981',
                   stroke: '#fff',
                   strokeWidth: 2,
@@ -312,10 +331,10 @@ export function PriceChart({
                 dataKey="lowPrice"
                 stroke="#f97316"
                 strokeWidth={2}
-                name="Sell Price"
-                dot={false}
+                name="Low Price"
+                dot={{ r: 3, fill: '#f97316', strokeWidth: 0 }}
                 activeDot={{ 
-                  r: 4, 
+                  r: 6, 
                   fill: '#f97316',
                   stroke: '#fff',
                   strokeWidth: 2,
@@ -332,9 +351,9 @@ export function PriceChart({
                 stroke={lineColor}
                 strokeWidth={2}
                 name="Price"
-                dot={false}
+                dot={{ r: 3, fill: lineColor, strokeWidth: 0 }}
                 activeDot={{ 
-                  r: 4, 
+                  r: 6, 
                   fill: lineColor,
                   stroke: '#fff',
                   strokeWidth: 2,

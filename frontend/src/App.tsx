@@ -15,7 +15,9 @@ function App() {
       <Routes>
         <Route path="/" element={<MainLayout />}>
           <Route index element={<DashboardPage />} />
+          {/* Support both old ID-only and new ID/slug routes */}
           <Route path="items/:id" element={<ItemDetailPage />} />
+          <Route path="items/:id/:slug" element={<ItemDetailPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Route>
       </Routes>

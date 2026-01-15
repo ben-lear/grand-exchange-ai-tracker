@@ -62,8 +62,13 @@ export const fetchPriceHistory = async (
   const response = await apiClient.get<{ 
     data: Array<{
       timestamp: string;
+      // Backend uses different field names based on source:
+      // - timeseries tables: avgHighPrice, avgLowPrice
+      // - daily table: highPrice, lowPrice
       avgHighPrice?: number | null;
       avgLowPrice?: number | null;
+      highPrice?: number | null;
+      lowPrice?: number | null;
       highPriceVolume?: number;
       lowPriceVolume?: number;
     }>; 
@@ -82,17 +87,28 @@ export const fetchPriceHistory = async (
   
   // Convert backend format to frontend format
   const data = backendData.map(point => {
-    const avgHigh = point.avgHighPrice ?? 0;
-    const avgLow = point.avgLowPrice ?? 0;
-    const avgPrice = avgHigh && avgLow ? (avgHigh + avgLow) / 2 : avgHigh || avgLow || 0;
+    // Backend may return either avgHighPrice/avgLowPrice (timeseries) or highPrice/lowPrice (daily)
+    const highValue = point.avgHighPrice ?? point.highPrice ?? null;
+    const lowValue = point.avgLowPrice ?? point.lowPrice ?? null;
+    
+    // Calculate average price: if both exist, average them; otherwise use whichever exists
+    let avgPrice = 0;
+    if (highValue !== null && lowValue !== null) {
+      avgPrice = (highValue + lowValue) / 2;
+    } else if (highValue !== null) {
+      avgPrice = highValue;
+    } else if (lowValue !== null) {
+      avgPrice = lowValue;
+    }
+    
     const totalVolume = (point.highPriceVolume ?? 0) + (point.lowPriceVolume ?? 0);
     
     return {
       timestamp: new Date(point.timestamp).getTime(),
-      avgHighPrice: point.avgHighPrice,
-      avgLowPrice: point.avgLowPrice,
-      highPrice: point.avgHighPrice, // Alias for compatibility
-      lowPrice: point.avgLowPrice,   // Alias for compatibility
+      avgHighPrice: highValue,
+      avgLowPrice: lowValue,
+      highPrice: highValue, // Normalized field name
+      lowPrice: lowValue,   // Normalized field name
       highPriceVolume: point.highPriceVolume,
       lowPriceVolume: point.lowPriceVolume,
       price: avgPrice, // Computed average for single-line charts

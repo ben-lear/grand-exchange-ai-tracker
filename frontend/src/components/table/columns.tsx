@@ -5,7 +5,7 @@
 
 import { createColumnHelper } from '@tanstack/react-table';
 import { Link } from 'react-router-dom';
-import { formatGold, formatNumber } from '@/utils/formatters';
+import { formatGold, formatNumber, getItemUrl } from '@/utils';
 import type { Item, CurrentPrice } from '@/types';
 
 export interface ItemWithPrice extends Item {
@@ -21,6 +21,7 @@ export const columns = [
     header: 'Item',
     cell: (info) => {
       const item = info.row.original;
+      const itemUrl = getItemUrl(item.itemId, item.name);
       return (
         <div className="flex items-center gap-3 min-w-[200px]">
           {item.iconUrl && (
@@ -33,7 +34,7 @@ export const columns = [
           )}
           <div className="flex flex-col">
             <Link
-              to={`/items/${item.itemId}`}
+              to={itemUrl}
               className="font-medium text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
             >
               {item.name}

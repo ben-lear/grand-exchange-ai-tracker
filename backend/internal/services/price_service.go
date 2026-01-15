@@ -105,6 +105,12 @@ func (s *priceService) GetAllCurrentPrices(ctx context.Context) ([]models.Curren
 
 // GetPriceHistory returns historical price data for an item
 func (s *priceService) GetPriceHistory(ctx context.Context, params models.PriceHistoryParams) (*models.PriceHistoryResponse, error) {
+	// Apply default MaxPoints if not specified
+	if params.MaxPoints == nil {
+		defaultMaxPoints := getDefaultMaxPoints(params.Period)
+		params.MaxPoints = &defaultMaxPoints
+	}
+
 	// Try cache first (only if period-based query)
 	var cacheKey string
 	if params.Period != "" {
@@ -140,6 +146,11 @@ func (s *priceService) GetPriceHistory(ctx context.Context, params models.PriceH
 
 		dataPoints = make([]models.PricePoint, 0, len(points))
 		for _, p := range points {
+			// Skip points where both prices are NULL (no trading data)
+			if p.AvgHighPrice == nil && p.AvgLowPrice == nil {
+				continue
+			}
+
 			high := int64(0)
 			low := int64(0)
 			if p.AvgHighPrice != nil {
@@ -179,6 +190,11 @@ func (s *priceService) GetPriceHistory(ctx context.Context, params models.PriceH
 
 		dataPoints = make([]models.PricePoint, 0, len(points))
 		for _, p := range points {
+			// Skip points where both prices are NULL (no trading data)
+			if p.AvgHighPrice == nil && p.AvgLowPrice == nil {
+				continue
+			}
+
 			high := int64(0)
 			low := int64(0)
 			if p.AvgHighPrice != nil {
@@ -225,22 +241,41 @@ type timeseriesSource struct {
 	seedStep string
 }
 
-func periodToTimeseriesSource(period models.TimePeriod) timeseriesSource {
+// getDefaultMaxPoints returns the target number of points for each time period
+func getDefaultMaxPoints(period models.TimePeriod) int {
 	switch period {
 	case models.Period1Hour:
-		return timeseriesSource{timestep: "5m"}
-	case models.Period12Hours:
-		return timeseriesSource{timestep: "6h"}
-	case models.Period24Hours:
-		return timeseriesSource{timestep: "6h"}
-	case models.Period3Days:
-		return timeseriesSource{timestep: "24h"}
-	case models.Period7Days, models.Period30Days, models.Period90Days, models.Period1Year, models.PeriodAll:
-		// Seed daily from 24h buckets (daily granularity).
-		return timeseriesSource{useDaily: true, seedStep: "24h"}
+		return 60 // API can return up to 365 points, sample to 60
 	default:
-		// Default to 7d behavior.
-		return timeseriesSource{useDaily: true, seedStep: "24h"}
+		return 120 // Target for all other periods
+	}
+}
+
+func periodToTimeseriesSource(period models.TimePeriod) timeseriesSource {
+	// Choose finest timestep that covers the period.
+	// Wiki API returns up to 365 points per query.
+	// Timestep coverage: 5m→1.3d, 1h→15.2d, 6h→91.2d, 24h→365d
+	switch period {
+	case models.Period1Hour:
+		return timeseriesSource{timestep: "5m"} // Up to 365 pts, sample to 60
+	case models.Period12Hours:
+		return timeseriesSource{timestep: "5m"} // Up to 365 pts, sample to 120
+	case models.Period24Hours:
+		return timeseriesSource{timestep: "5m"} // Up to 365 pts, sample to 120
+	case models.Period3Days:
+		return timeseriesSource{timestep: "1h"} // Up to 365 pts, sample to 120
+	case models.Period7Days:
+		return timeseriesSource{timestep: "1h"} // Up to 365 pts, sample to 120
+	case models.Period30Days:
+		return timeseriesSource{timestep: "6h"} // Up to 365 pts, sample to 120
+	case models.Period90Days:
+		return timeseriesSource{timestep: "6h"} // Up to 365 pts, sample to 120
+	case models.Period1Year:
+		return timeseriesSource{timestep: "24h"} // 365 pts available
+	case models.PeriodAll:
+		return timeseriesSource{timestep: "24h"} // 365 pts (covers 1y)
+	default:
+		return timeseriesSource{timestep: "24h"}
 	}
 }
 

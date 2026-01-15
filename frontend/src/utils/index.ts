@@ -5,12 +5,16 @@
 // Formatters
 export {
   formatGP,
+  formatGold,
   formatNumber,
   formatPercentage,
   formatPriceChange,
   parseGP,
   abbreviateNumber,
   formatCompact,
+  formatSpread,
+  formatMarginPercent,
+  calculateFlipProfit,
 } from './formatters';
 
 // Date utilities
@@ -42,3 +46,10 @@ export {
   debounce,
   throttle,
 } from './helpers';
+
+// Slug utilities
+export {
+  itemNameToSlug,
+  slugToSearchTerm,
+  getItemUrl,
+} from './slug';

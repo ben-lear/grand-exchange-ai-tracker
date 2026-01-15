@@ -24,10 +24,11 @@ export const fetchItems = async (
 
 /**
  * Fetch a single item by ID
+ * Backend returns: { data: { ...item, currentPrice: {...} } }
  */
 export const fetchItemById = async (id: number): Promise<Item> => {
-  const response = await apiClient.get<Item>(`/items/${id}`);
-  return response.data;
+  const response = await apiClient.get<{ data: Item }>(`/items/${id}`);
+  return response.data.data;
 };
 
 /**
