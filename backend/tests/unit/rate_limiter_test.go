@@ -16,7 +16,7 @@ import (
 // TestNewRateLimiter_DefaultValues tests rate limiter with default configuration
 func TestNewRateLimiter_DefaultValues(t *testing.T) {
 	app := fiber.New()
-	
+
 	// Create rate limiter with zero values - should use defaults (100 requests per minute)
 	app.Use(middleware.NewRateLimiter(middleware.RateLimiterConfig{}))
 	app.Get("/test", func(c *fiber.Ctx) error {
@@ -89,10 +89,10 @@ func TestNewRateLimiter_ErrorResponse(t *testing.T) {
 	// Verify response structure
 	var payload map[string]interface{}
 	require.NoError(t, json.NewDecoder(resp.Body).Decode(&payload))
-	
+
 	assert.Contains(t, payload, "error")
 	assert.Equal(t, "rate limit exceeded", payload["error"])
-	
+
 	assert.Contains(t, payload, "retry_after")
 	assert.Equal(t, float64(30), payload["retry_after"])
 }

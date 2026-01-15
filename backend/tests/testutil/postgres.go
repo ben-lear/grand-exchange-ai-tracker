@@ -226,7 +226,6 @@ func TruncateAllTables(t *testing.T, db *gorm.DB) {
 	// Order is irrelevant due to CASCADE.
 	if err := db.Exec(
 		"TRUNCATE TABLE " +
-			"price_history, current_prices, " +
 			"price_latest, " +
 			"price_timeseries_5m, price_timeseries_1h, price_timeseries_6h, price_timeseries_24h, price_timeseries_daily, " +
 			"items CASCADE",

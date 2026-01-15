@@ -233,14 +233,14 @@ func periodToTimeseriesSource(period models.TimePeriod) timeseriesSource {
 		return timeseriesSource{timestep: "6h"}
 	case models.Period24Hours:
 		return timeseriesSource{timestep: "6h"}
-	case models.Period3Days, models.Period7Days:
+	case models.Period3Days:
 		return timeseriesSource{timestep: "24h"}
-	case models.Period30Days, models.Period90Days, models.Period1Year, models.PeriodAll:
+	case models.Period7Days, models.Period30Days, models.Period90Days, models.Period1Year, models.PeriodAll:
 		// Seed daily from 24h buckets (daily granularity).
 		return timeseriesSource{useDaily: true, seedStep: "24h"}
 	default:
 		// Default to 7d behavior.
-		return timeseriesSource{timestep: "24h"}
+		return timeseriesSource{useDaily: true, seedStep: "24h"}
 	}
 }
 

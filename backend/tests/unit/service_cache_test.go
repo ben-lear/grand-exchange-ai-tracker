@@ -106,8 +106,8 @@ type fakeItemRepo struct {
 	bulkUpsertCalls int
 	bulkUpsertErr   error
 
-	countAll         int64
-	countMembersTrue int64
+	countAll          int64
+	countMembersTrue  int64
 	countMembersFalse int64
 }
 
@@ -186,19 +186,33 @@ func (r *fakePriceRepo) BulkUpsertCurrentPrices(_ context.Context, _ []models.Bu
 	return nil
 }
 
-func (r *fakePriceRepo) GetHistory(_ context.Context, _ models.PriceHistoryParams) ([]models.PriceHistory, error) {
+func (r *fakePriceRepo) InsertTimeseriesPoints(_ context.Context, _ string, _ []models.PriceTimeseriesPoint) error {
+	return nil
+}
+
+func (r *fakePriceRepo) GetTimeseriesPoints(_ context.Context, _ int, _ string, _ models.PriceHistoryParams) ([]models.PriceTimeseriesPoint, error) {
 	return nil, nil
 }
 
-func (r *fakePriceRepo) InsertHistory(_ context.Context, _ *models.PriceHistory) error { return nil }
+func (r *fakePriceRepo) InsertDailyPoints(_ context.Context, _ []models.PriceTimeseriesDaily) error {
+	return nil
+}
 
-func (r *fakePriceRepo) BulkInsertHistory(_ context.Context, _ []models.BulkHistoryInsert) error { return nil }
-
-func (r *fakePriceRepo) GetLatestHistoryTimestamp(_ context.Context, _ int) (*models.PriceHistory, error) {
+func (r *fakePriceRepo) GetDailyPoints(_ context.Context, _ int, _ models.PriceHistoryParams) ([]models.PriceTimeseriesDaily, error) {
 	return nil, nil
 }
 
-func (r *fakePriceRepo) DeleteOldHistory(_ context.Context, _ int, _ int64) error { return nil }
+func (r *fakePriceRepo) Rollup24hToDailyBefore(_ context.Context, _ time.Time) (int64, error) {
+	return 0, nil
+}
+
+func (r *fakePriceRepo) PrunePriceLatestBefore(_ context.Context, _ time.Time) (int64, error) {
+	return 0, nil
+}
+
+func (r *fakePriceRepo) PruneTimeseriesBefore(_ context.Context, _ string, _ time.Time) (int64, error) {
+	return 0, nil
+}
 
 func TestItemService_GetItemByItemID_UsesCache(t *testing.T) {
 	logger := zap.NewNop().Sugar()
@@ -207,7 +221,7 @@ func TestItemService_GetItemByItemID_UsesCache(t *testing.T) {
 	repo := &fakeItemRepo{getByItemIDItem: &models.Item{ItemID: 42, Name: "Test"}}
 	cache := newMemoryCache()
 
-	svc := services.NewItemService(repo, cache, logger)
+	svc := services.NewItemService(repo, cache, "", logger)
 
 	item, err := svc.GetItemByItemID(ctx, 42)
 	require.NoError(t, err)
@@ -234,7 +248,7 @@ func TestItemService_UpsertItem_InvalidatesCache(t *testing.T) {
 	cache := newMemoryCache()
 	require.NoError(t, cache.SetJSON(ctx, "item:99", &models.Item{ItemID: 99, Name: "Cached"}, time.Hour))
 
-	svc := services.NewItemService(repo, cache, logger)
+	svc := services.NewItemService(repo, cache, "", logger)
 
 	require.NoError(t, svc.UpsertItem(ctx, &models.Item{ItemID: 99, Name: "Updated"}))
 	require.Equal(t, 1, repo.upsertCalls)
@@ -253,7 +267,7 @@ func TestItemService_BulkUpsertItems_InvalidatesPattern(t *testing.T) {
 	require.NoError(t, cache.Set(ctx, "item:2", "v", time.Hour))
 	require.NoError(t, cache.Set(ctx, "other:1", "v", time.Hour))
 
-	svc := services.NewItemService(repo, cache, logger)
+	svc := services.NewItemService(repo, cache, "", logger)
 
 	require.NoError(t, svc.BulkUpsertItems(ctx, []models.Item{{ItemID: 1, Name: "A"}, {ItemID: 2, Name: "B"}}))
 	require.Equal(t, 1, repo.bulkUpsertCalls)
@@ -278,7 +292,7 @@ func TestPriceService_GetCurrentPrice_UsesCache(t *testing.T) {
 	itemRepo := &fakeItemRepo{}
 	cache := newMemoryCache()
 
-	svc := services.NewPriceService(priceRepo, itemRepo, cache, nil, logger)
+	svc := services.NewPriceService(priceRepo, itemRepo, cache, "", logger)
 
 	p, err := svc.GetCurrentPrice(ctx, 10)
 	require.NoError(t, err)
@@ -308,7 +322,7 @@ func TestPriceService_GetAllCurrentPrices_UsesCache(t *testing.T) {
 	itemRepo := &fakeItemRepo{}
 	cache := newMemoryCache()
 
-	svc := services.NewPriceService(priceRepo, itemRepo, cache, nil, logger)
+	svc := services.NewPriceService(priceRepo, itemRepo, cache, "", logger)
 
 	all, err := svc.GetAllCurrentPrices(ctx)
 	require.NoError(t, err)
@@ -333,7 +347,7 @@ func TestPriceService_UpdateCurrentPrice_InvalidatesCaches(t *testing.T) {
 	require.NoError(t, cache.Set(ctx, "price:current:all", "x", time.Hour))
 	require.NoError(t, cache.Set(ctx, "price:history:10:7d", "x", time.Hour))
 
-	svc := services.NewPriceService(priceRepo, itemRepo, cache, nil, logger)
+	svc := services.NewPriceService(priceRepo, itemRepo, cache, "", logger)
 
 	p := &models.CurrentPrice{ItemID: 10}
 	require.NoError(t, svc.UpdateCurrentPrice(ctx, p))
@@ -355,7 +369,7 @@ func TestItemService_GetItemCount_UsesRepoTotal(t *testing.T) {
 
 	repo := &fakeItemRepo{countAll: 3, countMembersTrue: 2, countMembersFalse: 1}
 	cache := newMemoryCache()
-	svc := services.NewItemService(repo, cache, logger)
+	svc := services.NewItemService(repo, cache, "", logger)
 
 	count, err := svc.GetItemCount(ctx, nil)
 	require.NoError(t, err)

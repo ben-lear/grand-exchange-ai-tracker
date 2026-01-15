@@ -29,8 +29,9 @@ func TestItemHandler_GetByID_NotFoundDoesNotPanic(t *testing.T) {
 
 	itemRepo := repository.NewItemRepository(db, logger)
 	cache := testutil.NewNoopCache()
-	itemSvc := services.NewItemService(itemRepo, cache, logger)
-	itemHandler := handlers.NewItemHandler(itemSvc, logger)
+	itemSvc := services.NewItemService(itemRepo, cache, "", logger)
+	priceService := testutil.NewNoopPriceService()
+	itemHandler := handlers.NewItemHandler(itemSvc, priceService, logger)
 
 	app := fiber.New()
 	app.Get("/api/v1/items/:id", itemHandler.GetItemByID)
@@ -56,8 +57,9 @@ func TestItemHandler_ListSearchCount_PostgresBacked(t *testing.T) {
 
 	itemRepo := repository.NewItemRepository(db, logger)
 	cache := testutil.NewNoopCache()
-	itemSvc := services.NewItemService(itemRepo, cache, logger)
-	itemHandler := handlers.NewItemHandler(itemSvc, logger)
+	itemSvc := services.NewItemService(itemRepo, cache, "", logger)
+	priceService := testutil.NewNoopPriceService()
+	itemHandler := handlers.NewItemHandler(itemSvc, priceService, logger)
 
 	app := fiber.New()
 	app.Get("/api/v1/items", itemHandler.ListItems)
@@ -163,8 +165,9 @@ func TestItemHandler_ValidationErrors(t *testing.T) {
 
 	itemRepo := repository.NewItemRepository(db, logger)
 	cache := testutil.NewNoopCache()
-	itemSvc := services.NewItemService(itemRepo, cache, logger)
-	itemHandler := handlers.NewItemHandler(itemSvc, logger)
+	itemSvc := services.NewItemService(itemRepo, cache, "", logger)
+	priceService := testutil.NewNoopPriceService()
+	itemHandler := handlers.NewItemHandler(itemSvc, priceService, logger)
 
 	app := fiber.New()
 	app.Get("/api/v1/items", itemHandler.ListItems)

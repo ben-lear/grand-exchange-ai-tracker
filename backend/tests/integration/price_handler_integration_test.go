@@ -22,19 +22,6 @@ import (
 	"github.com/guavi/osrs-ge-tracker/tests/testutil"
 )
 
-type stubOSRSClient struct{}
-
-func (s stubOSRSClient) FetchBulkDump() (map[int]models.BulkDumpItem, error)                         { return map[int]models.BulkDumpItem{}, nil }
-func (s stubOSRSClient) FetchLatestPrices(itemIDs []int) (map[int]models.HistoricalDataPoint, error) { return map[int]models.HistoricalDataPoint{}, nil }
-func (s stubOSRSClient) FetchHistoricalData(itemID int, period string) ([]models.HistoricalDataPoint, error) {
-	return []models.HistoricalDataPoint{}, nil
-}
-func (s stubOSRSClient) FetchSampleData(itemID int) ([]models.HistoricalDataPoint, error)     { return []models.HistoricalDataPoint{}, nil }
-func (s stubOSRSClient) FetchAllHistoricalData(itemID int) ([]models.HistoricalDataPoint, error) {
-	return []models.HistoricalDataPoint{}, nil
-}
-func (s stubOSRSClient) FetchItemDetail(itemID int) (*models.ItemDetail, error) { return nil, nil }
-
 func TestPriceHandler_ReadEndpoints_PostgresBacked(t *testing.T) {
 	db, release := testutil.SharedPostgres(t)
 	t.Cleanup(release)
@@ -54,17 +41,21 @@ func TestPriceHandler_ReadEndpoints_PostgresBacked(t *testing.T) {
 	high := int64(1000)
 	low := int64(900)
 	now := time.Now().UTC()
+	// UpsertCurrentPrice creates PriceLatest snapshots in price_latest table (partitioned by day)
 	require.NoError(t, priceRepo.UpsertCurrentPrice(ctx, &models.CurrentPrice{ItemID: 100, HighPrice: &high, LowPrice: &low, HighPriceTime: &now, LowPriceTime: &now}))
 	require.NoError(t, priceRepo.UpsertCurrentPrice(ctx, &models.CurrentPrice{ItemID: 200, HighPrice: &high, LowPrice: &low, HighPriceTime: &now, LowPriceTime: &now}))
 
-	// Seed some history for item 100
-	older := time.Now().Add(-48 * time.Hour).UTC()
-	newer := time.Now().Add(-2 * time.Hour).UTC()
-	require.NoError(t, priceRepo.InsertHistory(ctx, &models.PriceHistory{ItemID: 100, HighPrice: &high, LowPrice: &low, Timestamp: older}))
-	require.NoError(t, priceRepo.InsertHistory(ctx, &models.PriceHistory{ItemID: 100, HighPrice: &high, LowPrice: &low, Timestamp: newer}))
+	// Seed timeseries data for item 100 to test GetPriceHistory endpoint
+	// Insert daily bucketed data for last 3 days
+	dailyPoints := []models.PriceTimeseriesDaily{
+		{ItemID: 100, Day: now.Add(-48 * time.Hour).Truncate(24 * time.Hour), AvgHighPrice: &high, AvgLowPrice: &low, HighPriceVolume: 100, LowPriceVolume: 90},
+		{ItemID: 100, Day: now.Add(-24 * time.Hour).Truncate(24 * time.Hour), AvgHighPrice: &high, AvgLowPrice: &low, HighPriceVolume: 110, LowPriceVolume: 95},
+		{ItemID: 100, Day: now.Truncate(24 * time.Hour), AvgHighPrice: &high, AvgLowPrice: &low, HighPriceVolume: 120, LowPriceVolume: 100},
+	}
+	require.NoError(t, priceRepo.InsertDailyPoints(ctx, dailyPoints))
 
 	cache := testutil.NewNoopCache()
-	priceSvc := services.NewPriceService(priceRepo, itemRepo, cache, stubOSRSClient{}, logger)
+	priceSvc := services.NewPriceService(priceRepo, itemRepo, cache, "", logger)
 	priceHandler := handlers.NewPriceHandler(priceSvc, logger)
 
 	app := fiber.New()
@@ -117,8 +108,8 @@ func TestPriceHandler_ReadEndpoints_PostgresBacked(t *testing.T) {
 	require.Equal(t, 2, batchResp.Meta["requested"])
 	require.Equal(t, 2, batchResp.Meta["found"])
 
-	// GET history (24h should include only the recent point)
-	resp, err = app.Test(httptest.NewRequest("GET", "/api/v1/prices/history/100?period=24h", nil))
+	// GET history (7d should include the 3 daily points we seeded)
+	resp, err = app.Test(httptest.NewRequest("GET", "/api/v1/prices/history/100?period=7d", nil))
 	require.NoError(t, err)
 	if resp.StatusCode != 200 {
 		b, _ := io.ReadAll(resp.Body)
@@ -130,5 +121,5 @@ func TestPriceHandler_ReadEndpoints_PostgresBacked(t *testing.T) {
 		Meta map[string]any      `json:"meta"`
 	}
 	require.NoError(t, json.NewDecoder(resp.Body).Decode(&histResp))
-	require.Len(t, histResp.Data, 1)
+	require.GreaterOrEqual(t, len(histResp.Data), 3, "Should have at least 3 daily points")
 }

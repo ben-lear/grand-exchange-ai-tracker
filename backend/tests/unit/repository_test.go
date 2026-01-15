@@ -186,10 +186,13 @@ func TestPriceRepository_UpsertCurrentPrice(t *testing.T) {
 		LowPriceTime:  &now,
 	}
 
+	// UpsertCurrentPrice inserts a minute-level snapshot into price_latest table
+	// (not into current_prices which was dropped in migration 003)
 	err = priceRepo.UpsertCurrentPrice(ctx, price)
 	require.NoError(t, err)
 
-	// Retrieve and verify
+	// Retrieve and verify - GetCurrentPrice uses raw SQL DISTINCT ON (item_id)
+	// to fetch the latest snapshot from price_latest table
 	retrieved, err := priceRepo.GetCurrentPrice(ctx, 2)
 	require.NoError(t, err)
 	assert.NotNil(t, retrieved)
@@ -230,62 +233,8 @@ func TestPriceRepository_GetAllCurrentPrices(t *testing.T) {
 		require.NoError(t, err)
 	}
 
-	// Get all prices
+	// Get all prices - queries price_latest with DISTINCT ON (item_id) to get latest snapshots
 	results, err := priceRepo.GetAllCurrentPrices(ctx)
 	require.NoError(t, err)
 	assert.Len(t, results, 2)
-}
-
-func TestPriceRepository_HistoryLifecycle(t *testing.T) {
-	db := setupTestDB(t)
-	logger, _ := zap.NewDevelopment()
-	priceRepo := repository.NewPriceRepository(db, logger.Sugar())
-	itemRepo := repository.NewItemRepository(db, logger.Sugar())
-
-	ctx := context.Background()
-
-	// Create item first (FK)
-	item := &models.Item{ItemID: 42, Name: "Test Item", Members: false}
-	err := itemRepo.Create(ctx, item)
-	require.NoError(t, err)
-
-	high := int64(1200)
-	low := int64(1100)
-
-	older := time.Now().Add(-48 * time.Hour).UTC()
-	newer := time.Now().Add(-2 * time.Hour).UTC()
-
-	// Insert into partitioned table (exercises trigger/partition creation)
-	err = priceRepo.InsertHistory(ctx, &models.PriceHistory{ItemID: 42, HighPrice: &high, LowPrice: &low, Timestamp: older})
-	require.NoError(t, err)
-	err = priceRepo.InsertHistory(ctx, &models.PriceHistory{ItemID: 42, HighPrice: &high, LowPrice: &low, Timestamp: newer})
-	require.NoError(t, err)
-
-	// Latest timestamp
-	latest, err := priceRepo.GetLatestHistoryTimestamp(ctx, 42)
-	require.NoError(t, err)
-	require.NotNil(t, latest)
-	assert.True(t, latest.Timestamp.Equal(newer) || latest.Timestamp.After(older))
-
-	// Period filter (24h should exclude the 48h point)
-	history, err := priceRepo.GetHistory(ctx, models.PriceHistoryParams{ItemID: 42, Period: models.Period24Hours})
-	require.NoError(t, err)
-	assert.Len(t, history, 1)
-	assert.True(t, history[0].Timestamp.After(time.Now().Add(-24*time.Hour)))
-
-	// Sampling
-	maxPoints := 1
-	history, err = priceRepo.GetHistory(ctx, models.PriceHistoryParams{ItemID: 42, Period: models.PeriodAll, MaxPoints: &maxPoints})
-	require.NoError(t, err)
-	assert.Len(t, history, 1)
-
-	// Delete old history
-	cutoff := time.Now().Add(-24 * time.Hour).Unix()
-	err = priceRepo.DeleteOldHistory(ctx, 42, cutoff)
-	require.NoError(t, err)
-
-	remaining, err := priceRepo.GetHistory(ctx, models.PriceHistoryParams{ItemID: 42, Period: models.PeriodAll})
-	require.NoError(t, err)
-	assert.Len(t, remaining, 1)
-	
 }

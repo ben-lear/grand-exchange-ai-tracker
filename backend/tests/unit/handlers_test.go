@@ -1,7 +1,6 @@
 package unit
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"net/http/httptest"
@@ -16,89 +15,18 @@ import (
 	"github.com/guavi/osrs-ge-tracker/internal/models"
 )
 
-// MockItemService is a mock implementation of ItemService
-type MockItemService struct {
-	mock.Mock
-}
-
-func (m *MockItemService) ListItems(ctx context.Context, params models.ItemListParams) ([]models.Item, int64, error) {
-	args := m.Called(ctx, params)
-	return args.Get(0).([]models.Item), args.Get(1).(int64), args.Error(2)
-}
-
-func (m *MockItemService) GetAllItems(ctx context.Context, params models.ItemListParams) ([]models.Item, int64, error) {
-	args := m.Called(ctx, params)
-	return args.Get(0).([]models.Item), args.Get(1).(int64), args.Error(2)
-}
-
-func (m *MockItemService) GetItemByID(ctx context.Context, id uint) (*models.Item, error) {
-	args := m.Called(ctx, id)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(*models.Item), args.Error(1)
-}
-
-func (m *MockItemService) GetItemByItemID(ctx context.Context, itemID int) (*models.Item, error) {
-	args := m.Called(ctx, itemID)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(*models.Item), args.Error(1)
-}
-
-func (m *MockItemService) GetItemWithPrice(ctx context.Context, itemID int) (*models.ItemWithCurrentPrice, error) {
-	args := m.Called(ctx, itemID)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(*models.ItemWithCurrentPrice), args.Error(1)
-}
-
-func (m *MockItemService) SearchItems(ctx context.Context, params models.ItemSearchParams) ([]models.Item, error) {
-	args := m.Called(ctx, params)
-	return args.Get(0).([]models.Item), args.Error(1)
-}
-
-func (m *MockItemService) GetItemCount(ctx context.Context, members *bool) (int64, error) {
-	args := m.Called(ctx, members)
-	return args.Get(0).(int64), args.Error(1)
-}
-
-func (m *MockItemService) UpsertItem(ctx context.Context, item *models.Item) error {
-	args := m.Called(ctx, item)
-	return args.Error(0)
-}
-
-func (m *MockItemService) BulkUpsertItems(ctx context.Context, items []models.Item) error {
-	args := m.Called(ctx, items)
-	return args.Error(0)
-}
-
-func (m *MockItemService) SyncItemFromAPI(ctx context.Context, itemID int) (*models.Item, error) {
-	args := m.Called(ctx, itemID)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(*models.Item), args.Error(1)
-}
-
-func (m *MockItemService) SyncItemsFromBulkDump(ctx context.Context) error {
-	args := m.Called(ctx)
-	return args.Error(0)
-}
-
 func TestItemHandler_ListItems(t *testing.T) {
 	logger := zap.NewNop().Sugar()
-	mockService := new(MockItemService)
-	handler := handlers.NewItemHandler(mockService, logger)
+	mockItemService := new(MockItemService)
+	mockPriceService := new(MockPriceService)
+	handler := handlers.NewItemHandler(mockItemService, mockPriceService, logger)
 
 	// Setup mock response
 	items := []models.Item{
 		{ItemID: 1, Name: "Test Item 1"},
 		{ItemID: 2, Name: "Test Item 2"},
 	}
-	mockService.On("ListItems", mock.Anything, mock.AnythingOfType("models.ItemListParams")).
+	mockItemService.On("ListItems", mock.Anything, mock.AnythingOfType("models.ItemListParams")).
 		Return(items, int64(2), nil)
 
 	// Setup Fiber app
@@ -120,13 +48,14 @@ func TestItemHandler_ListItems(t *testing.T) {
 	data := result["data"].([]interface{})
 	assert.Len(t, data, 2)
 
-	mockService.AssertExpectations(t)
+	mockItemService.AssertExpectations(t)
 }
 
 func TestItemHandler_ListItems_InvalidPagination(t *testing.T) {
 	logger := zap.NewNop().Sugar()
-	mockService := new(MockItemService)
-	handler := handlers.NewItemHandler(mockService, logger)
+	mockItemService := new(MockItemService)
+	mockPriceService := new(MockPriceService)
+	handler := handlers.NewItemHandler(mockItemService, mockPriceService, logger)
 
 	app := fiber.New()
 	app.Get("/items", handler.ListItems)
@@ -139,13 +68,14 @@ func TestItemHandler_ListItems_InvalidPagination(t *testing.T) {
 	_ = json.NewDecoder(resp.Body).Decode(&result)
 	assert.Equal(t, "page must be greater than 0", result["error"])
 
-	mockService.AssertNotCalled(t, "ListItems", mock.Anything, mock.Anything)
+	mockItemService.AssertNotCalled(t, "ListItems", mock.Anything, mock.Anything)
 }
 
 func TestItemHandler_ListItems_InvalidSort(t *testing.T) {
 	logger := zap.NewNop().Sugar()
-	mockService := new(MockItemService)
-	handler := handlers.NewItemHandler(mockService, logger)
+	mockItemService := new(MockItemService)
+	mockPriceService := new(MockPriceService)
+	handler := handlers.NewItemHandler(mockItemService, mockPriceService, logger)
 
 	app := fiber.New()
 	app.Get("/items", handler.ListItems)
@@ -158,15 +88,16 @@ func TestItemHandler_ListItems_InvalidSort(t *testing.T) {
 	_ = json.NewDecoder(resp.Body).Decode(&result)
 	assert.Equal(t, "invalid sort_by field", result["error"])
 
-	mockService.AssertNotCalled(t, "ListItems", mock.Anything, mock.Anything)
+	mockItemService.AssertNotCalled(t, "ListItems", mock.Anything, mock.Anything)
 }
 
 func TestItemHandler_ListItems_ServiceError(t *testing.T) {
 	logger := zap.NewNop().Sugar()
-	mockService := new(MockItemService)
-	handler := handlers.NewItemHandler(mockService, logger)
+	mockItemService := new(MockItemService)
+	mockPriceService := new(MockPriceService)
+	handler := handlers.NewItemHandler(mockItemService, mockPriceService, logger)
 
-	mockService.On("ListItems", mock.Anything, mock.AnythingOfType("models.ItemListParams")).
+	mockItemService.On("ListItems", mock.Anything, mock.AnythingOfType("models.ItemListParams")).
 		Return([]models.Item{}, int64(0), errors.New("boom"))
 
 	app := fiber.New()
@@ -180,19 +111,22 @@ func TestItemHandler_ListItems_ServiceError(t *testing.T) {
 	_ = json.NewDecoder(resp.Body).Decode(&result)
 	assert.Equal(t, "failed to fetch items", result["error"])
 
-	mockService.AssertExpectations(t)
+	mockItemService.AssertExpectations(t)
 }
 
 func TestItemHandler_GetItemByID(t *testing.T) {
 	logger := zap.NewNop().Sugar()
-	mockService := new(MockItemService)
-	handler := handlers.NewItemHandler(mockService, logger)
+	mockItemService := new(MockItemService)
+	mockPriceService := new(MockPriceService)
+	handler := handlers.NewItemHandler(mockItemService, mockPriceService, logger)
 
 	// Setup mock response
-	item := &models.ItemWithCurrentPrice{
-		Item: models.Item{ItemID: 1, Name: "Test Item"},
-	}
-	mockService.On("GetItemWithPrice", mock.Anything, 1).Return(item, nil)
+	item := &models.Item{ItemID: 1, Name: "Test Item"}
+	highPrice := int64(100)
+	lowPrice := int64(90)
+	price := &models.CurrentPrice{ItemID: 1, HighPrice: &highPrice, LowPrice: &lowPrice}
+	mockItemService.On("GetItemByItemID", mock.Anything, 1).Return(item, nil)
+	mockPriceService.On("GetCurrentPrice", mock.Anything, 1).Return(price, nil)
 
 	// Setup Fiber app
 	app := fiber.New()
@@ -206,13 +140,15 @@ func TestItemHandler_GetItemByID(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, 200, resp.StatusCode)
 
-	mockService.AssertExpectations(t)
+	mockItemService.AssertExpectations(t)
+	mockPriceService.AssertExpectations(t)
 }
 
 func TestItemHandler_GetItemByID_InvalidID(t *testing.T) {
 	logger := zap.NewNop().Sugar()
-	mockService := new(MockItemService)
-	handler := handlers.NewItemHandler(mockService, logger)
+	mockItemService := new(MockItemService)
+	mockPriceService := new(MockPriceService)
+	handler := handlers.NewItemHandler(mockItemService, mockPriceService, logger)
 
 	app := fiber.New()
 	app.Get("/items/:id", handler.GetItemByID)
@@ -225,15 +161,16 @@ func TestItemHandler_GetItemByID_InvalidID(t *testing.T) {
 	_ = json.NewDecoder(resp.Body).Decode(&result)
 	assert.Equal(t, "invalid item ID", result["error"])
 
-	mockService.AssertNotCalled(t, "GetItemWithPrice", mock.Anything, mock.Anything)
+	mockItemService.AssertNotCalled(t, "GetItemByItemID", mock.Anything, mock.Anything)
 }
 
 func TestItemHandler_GetItemByID_NotFound(t *testing.T) {
 	logger := zap.NewNop().Sugar()
-	mockService := new(MockItemService)
-	handler := handlers.NewItemHandler(mockService, logger)
+	mockItemService := new(MockItemService)
+	mockPriceService := new(MockPriceService)
+	handler := handlers.NewItemHandler(mockItemService, mockPriceService, logger)
 
-	mockService.On("GetItemWithPrice", mock.Anything, 123).Return((*models.ItemWithCurrentPrice)(nil), errors.New("not found"))
+	mockItemService.On("GetItemByItemID", mock.Anything, 123).Return((*models.Item)(nil), errors.New("not found"))
 
 	app := fiber.New()
 	app.Get("/items/:id", handler.GetItemByID)
@@ -246,19 +183,20 @@ func TestItemHandler_GetItemByID_NotFound(t *testing.T) {
 	_ = json.NewDecoder(resp.Body).Decode(&result)
 	assert.Equal(t, "item not found", result["error"])
 
-	mockService.AssertExpectations(t)
+	mockItemService.AssertExpectations(t)
 }
 
 func TestItemHandler_SearchItems(t *testing.T) {
 	logger := zap.NewNop().Sugar()
-	mockService := new(MockItemService)
-	handler := handlers.NewItemHandler(mockService, logger)
+	mockItemService := new(MockItemService)
+	mockPriceService := new(MockPriceService)
+	handler := handlers.NewItemHandler(mockItemService, mockPriceService, logger)
 
 	// Setup mock response
 	items := []models.Item{
 		{ItemID: 1, Name: "Dragon Sword"},
 	}
-	mockService.On("SearchItems", mock.Anything, mock.AnythingOfType("models.ItemSearchParams")).
+	mockItemService.On("SearchItems", mock.Anything, mock.AnythingOfType("models.ItemSearchParams")).
 		Return(items, nil)
 
 	// Setup Fiber app
@@ -273,13 +211,14 @@ func TestItemHandler_SearchItems(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, 200, resp.StatusCode)
 
-	mockService.AssertExpectations(t)
+	mockItemService.AssertExpectations(t)
 }
 
 func TestItemHandler_SearchItems_MissingQuery(t *testing.T) {
 	logger := zap.NewNop().Sugar()
-	mockService := new(MockItemService)
-	handler := handlers.NewItemHandler(mockService, logger)
+	mockItemService := new(MockItemService)
+	mockPriceService := new(MockPriceService)
+	handler := handlers.NewItemHandler(mockItemService, mockPriceService, logger)
 
 	// Setup Fiber app
 	app := fiber.New()
@@ -296,8 +235,9 @@ func TestItemHandler_SearchItems_MissingQuery(t *testing.T) {
 
 func TestItemHandler_SearchItems_InvalidLimit(t *testing.T) {
 	logger := zap.NewNop().Sugar()
-	mockService := new(MockItemService)
-	handler := handlers.NewItemHandler(mockService, logger)
+	mockItemService := new(MockItemService)
+	mockPriceService := new(MockPriceService)
+	handler := handlers.NewItemHandler(mockItemService, mockPriceService, logger)
 
 	app := fiber.New()
 	app.Get("/items/search", handler.SearchItems)
@@ -310,15 +250,16 @@ func TestItemHandler_SearchItems_InvalidLimit(t *testing.T) {
 	_ = json.NewDecoder(resp.Body).Decode(&result)
 	assert.Equal(t, "limit must be between 1 and 200", result["error"])
 
-	mockService.AssertNotCalled(t, "SearchItems", mock.Anything, mock.Anything)
+	mockItemService.AssertNotCalled(t, "SearchItems", mock.Anything, mock.Anything)
 }
 
 func TestItemHandler_SearchItems_ServiceError(t *testing.T) {
 	logger := zap.NewNop().Sugar()
-	mockService := new(MockItemService)
-	handler := handlers.NewItemHandler(mockService, logger)
+	mockItemService := new(MockItemService)
+	mockPriceService := new(MockPriceService)
+	handler := handlers.NewItemHandler(mockItemService, mockPriceService, logger)
 
-	mockService.On("SearchItems", mock.Anything, mock.AnythingOfType("models.ItemSearchParams")).
+	mockItemService.On("SearchItems", mock.Anything, mock.AnythingOfType("models.ItemSearchParams")).
 		Return([]models.Item{}, errors.New("boom"))
 
 	app := fiber.New()
@@ -332,15 +273,16 @@ func TestItemHandler_SearchItems_ServiceError(t *testing.T) {
 	_ = json.NewDecoder(resp.Body).Decode(&result)
 	assert.Equal(t, "failed to search items", result["error"])
 
-	mockService.AssertExpectations(t)
+	mockItemService.AssertExpectations(t)
 }
 
 func TestItemHandler_GetItemCount_OK(t *testing.T) {
 	logger := zap.NewNop().Sugar()
-	mockService := new(MockItemService)
-	handler := handlers.NewItemHandler(mockService, logger)
+	mockItemService := new(MockItemService)
+	mockPriceService := new(MockPriceService)
+	handler := handlers.NewItemHandler(mockItemService, mockPriceService, logger)
 
-	mockService.On("GetItemCount", mock.Anything, (*bool)(nil)).Return(int64(123), nil)
+	mockItemService.On("GetItemCount", mock.Anything, (*bool)(nil)).Return(int64(123), nil)
 
 	app := fiber.New()
 	app.Get("/items/count", handler.GetItemCount)
@@ -353,15 +295,16 @@ func TestItemHandler_GetItemCount_OK(t *testing.T) {
 	_ = json.NewDecoder(resp.Body).Decode(&result)
 	assert.Equal(t, float64(123), result["count"])
 
-	mockService.AssertExpectations(t)
+	mockItemService.AssertExpectations(t)
 }
 
 func TestItemHandler_GetItemCount_ServiceError(t *testing.T) {
 	logger := zap.NewNop().Sugar()
-	mockService := new(MockItemService)
-	handler := handlers.NewItemHandler(mockService, logger)
+	mockItemService := new(MockItemService)
+	mockPriceService := new(MockPriceService)
+	handler := handlers.NewItemHandler(mockItemService, mockPriceService, logger)
 
-	mockService.On("GetItemCount", mock.Anything, (*bool)(nil)).Return(int64(0), errors.New("boom"))
+	mockItemService.On("GetItemCount", mock.Anything, (*bool)(nil)).Return(int64(0), errors.New("boom"))
 
 	app := fiber.New()
 	app.Get("/items/count", handler.GetItemCount)
@@ -374,5 +317,5 @@ func TestItemHandler_GetItemCount_ServiceError(t *testing.T) {
 	_ = json.NewDecoder(resp.Body).Decode(&result)
 	assert.Equal(t, "failed to get item count", result["error"])
 
-	mockService.AssertExpectations(t)
+	mockItemService.AssertExpectations(t)
 }
