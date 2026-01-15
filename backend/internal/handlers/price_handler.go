@@ -142,6 +142,7 @@ func (h *PriceHandler) GetPriceHistory(c *fiber.Ctx) error {
 	// Parse query parameters
 	periodStr := c.Query("period", "7d")
 	sampleStr := c.Query("sample")
+	refreshStr := c.Query("refresh") // If "true", bypass cache
 
 	// Parse period
 	period := models.TimePeriod(periodStr)
@@ -175,10 +176,13 @@ func (h *PriceHandler) GetPriceHistory(c *fiber.Ctx) error {
 		maxPoints = &points
 	}
 
+	refresh := refreshStr == "true"
+
 	params := models.PriceHistoryParams{
 		ItemID:    itemID,
 		Period:    period,
 		MaxPoints: maxPoints,
+		Refresh:   refresh,
 	}
 
 	// Get price history

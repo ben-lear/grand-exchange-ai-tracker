@@ -65,6 +65,9 @@ type PriceService interface {
 
 	// RunMaintenance performs retention pruning and rollups for realtime price tables.
 	RunMaintenance(ctx context.Context) error
+
+	// EnsureFuturePartitions creates partitions for price_latest for the next N days
+	EnsureFuturePartitions(ctx context.Context, daysAhead int) error
 }
 
 // CacheService defines the interface for caching operations

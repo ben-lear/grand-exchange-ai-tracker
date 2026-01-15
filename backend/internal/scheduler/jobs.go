@@ -15,6 +15,7 @@ type Scheduler struct {
 	cron         *cron.Cron
 	priceService services.PriceService
 	itemService  services.ItemService
+	sseHub       *services.SSEHub
 	logger       *zap.SugaredLogger
 	itemsSynced  atomic.Bool
 }
@@ -23,6 +24,7 @@ type Scheduler struct {
 func NewScheduler(
 	priceService services.PriceService,
 	itemService services.ItemService,
+	sseHub *services.SSEHub,
 	logger *zap.SugaredLogger,
 ) *Scheduler {
 	// Create cron with second precision
@@ -32,6 +34,7 @@ func NewScheduler(
 		cron:         c,
 		priceService: priceService,
 		itemService:  itemService,
+		sseHub:       sseHub,
 		logger:       logger,
 	}
 }
@@ -59,7 +62,14 @@ func (s *Scheduler) Start() error {
 	}
 	s.logger.Info("Scheduled: Sync current prices (every 1 minute)")
 
-	// Job 2: Run maintenance (rollups + pruning) daily
+	// Job 2: Ensure future partitions exist (daily at 00:02)
+	_, err = s.cron.AddFunc("0 2 0 * * *", s.ensurePartitionsJob)
+	if err != nil {
+		return err
+	}
+	s.logger.Info("Scheduled: Partition maintenance (daily at 00:02)")
+
+	// Job 3: Run maintenance (rollups + pruning) daily
 	_, err = s.cron.AddFunc("0 5 0 * * *", s.maintenanceJob)
 	if err != nil {
 		return err
@@ -99,6 +109,7 @@ func (s *Scheduler) syncItemsJob() {
 	// price sync so the API has data without waiting for the next cron tick.
 	if s.itemsSynced.CompareAndSwap(false, true) {
 		s.logger.Info("Initial items sync completed; triggering initial current prices sync")
+		go s.ensurePartitionsJob()
 		go s.syncCurrentPricesJob()
 	}
 
@@ -129,6 +140,38 @@ func (s *Scheduler) syncCurrentPricesJob() {
 
 	duration := time.Since(start)
 	s.logger.Infow("Current prices sync completed",
+		"duration_ms", duration.Milliseconds(),
+	)
+
+	// Broadcast SSE event if hub is available
+	if s.sseHub != nil && s.sseHub.ClientCount() > 0 {
+		s.logger.Debugw("Broadcasting price sync completion to SSE clients",
+			"client_count", s.sseHub.ClientCount())
+
+		s.sseHub.Broadcast(services.SSEMessage{
+			Event:     "sync-complete",
+			Data:      map[string]interface{}{"timestamp": time.Now()},
+			Timestamp: time.Now(),
+		})
+	}
+}
+
+func (s *Scheduler) ensurePartitionsJob() {
+	s.logger.Info("Starting partition maintenance job")
+	start := time.Now()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+	defer cancel()
+
+	// Create partitions for the next 7 days
+	err := s.priceService.EnsureFuturePartitions(ctx, 7)
+	if err != nil {
+		s.logger.Errorf("Partition maintenance failed: %v", err)
+		return
+	}
+
+	duration := time.Since(start)
+	s.logger.Infow("Partition maintenance completed",
 		"duration_ms", duration.Milliseconds(),
 	)
 }

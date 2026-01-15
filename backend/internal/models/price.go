@@ -23,6 +23,7 @@ type PriceHistoryParams struct {
 	EndTime   *time.Time
 	MaxPoints *int // Maximum number of points to return (for sampling)
 	Limit     int
+	Refresh   bool // If true, bypass cache and force fresh data
 }
 
 // PriceHistoryResponse represents the response structure for historical prices

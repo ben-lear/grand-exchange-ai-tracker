@@ -57,10 +57,28 @@ func main() {
 	itemService := services.NewItemService(itemRepo, cacheService, cfg.WikiPricesBaseURL, logger)
 	priceService := services.NewPriceService(priceRepo, itemRepo, cacheService, cfg.WikiPricesBaseURL, logger)
 
+	// Initialize SSE Hub if enabled
+	var sseHub *services.SSEHub
+	if cfg.SSE.Enabled {
+		sseHub = services.NewSSEHub(logger, cfg.SSE.MaxClients)
+		go sseHub.Run()
+		logger.Info("SSE Hub started")
+	}
+
 	// Initialize handlers
 	healthHandler := handlers.NewHealthHandler(db, redis, logger)
 	itemHandler := handlers.NewItemHandler(itemService, priceService, logger)
 	priceHandler := handlers.NewPriceHandler(priceService, logger)
+
+	// Initialize SSE handler if enabled
+	var sseHandler *handlers.SSEHandler
+	if cfg.SSE.Enabled && sseHub != nil {
+		sseHandler = handlers.NewSSEHandler(sseHub, logger, handlers.SSEConfig{
+			ConnectionTimeout: cfg.SSE.ConnectionTimeout,
+			HeartbeatInterval: cfg.SSE.HeartbeatInterval,
+			MaxClients:        cfg.SSE.MaxClients,
+		})
+	}
 
 	// Create Fiber app
 	app := fiber.New(fiber.Config{
@@ -87,6 +105,8 @@ func main() {
 
 	// API routes with rate limiting
 	api := app.Group("/api/v1", middleware.NewAPIRateLimiter())
+	// API routes without rate limiting (e.g., long-lived SSE connections)
+	apiNoLimit := app.Group("/api/v1")
 
 	// Root API endpoint
 	api.Get("/", func(c *fiber.Ctx) error {
@@ -111,12 +131,18 @@ func main() {
 	prices.Get("/current/:id", priceHandler.GetCurrentPrice)         // GET /api/v1/prices/current/:id
 	prices.Get("/history/:id", priceHandler.GetPriceHistory)         // GET /api/v1/prices/history/:id?period=7d&sample=150
 
+	// SSE route (if enabled) - avoid rate limiting to prevent disconnect loops
+	if cfg.SSE.Enabled && sseHandler != nil {
+		pricesNoLimit := apiNoLimit.Group("/prices")
+		pricesNoLimit.Get("/stream", sseHandler.Stream) // GET /api/v1/prices/stream?items=1,2,3
+	}
+
 	// Admin/sync routes (with stricter rate limiting)
 	sync := api.Group("/sync", middleware.NewSyncRateLimiter())
 	sync.Post("/prices", priceHandler.SyncCurrentPrices) // POST /api/v1/sync/prices
 
-	// Initialize and start scheduler
-	sched := scheduler.NewScheduler(priceService, itemService, logger)
+	// Initialize and start scheduler (pass SSE hub if enabled)
+	sched := scheduler.NewScheduler(priceService, itemService, sseHub, logger)
 	if err := sched.Start(); err != nil {
 		logger.Fatalf("Failed to start scheduler: %v", err)
 	}
@@ -137,6 +163,13 @@ func main() {
 	<-quit
 
 	logger.Info("Shutting down server...")
+
+	// Stop SSE hub first
+	if sseHub != nil {
+		logger.Info("Stopping SSE Hub...")
+		sseHub.Stop()
+	}
+
 	if err := app.Shutdown(); err != nil {
 		logger.Errorf("Server shutdown error: %v", err)
 	}

@@ -79,4 +79,7 @@ type PriceRepository interface {
 	// PruneTimeseriesBefore deletes bucketed timeseries points older than the cutoff for a timestep.
 	// timestep must be one of: 5m, 1h, 6h, 24h.
 	PruneTimeseriesBefore(ctx context.Context, timestep string, cutoff time.Time) (int64, error)
+
+	// EnsureFuturePartitions creates partitions for price_latest for the next N days
+	EnsureFuturePartitions(ctx context.Context, daysAhead int) error
 }

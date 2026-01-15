@@ -6,9 +6,10 @@
  * - Responsive design
  * - Custom tooltip
  * - Price trend indicators
+ * - Real-time SSE price updates with live indicator
  */
 
-import { useMemo } from 'react';
+import { useMemo, useEffect } from 'react';
 import {
   Line,
   XAxis,
@@ -19,12 +20,16 @@ import {
   ReferenceLine,
   Area,
   ComposedChart,
+  Dot,
 } from 'recharts';
 import { format } from 'date-fns';
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { ChartTooltip } from './ChartTooltip';
 import { LoadingSpinner, ErrorDisplay } from '@/components/common';
 import { formatGold } from '@/utils/formatters';
+import { usePriceStream } from '@/hooks/usePriceStream';
+import { useLiveBufferStore } from '@/stores/liveBufferStore';
+import { getTimestepForPeriod } from '@/utils/chartTimesteps';
 import type { PricePoint, TimePeriod } from '@/types';
 
 export interface PriceChartProps {
@@ -32,6 +37,7 @@ export interface PriceChartProps {
   isLoading?: boolean;
   error?: Error | null;
   period: TimePeriod;
+  itemId?: number; // Required for SSE integration
   itemName?: string;
   height?: number;
   showDualLines?: boolean; // Toggle between dual-line and single-line mode
@@ -42,10 +48,49 @@ export function PriceChart({
   isLoading = false,
   error = null,
   period,
+  itemId,
   itemName,
   height = 400,
   showDualLines = true, // Default to dual-line mode
 }: PriceChartProps) {
+  // SSE integration for real-time updates
+  const { isConnected, lastUpdate, lastHeartbeatAt } = usePriceStream({
+    itemIds: itemId ? [itemId] : [],
+    enabled: !!itemId,
+  });
+
+  const { addPoint, getLiveTip, getConsolidatedPoints, clearBuffer } = useLiveBufferStore();
+  const timestepConfig = getTimestepForPeriod(period);
+
+  // Guard against undefined timestepConfig (shouldn't happen with fixed config)
+  if (!timestepConfig) {
+    return (
+      <ErrorDisplay
+        error={`Invalid time period: ${period}`}
+        title="Chart Configuration Error"
+      />
+    );
+  }
+
+  // Add SSE updates to buffer
+  useEffect(() => {
+    if (lastUpdate && itemId && lastUpdate.item_id === itemId) {
+      addPoint(itemId, {
+        timestamp: new Date(lastUpdate.timestamp),
+        high: lastUpdate.high !== null ? Number(lastUpdate.high) : null,
+        low: lastUpdate.low !== null ? Number(lastUpdate.low) : null,
+        isLive: true,
+      });
+    }
+  }, [lastUpdate, itemId, addPoint]);
+
+  // Clear buffer when item or period changes
+  useEffect(() => {
+    if (itemId) {
+      clearBuffer(itemId);
+    }
+  }, [itemId, period, clearBuffer]);
+
   // Process data for chart
   const chartData = useMemo(() => {
     if (!data || data.length === 0) return [];
@@ -76,8 +121,9 @@ export function PriceChart({
         return {
           ...point,
           timestamp: typeof point.timestamp === 'number' ? point.timestamp : new Date(point.timestamp).getTime(),
-          highPrice: highPrice ?? undefined,
-          lowPrice: lowPrice ?? undefined,
+          // Explicitly set to undefined (not null or 0) so Recharts properly gaps the line
+          highPrice: highPrice !== null && highPrice > 0 ? highPrice : undefined,
+          lowPrice: lowPrice !== null && lowPrice > 0 ? lowPrice : undefined,
           midPrice,
           previousPrice: index > 0 ? (data[index - 1].price || 0) : null,
         };
@@ -91,11 +137,53 @@ export function PriceChart({
       .sort((a, b) => a.timestamp - b.timestamp);
   }, [data]);
 
+  // Merge historical data with live SSE data
+  const mergedChartData = useMemo(() => {
+    if (!itemId) return chartData;
+
+    const liveTip = getLiveTip(itemId);
+    const consolidated = getConsolidatedPoints(itemId, timestepConfig.displayTimestepMs);
+
+    // Start with historical data
+    const merged = [...chartData];
+
+    // Get current timestep bucket start
+    const now = Date.now();
+    const currentBucketStart = Math.floor(now / timestepConfig.displayTimestepMs) * timestepConfig.displayTimestepMs;
+
+    // Add consolidated SSE points (excluding current incomplete bucket)
+    for (const cp of consolidated) {
+      const cpTime = cp.timestamp.getTime();
+      if (cpTime < currentBucketStart) {
+        merged.push({
+          timestamp: cpTime,
+          highPrice: cp.high !== null ? cp.high : undefined,
+          lowPrice: cp.low !== null ? cp.low : undefined,
+          midPrice: cp.high !== null && cp.low !== null ? (cp.high + cp.low) / 2 : cp.high ?? cp.low ?? 0,
+          isLive: true,
+        });
+      }
+    }
+
+    // Always add live tip as the rightmost point (if it exists)
+    if (liveTip) {
+      merged.push({
+        timestamp: liveTip.timestamp.getTime(),
+        highPrice: liveTip.high !== null ? liveTip.high : undefined,
+        lowPrice: liveTip.low !== null ? liveTip.low : undefined,
+        midPrice: liveTip.high !== null && liveTip.low !== null ? (liveTip.high + liveTip.low) / 2 : liveTip.high ?? liveTip.low ?? 0,
+        isLive: true,
+      });
+    }
+
+    return merged.sort((a, b) => a.timestamp - b.timestamp);
+  }, [chartData, itemId, getLiveTip, getConsolidatedPoints, timestepConfig.displayTimestepMs]);
+
   // Calculate price statistics
   const stats = useMemo(() => {
-    if (chartData.length === 0) return null;
+    if (mergedChartData.length === 0) return null;
 
-    const prices = chartData.map(d => d.midPrice || d.price || 0).filter(p => p > 0);
+    const prices = mergedChartData.map(d => d.midPrice || d.price || 0).filter(p => p > 0);
     if (prices.length === 0) return null;
     
     const firstPrice = prices[0];
@@ -115,7 +203,7 @@ export function PriceChart({
       changePercent,
       trend: change > 0 ? 'up' : change < 0 ? 'down' : 'flat',
     };
-  }, [chartData]);
+  }, [mergedChartData]);
 
   // Format X-axis ticks based on period
   const formatXAxisTick = (timestamp: number) => {
@@ -163,7 +251,7 @@ export function PriceChart({
   }
 
   // Empty state
-  if (chartData.length === 0) {
+  if (mergedChartData.length === 0) {
     return (
       <div
         className="flex flex-col items-center justify-center text-center"
@@ -196,6 +284,24 @@ export function PriceChart({
 
   const lineColor = stats?.trend === 'up' ? '#10b981' : stats?.trend === 'down' ? '#ef4444' : '#6b7280';
   
+  // Custom dot renderer to highlight live data points
+  const CustomDot = (props: any) => {
+    const { cx, cy, payload, fill } = props;
+    if (!payload?.isLive) {
+      return <Dot {...props} />;
+    }
+    // Render live points with pulsing animation
+    return (
+      <g>
+        <circle cx={cx} cy={cy} r={6} fill={fill} opacity={0.3}>
+          <animate attributeName="r" from="6" to="10" dur="1s" repeatCount="indefinite" />
+          <animate attributeName="opacity" from="0.3" to="0" dur="1s" repeatCount="indefinite" />
+        </circle>
+        <circle cx={cx} cy={cy} r={4} fill={fill} stroke="#fff" strokeWidth={2} />
+      </g>
+    );
+  };
+
   return (
     <div className="space-y-4">
       {/* Chart Header with Stats */}
@@ -213,7 +319,7 @@ export function PriceChart({
               <span>Low: {formatGold(stats.minPrice)}</span>
             </div>
           </div>
-          
+
           {/* Price Change */}
           <div className="text-right">
             <div
@@ -250,7 +356,7 @@ export function PriceChart({
       <div style={{ height }}>
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart
-            data={chartData}
+            data={mergedChartData}
             margin={{
               top: 5,
               right: 30,
@@ -279,10 +385,19 @@ export function PriceChart({
               tickFormatter={(value) => formatGold(value, 0)}
               stroke="#6b7280"
               fontSize={12}
+              domain={[(dataMin: number) => dataMin * 0.95, (dataMax: number) => dataMax * 1.05]}
             />
             
-            {/* Tooltip */}
-            <Tooltip content={<ChartTooltip />} />
+            {/* Tooltip - positioned at the midpoint between high and low */}
+            <Tooltip 
+              content={<ChartTooltip />}
+              animationDuration={150}
+              animationEasing="ease-out"
+              wrapperStyle={{ 
+                outline: 'none',
+                transition: 'all 0.15s ease-out',
+              }}
+            />
             
             {/* Current price reference line */}
             {stats && (
@@ -294,17 +409,6 @@ export function PriceChart({
               />
             )}
             
-            {/* Spread area (if dual-line mode) */}
-            {showDualLines && (
-              <Area
-                type="monotone"
-                dataKey="highPrice"
-                stroke="none"
-                fill="#10b981"
-                fillOpacity={0.1}
-              />
-            )}
-            
             {/* High price line (buy price) */}
             {showDualLines && (
               <Line
@@ -313,7 +417,7 @@ export function PriceChart({
                 stroke="#10b981"
                 strokeWidth={2}
                 name="High Price"
-                dot={{ r: 3, fill: '#10b981', strokeWidth: 0 }}
+                dot={<CustomDot fill="#10b981" />}
                 activeDot={{ 
                   r: 6, 
                   fill: '#10b981',
@@ -332,7 +436,7 @@ export function PriceChart({
                 stroke="#f97316"
                 strokeWidth={2}
                 name="Low Price"
-                dot={{ r: 3, fill: '#f97316', strokeWidth: 0 }}
+                dot={<CustomDot fill="#f97316" />}
                 activeDot={{ 
                   r: 6, 
                   fill: '#f97316',
@@ -351,7 +455,7 @@ export function PriceChart({
                 stroke={lineColor}
                 strokeWidth={2}
                 name="Price"
-                dot={{ r: 3, fill: lineColor, strokeWidth: 0 }}
+                dot={<CustomDot fill={lineColor} />}
                 activeDot={{ 
                   r: 6, 
                   fill: lineColor,

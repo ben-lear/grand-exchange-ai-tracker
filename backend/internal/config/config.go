@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/spf13/viper"
 )
@@ -28,6 +29,17 @@ type Config struct {
 
 	// OSRS Wiki Real-time Prices API
 	WikiPricesBaseURL string
+
+	// SSE (Server-Sent Events)
+	SSE SSEConfig
+}
+
+// SSEConfig contains SSE-specific configuration
+type SSEConfig struct {
+	Enabled           bool
+	ConnectionTimeout time.Duration
+	HeartbeatInterval time.Duration
+	MaxClients        int
 }
 
 func LoadConfig() (*Config, error) {
@@ -70,6 +82,13 @@ func LoadConfig() (*Config, error) {
 		RedisDB:       viper.GetInt("REDIS_DB"),
 
 		WikiPricesBaseURL: viper.GetString("WIKI_PRICES_BASE_URL"),
+
+		SSE: SSEConfig{
+			Enabled:           viper.GetBool("SSE_ENABLED"),
+			ConnectionTimeout: viper.GetDuration("SSE_CONNECTION_TIMEOUT"),
+			HeartbeatInterval: viper.GetDuration("SSE_HEARTBEAT_INTERVAL"),
+			MaxClients:        viper.GetInt("SSE_MAX_CLIENTS"),
+		},
 	}
 
 	return config, nil
@@ -97,4 +116,10 @@ func setDefaults() {
 
 	// OSRS Wiki prices API defaults
 	viper.SetDefault("WIKI_PRICES_BASE_URL", "https://prices.runescape.wiki/api/v1/osrs")
+
+	// SSE defaults
+	viper.SetDefault("SSE_ENABLED", true)
+	viper.SetDefault("SSE_CONNECTION_TIMEOUT", 30*time.Minute)
+	viper.SetDefault("SSE_HEARTBEAT_INTERVAL", 30*time.Second)
+	viper.SetDefault("SSE_MAX_CLIENTS", 100)
 }

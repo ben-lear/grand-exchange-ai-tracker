@@ -22,3 +22,11 @@ export {
   usePrefetchPriceHistory,
   priceKeys,
 } from './usePrices';
+
+// SSE hooks
+export {
+  usePriceStream,
+  type PriceUpdate,
+  type UsePriceStreamOptions,
+  type UsePriceStreamReturn,
+} from './usePriceStream';

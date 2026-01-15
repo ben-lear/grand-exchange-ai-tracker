@@ -111,9 +111,9 @@ func (s *priceService) GetPriceHistory(ctx context.Context, params models.PriceH
 		params.MaxPoints = &defaultMaxPoints
 	}
 
-	// Try cache first (only if period-based query)
+	// Try cache first (only if period-based query and not forcing refresh)
 	var cacheKey string
-	if params.Period != "" {
+	if params.Period != "" && !params.Refresh {
 		cacheKey = fmt.Sprintf("price:history:%d:%s", params.ItemID, params.Period)
 		var response models.PriceHistoryResponse
 		err := s.cache.GetJSON(ctx, cacheKey, &response)
@@ -121,6 +121,10 @@ func (s *priceService) GetPriceHistory(ctx context.Context, params models.PriceH
 			s.logger.Debugw("Returning price history from cache", "itemID", params.ItemID, "period", params.Period)
 			return &response, nil
 		}
+	} else if params.Period != "" && params.Refresh {
+		// Force cache refresh by setting the cache key for later update
+		cacheKey = fmt.Sprintf("price:history:%d:%s", params.ItemID, params.Period)
+		s.logger.Debugw("Bypassing cache due to refresh=true", "itemID", params.ItemID, "period", params.Period)
 	}
 
 	source := periodToTimeseriesSource(params.Period)
@@ -485,4 +489,9 @@ func (s *priceService) RunMaintenance(ctx context.Context) error {
 	)
 
 	return nil
+}
+
+// EnsureFuturePartitions creates partitions for price_latest for the next N days
+func (s *priceService) EnsureFuturePartitions(ctx context.Context, daysAhead int) error {
+	return s.priceRepo.EnsureFuturePartitions(ctx, daysAhead)
 }

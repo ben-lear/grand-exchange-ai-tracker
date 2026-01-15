@@ -6,9 +6,9 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, TrendingUp } from 'lucide-react';
-import { PriceChart, TimePeriodSelector } from '@/components/charts';
+import { PriceChart, TimePeriodSelector, LiveIndicator } from '@/components/charts';
 import { LoadingSpinner, ErrorDisplay } from '@/components/common';
-import { useItem, useCurrentPrice, usePriceHistory } from '@/hooks';
+import { useItem, useCurrentPrice, usePriceHistory, usePriceStream } from '@/hooks';
 import { formatGold, formatSpread, formatMarginPercent, formatRelativeTime, getItemUrl } from '@/utils';
 import type { TimePeriod } from '@/types';
 
@@ -41,6 +41,16 @@ export const ItemDetailPage: React.FC = () => {
     isLoading: historyLoading,
     error: historyError,
   } = usePriceHistory(itemId, selectedPeriod);
+
+  // Connect to SSE for real-time updates
+  const {
+    isConnected: sseConnected,
+    reconnectCount: sseReconnectCount,
+    lastHeartbeatAt,
+  } = usePriceStream({
+    itemIds: [itemId],
+    enabled: true,
+  });
 
   // Redirect to proper slug URL if item is loaded and slug is missing/incorrect
   useEffect(() => {
@@ -219,9 +229,16 @@ export const ItemDetailPage: React.FC = () => {
       {/* Price Chart */}
       <div className="rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-6">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-            Price History
-          </h2>
+          <div className="flex items-center gap-4">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+              Price History
+            </h2>
+            <LiveIndicator
+              isConnected={sseConnected}
+              lastUpdateTime={lastHeartbeatAt}
+              reconnectCount={sseReconnectCount}
+            />
+          </div>
           <TimePeriodSelector
             activePeriod={selectedPeriod}
             onPeriodChange={setSelectedPeriod}
@@ -234,6 +251,7 @@ export const ItemDetailPage: React.FC = () => {
           isLoading={historyLoading}
           error={historyError}
           period={selectedPeriod}
+          itemId={itemId}
           itemName={item.name}
           height={400}
         />

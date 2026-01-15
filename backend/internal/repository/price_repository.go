@@ -27,6 +27,61 @@ func NewPriceRepository(db *gorm.DB, logger *zap.SugaredLogger) PriceRepository 
 	}
 }
 
+// EnsureFuturePartitions creates partitions for price_latest for the next N days
+func (r *priceRepository) EnsureFuturePartitions(ctx context.Context, daysAhead int) error {
+	now := time.Now().UTC()
+	createdCount := 0
+	skippedCount := 0
+
+	for i := 0; i <= daysAhead; i++ {
+		targetDate := now.AddDate(0, 0, i)
+		partitionDate := targetDate.Format("2006_01_02")
+		partitionName := "price_latest_" + partitionDate
+
+		// Check if partition already exists
+		var exists bool
+		err := r.db.WithContext(ctx).Raw(
+			"SELECT EXISTS (SELECT 1 FROM pg_class WHERE relname = ?)",
+			partitionName,
+		).Scan(&exists).Error
+
+		if err != nil {
+			return fmt.Errorf("failed to check partition existence for %s: %w", partitionName, err)
+		}
+
+		if exists {
+			skippedCount++
+			continue
+		}
+
+		// Create partition
+		startTime := time.Date(targetDate.Year(), targetDate.Month(), targetDate.Day(), 0, 0, 0, 0, time.UTC)
+		endTime := startTime.AddDate(0, 0, 1)
+
+		sql := fmt.Sprintf(
+			"CREATE TABLE IF NOT EXISTS %s PARTITION OF price_latest FOR VALUES FROM ('%s') TO ('%s')",
+			partitionName,
+			startTime.Format("2006-01-02 15:04:05-07"),
+			endTime.Format("2006-01-02 15:04:05-07"),
+		)
+
+		if err := r.db.WithContext(ctx).Exec(sql).Error; err != nil {
+			return fmt.Errorf("failed to create partition %s: %w", partitionName, err)
+		}
+
+		r.logger.Infow("Created partition", "partition", partitionName, "date", targetDate.Format("2006-01-02"))
+		createdCount++
+	}
+
+	r.logger.Infow("Partition maintenance completed",
+		"created", createdCount,
+		"skipped", skippedCount,
+		"days_ahead", daysAhead,
+	)
+
+	return nil
+}
+
 // GetCurrentPrice returns the current price for an item
 func (r *priceRepository) GetCurrentPrice(ctx context.Context, itemID int) (*models.CurrentPrice, error) {
 	var price models.CurrentPrice
