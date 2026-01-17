@@ -206,7 +206,7 @@ describe('SearchInput', () => {
         render(<SearchInput value="" onChange={handleChange} />);
 
         const input = screen.getByRole('textbox');
-        await user.type(input, 'dragonsword', { delay: 0 });
+        await user.type(input, 'dragonsword');
 
         expect(handleChange).toHaveBeenCalledTimes(11);
     });

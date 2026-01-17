@@ -32,31 +32,43 @@ Element.prototype.scrollIntoView = vi.fn();
 describe('GlobalSearch', () => {
     const mockItems: Item[] = [
         {
+            id: 1,
             itemId: 1,
             name: 'Dragon scimitar',
             description: 'A powerful scimitar',
             iconUrl: 'https://example.com/dragon-scim.png',
             members: true,
-            tradeable: true,
-            equipable: true,
+            buyLimit: 70,
+            highAlch: 72000,
+            lowAlch: 48000,
+            createdAt: '2024-01-01T00:00:00Z',
+            updatedAt: '2024-01-01T00:00:00Z',
         },
         {
+            id: 2,
             itemId: 2,
             name: 'Dragon longsword',
             description: 'A sharp longsword',
             iconUrl: 'https://example.com/dragon-long.png',
             members: true,
-            tradeable: true,
-            equipable: true,
+            buyLimit: 70,
+            highAlch: 72000,
+            lowAlch: 48000,
+            createdAt: '2024-01-01T00:00:00Z',
+            updatedAt: '2024-01-01T00:00:00Z',
         },
         {
+            id: 3,
             itemId: 3,
             name: 'Abyssal whip',
             description: 'A demonic whip',
             iconUrl: 'https://example.com/whip.png',
             members: true,
-            tradeable: true,
-            equipable: true,
+            buyLimit: 70,
+            highAlch: 72000,
+            lowAlch: 48000,
+            createdAt: '2024-01-01T00:00:00Z',
+            updatedAt: '2024-01-01T00:00:00Z',
         },
     ];
 
@@ -65,9 +77,9 @@ describe('GlobalSearch', () => {
             itemId: 1,
             highPrice: 100000,
             lowPrice: 95000,
-            highPriceVolume: 500,
-            lowPriceVolume: 600,
-            timestamp: Date.now(),
+            highPriceTime: new Date().toISOString(),
+            lowPriceTime: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
         },
     ];
 
@@ -467,7 +479,7 @@ describe('GlobalSearch', () => {
         renderGlobalSearch();
 
         const input = screen.getByRole('combobox');
-        await user.type(input, 'dragonsword', { delay: 0 });
+        await user.type(input, 'dragonsword');
 
         // Should eventually show results or no results
         await waitFor(() => {

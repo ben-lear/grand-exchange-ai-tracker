@@ -14,41 +14,49 @@ describe('itemDataStore', () => {
     });
 
     const mockItem1: Item = {
+        id: 1,
         itemId: 1,
         name: 'Dragon scimitar',
         description: 'A powerful scimitar',
         iconUrl: 'https://example.com/dragon-scim.png',
         members: true,
-        tradeable: true,
-        equipable: true,
+        buyLimit: 70,
+        highAlch: 72000,
+        lowAlch: 48000,
+        createdAt: '2024-01-01T00:00:00Z',
+        updatedAt: '2024-01-01T00:00:00Z',
     };
 
     const mockItem2: Item = {
+        id: 2,
         itemId: 2,
         name: 'Abyssal whip',
         description: 'A demonic whip',
         iconUrl: 'https://example.com/whip.png',
         members: true,
-        tradeable: true,
-        equipable: true,
+        buyLimit: 70,
+        highAlch: 72000,
+        lowAlch: 48000,
+        createdAt: '2024-01-01T00:00:00Z',
+        updatedAt: '2024-01-01T00:00:00Z',
     };
 
     const mockPrice1: CurrentPrice = {
         itemId: 1,
         highPrice: 100000,
         lowPrice: 95000,
-        highPriceVolume: 500,
-        lowPriceVolume: 600,
-        timestamp: Date.now(),
+        highPriceTime: new Date().toISOString(),
+        lowPriceTime: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
     };
 
     const mockPrice2: CurrentPrice = {
         itemId: 2,
         highPrice: 2500000,
         lowPrice: 2400000,
-        highPriceVolume: 200,
-        lowPriceVolume: 250,
-        timestamp: Date.now(),
+        highPriceTime: new Date().toISOString(),
+        lowPriceTime: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
     };
 
     describe('Initial State', () => {
@@ -402,7 +410,7 @@ describe('itemDataStore', () => {
             // 6. Can retrieve combined data
             const combined = getItemWithPrice(1);
             expect(combined?.item).toEqual(mockItem1);
-            expect(combined?.price.highPrice).toBe(105000);
+            expect(combined?.price?.highPrice).toBe(105000);
         });
 
         it('handles price updates without losing items', () => {

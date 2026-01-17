@@ -10,22 +10,26 @@ import { SearchResultItem } from './SearchResultItem';
 
 describe('SearchResultItem', () => {
     const mockItem: Item = {
+        id: 1,
         itemId: 1,
         name: 'Dragon scimitar',
         description: 'A powerful scimitar',
         iconUrl: 'https://example.com/dragon-scim.png',
         members: true,
-        tradeable: true,
-        equipable: true,
+        buyLimit: 70,
+        highAlch: 72000,
+        lowAlch: 48000,
+        createdAt: '2024-01-01T00:00:00Z',
+        updatedAt: '2024-01-01T00:00:00Z',
     };
 
     const mockPrice: CurrentPrice = {
         itemId: 1,
         highPrice: 100000,
         lowPrice: 95000,
-        highPriceVolume: 500,
-        lowPriceVolume: 600,
-        timestamp: Date.now(),
+        highPriceTime: new Date().toISOString(),
+        lowPriceTime: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
     };
 
     it('renders item name', () => {
@@ -44,7 +48,7 @@ describe('SearchResultItem', () => {
     });
 
     it('does not render icon when iconUrl is undefined', () => {
-        const itemWithoutIcon = { ...mockItem, iconUrl: undefined };
+        const itemWithoutIcon = { ...mockItem, iconUrl: '' };
         render(<SearchResultItem item={itemWithoutIcon} />);
 
         expect(screen.queryByRole('img')).not.toBeInTheDocument();
@@ -120,14 +124,14 @@ describe('SearchResultItem', () => {
     });
 
     it('applies correct styling to highPrice (green)', () => {
-        const { container } = render(<SearchResultItem item={mockItem} price={mockPrice} />);
+        render(<SearchResultItem item={mockItem} price={mockPrice} />);
 
         const highPriceElement = screen.getByText('100K');
         expect(highPriceElement).toHaveClass('text-green-600');
     });
 
     it('applies correct styling to lowPrice (red)', () => {
-        const { container } = render(<SearchResultItem item={mockItem} price={mockPrice} />);
+        render(<SearchResultItem item={mockItem} price={mockPrice} />);
 
         const lowPriceElement = screen.getByText('95K');
         expect(lowPriceElement).toHaveClass('text-red-600');
@@ -205,7 +209,7 @@ describe('SearchResultItem', () => {
     });
 
     it('renders minimal version without icon or price', () => {
-        const minimalItem = { ...mockItem, iconUrl: undefined, members: false };
+        const minimalItem = { ...mockItem, iconUrl: '', members: false };
         render(<SearchResultItem item={minimalItem} />);
 
         expect(screen.getByText('Dragon scimitar')).toBeInTheDocument();

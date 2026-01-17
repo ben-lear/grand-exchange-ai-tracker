@@ -79,7 +79,7 @@ describe('RecentSearchItem', () => {
     });
 
     it('renders X icon in remove button', () => {
-        const { container } = render(
+        render(
             <RecentSearchItem item={mockRecentItem} onRemove={() => { }} />
         );
 

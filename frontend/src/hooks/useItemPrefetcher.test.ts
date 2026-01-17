@@ -26,23 +26,31 @@ afterEach(() => {
 
 describe('useItemPrefetcher', () => {
     const mockItem1: Item = {
+        id: 1,
         itemId: 1,
         name: 'Dragon scimitar',
         description: 'A powerful scimitar',
         iconUrl: 'https://example.com/dragon-scim.png',
         members: true,
-        tradeable: true,
-        equipable: true,
+        buyLimit: 70,
+        highAlch: 72000,
+        lowAlch: 48000,
+        createdAt: '2024-01-01T00:00:00Z',
+        updatedAt: '2024-01-01T00:00:00Z',
     };
 
     const mockItem2: Item = {
+        id: 2,
         itemId: 2,
         name: 'Abyssal whip',
         description: 'A demonic whip',
         iconUrl: 'https://example.com/whip.png',
         members: true,
-        tradeable: true,
-        equipable: true,
+        buyLimit: 70,
+        highAlch: 72000,
+        lowAlch: 48000,
+        createdAt: '2024-01-01T00:00:00Z',
+        updatedAt: '2024-01-01T00:00:00Z',
     };
 
     beforeEach(() => {
@@ -70,7 +78,7 @@ describe('useItemPrefetcher', () => {
             data: [mockItem1, mockItem2],
             meta: {
                 page: 1,
-                page_size: 200,
+                limit: 200,
                 total: 2,
                 total_pages: 1,
             },
@@ -94,7 +102,7 @@ describe('useItemPrefetcher', () => {
             data: [mockItem1],
             meta: {
                 page: 1,
-                page_size: 1,
+                limit: 1,
                 total: 2,
                 total_pages: 2,
             },
@@ -104,7 +112,7 @@ describe('useItemPrefetcher', () => {
             data: [mockItem2],
             meta: {
                 page: 2,
-                page_size: 1,
+                limit: 1,
                 total: 2,
                 total_pages: 2,
             },
@@ -132,7 +140,7 @@ describe('useItemPrefetcher', () => {
             data: [mockItem1],
             meta: {
                 page: 1,
-                page_size: 200,
+                limit: 200,
                 total: 1,
                 total_pages: 1,
             },
@@ -170,7 +178,7 @@ describe('useItemPrefetcher', () => {
             data: [mockItem1],
             meta: {
                 page: 1,
-                page_size: 200,
+                limit: 200,
                 total: 1,
                 total_pages: 1,
             },
@@ -202,7 +210,7 @@ describe('useItemPrefetcher', () => {
             data: [mockItem1],
             meta: {
                 page: 1,
-                page_size: 1,
+                limit: 1,
                 total: 2,
                 total_pages: 2,
             },
@@ -212,7 +220,7 @@ describe('useItemPrefetcher', () => {
             data: [mockItem2],
             meta: {
                 page: 2,
-                page_size: 1,
+                limit: 1,
                 total: 2,
                 total_pages: 2,
             },
@@ -239,7 +247,7 @@ describe('useItemPrefetcher', () => {
             data: [mockItem1],
             meta: {
                 page: 1,
-                page_size: 1,
+                limit: 1,
                 total: 500,
                 total_pages: 500,
             },
@@ -250,7 +258,7 @@ describe('useItemPrefetcher', () => {
             .mockResolvedValueOnce(mockResponse)
             .mockResolvedValue({
                 data: [],
-                meta: { page: 2, page_size: 1, total: 500, total_pages: 500 },
+                meta: { page: 2, limit: 1, total: 500, total_pages: 500 },
             });
 
         const { result } = renderHook(() => useItemPrefetcher());
@@ -270,7 +278,7 @@ describe('useItemPrefetcher', () => {
             data: [mockItem1],
             meta: {
                 page: 1,
-                page_size: 200,
+                limit: 200,
                 total: 1000,
                 total_pages: 5,
             },
@@ -298,7 +306,7 @@ describe('useItemPrefetcher', () => {
             data: [],
             meta: {
                 page: 1,
-                page_size: 200,
+                limit: 200,
                 total: 0,
                 total_pages: 0,
             },
