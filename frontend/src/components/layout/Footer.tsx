@@ -2,8 +2,8 @@
  * Footer component for the main layout
  */
 
-import React from 'react';
 import { Github, Heart } from 'lucide-react';
+import React from 'react';
 import { cn } from '../../utils';
 
 export interface FooterProps {
@@ -64,7 +64,9 @@ export const Footer: React.FC<FooterProps> = ({ className }) => {
               </li>
               <li>
                 <a
-                  href="/api/health"
+                  href={`${import.meta.env.VITE_API_BASE_URL?.replace('/api/v1', '')}/health`}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400"
                 >
                   API Status
@@ -80,7 +82,7 @@ export const Footer: React.FC<FooterProps> = ({ className }) => {
             </h3>
             <div className="flex flex-col gap-3">
               <a
-                href="https://github.com"
+                href="https://github.com/ben-lear/grand-exchange-ai-tracker"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400"

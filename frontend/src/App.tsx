@@ -2,7 +2,7 @@
  * Main App component with routing configuration
  */
 
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import { MainLayout } from './components/layout';
 import { DashboardPage, ItemDetailPage, NotFoundPage } from './pages';
 
@@ -11,7 +11,7 @@ import { DashboardPage, ItemDetailPage, NotFoundPage } from './pages';
  */
 function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <Routes>
         <Route path="/" element={<MainLayout />}>
           <Route index element={<DashboardPage />} />
