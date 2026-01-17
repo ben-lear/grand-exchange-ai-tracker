@@ -11,13 +11,41 @@ import (
 	"gorm.io/gorm/clause"
 
 	"github.com/guavi/osrs-ge-tracker/internal/models"
+	"github.com/guavi/osrs-ge-tracker/internal/utils"
 )
+
+// timeseriesAccessor provides TimeAccessor for PriceTimeseriesPoint.
+//
+//nolint:dupl // Accessors are structurally similar but type-specific; cannot be generalized further.
+var timeseriesAccessor = utils.TimeAccessor[models.PriceTimeseriesPoint]{
+	GetTime: func(p models.PriceTimeseriesPoint) time.Time { return p.Timestamp },
+	GetHigh: func(p models.PriceTimeseriesPoint) *int64 { return p.AvgHighPrice },
+	GetLow:  func(p models.PriceTimeseriesPoint) *int64 { return p.AvgLowPrice },
+	SetHigh: func(p *models.PriceTimeseriesPoint, v *int64) { p.AvgHighPrice = v },
+	SetLow:  func(p *models.PriceTimeseriesPoint, v *int64) { p.AvgLowPrice = v },
+}
+
+// dailyAccessor provides TimeAccessor for PriceTimeseriesDaily.
+//
+//nolint:dupl // Accessors are structurally similar but type-specific; cannot be generalized further.
+var dailyAccessor = utils.TimeAccessor[models.PriceTimeseriesDaily]{
+	GetTime: func(p models.PriceTimeseriesDaily) time.Time { return p.Day },
+	GetHigh: func(p models.PriceTimeseriesDaily) *int64 { return p.AvgHighPrice },
+	GetLow:  func(p models.PriceTimeseriesDaily) *int64 { return p.AvgLowPrice },
+	SetHigh: func(p *models.PriceTimeseriesDaily, v *int64) { p.AvgHighPrice = v },
+	SetLow:  func(p *models.PriceTimeseriesDaily, v *int64) { p.AvgLowPrice = v },
+}
 
 // priceRepository implements PriceRepository.
 type priceRepository struct {
 	dbClient *gorm.DB
 	logger   *zap.SugaredLogger
 }
+
+// upsertBatchSize is the number of records inserted per GORM batch operation
+// when performing upserts with ON CONFLICT DO NOTHING strategy. This size
+// balances memory usage with database round-trip overhead.
+const upsertBatchSize = 2000
 
 // dbClient: Database client for executing GORM operations.
 func NewPriceRepository(dbClient *gorm.DB, logger *zap.SugaredLogger) PriceRepository {
@@ -246,265 +274,87 @@ func timeseriesTableForTimestep(timestep string) (string, error) {
 	}
 }
 
-//nolint:dupl // Duplication with sampleDailyPoints is intentional for now; will refactor with generics
-func sampleTimeseriesPoints(points []models.PriceTimeseriesPoint, targetPoints int) []models.PriceTimeseriesPoint {
-	if len(points) <= targetPoints {
-		return points
-	}
-
-	step := float64(len(points)) / float64(targetPoints)
-	sampled := make([]models.PriceTimeseriesPoint, targetPoints)
-
-	// First pass: select evenly-spaced sample points
-	sampleIndices := make([]int, targetPoints)
-	for i := 0; i < targetPoints; i++ {
-		idx := int(float64(i) * step)
-		if idx >= len(points) {
-			idx = len(points) - 1
-		}
-		sampleIndices[i] = idx
-		sampled[i] = points[idx]
-	}
-
-	// Second pass: fill missing values from neighbors
-	for i := 0; i < targetPoints; i++ {
-		currentIdx := sampleIndices[i]
-		point := &sampled[i]
-
-		// Determine the search range (neighbors closer to this sample than to others)
-		leftBound := 0
-		rightBound := len(points) - 1
-		if i > 0 {
-			leftBound = (sampleIndices[i-1] + currentIdx) / 2
-		}
-		if i < targetPoints-1 {
-			rightBound = (currentIdx + sampleIndices[i+1]) / 2
-		}
-
-		// Fill missing AvgHighPrice
-		if point.AvgHighPrice == nil {
-			if neighbor := findClosestNeighborWithHigh(points, currentIdx, leftBound, rightBound); neighbor != nil {
-				point.AvgHighPrice = neighbor.AvgHighPrice
-			}
-		}
-
-		// Fill missing AvgLowPrice
-		if point.AvgLowPrice == nil {
-			if neighbor := findClosestNeighborWithLow(points, currentIdx, leftBound, rightBound); neighbor != nil {
-				point.AvgLowPrice = neighbor.AvgLowPrice
-			}
-		}
-	}
-
-	return sampled
+// SampleTimeseriesPoints reduces a slice of time-ordered points to targetPoints
+// using Voronoi partitioning on the time axis.
+func SampleTimeseriesPoints(points []models.PriceTimeseriesPoint, targetPoints int) []models.PriceTimeseriesPoint {
+	return utils.SampleByTime(points, targetPoints, timeseriesAccessor)
 }
 
-// findClosestNeighborWithHigh finds the nearest point with a non-nil AvgHighPrice.
-func findClosestNeighborWithHigh(points []models.PriceTimeseriesPoint, centerIdx, leftBound, rightBound int) *models.PriceTimeseriesPoint {
-	closestDist := len(points)
-	var closest *models.PriceTimeseriesPoint
-
-	for i := leftBound; i <= rightBound; i++ {
-		if points[i].AvgHighPrice != nil {
-			dist := abs(i - centerIdx)
-			if dist < closestDist {
-				closestDist = dist
-				closest = &points[i]
-			}
-		}
-	}
-	return closest
+// SampleDailyPoints reduces a slice of day-ordered points to targetPoints
+// using Voronoi partitioning on the time axis.
+func SampleDailyPoints(points []models.PriceTimeseriesDaily, targetPoints int) []models.PriceTimeseriesDaily {
+	return utils.SampleByTime(points, targetPoints, dailyAccessor)
 }
 
-// findClosestNeighborWithLow finds the nearest point with a non-nil AvgLowPrice.
-func findClosestNeighborWithLow(points []models.PriceTimeseriesPoint, centerIdx, leftBound, rightBound int) *models.PriceTimeseriesPoint {
-	closestDist := len(points)
-	var closest *models.PriceTimeseriesPoint
-
-	for i := leftBound; i <= rightBound; i++ {
-		if points[i].AvgLowPrice != nil {
-			dist := abs(i - centerIdx)
-			if dist < closestDist {
-				closestDist = dist
-				closest = &points[i]
-			}
-		}
-	}
-	return closest
-}
-
-// abs returns the absolute value of an integer.
-func abs(x int) int {
-	if x < 0 {
-		return -x
-	}
-	return x
-}
-
-//nolint:dupl // Duplication with sampleTimeseriesPoints is intentional for now; will refactor with generics
-func sampleDailyPoints(points []models.PriceTimeseriesDaily, targetPoints int) []models.PriceTimeseriesDaily {
-	if len(points) <= targetPoints {
-		return points
-	}
-
-	step := float64(len(points)) / float64(targetPoints)
-	sampled := make([]models.PriceTimeseriesDaily, targetPoints)
-
-	// First pass: select evenly-spaced sample points
-	sampleIndices := make([]int, targetPoints)
-	for i := 0; i < targetPoints; i++ {
-		idx := int(float64(i) * step)
-		if idx >= len(points) {
-			idx = len(points) - 1
-		}
-		sampleIndices[i] = idx
-		sampled[i] = points[idx]
-	}
-
-	// Second pass: fill missing values from neighbors
-	for i := 0; i < targetPoints; i++ {
-		currentIdx := sampleIndices[i]
-		point := &sampled[i]
-
-		// Determine the search range (neighbors closer to this sample than to others)
-		leftBound := 0
-		rightBound := len(points) - 1
-		if i > 0 {
-			leftBound = (sampleIndices[i-1] + currentIdx) / 2
-		}
-		if i < targetPoints-1 {
-			rightBound = (currentIdx + sampleIndices[i+1]) / 2
-		}
-
-		// Fill missing AvgHighPrice
-		if point.AvgHighPrice == nil {
-			if neighbor := findClosestDailyNeighborWithHigh(points, currentIdx, leftBound, rightBound); neighbor != nil {
-				point.AvgHighPrice = neighbor.AvgHighPrice
-			}
-		}
-
-		// Fill missing AvgLowPrice
-		if point.AvgLowPrice == nil {
-			if neighbor := findClosestDailyNeighborWithLow(points, currentIdx, leftBound, rightBound); neighbor != nil {
-				point.AvgLowPrice = neighbor.AvgLowPrice
-			}
-		}
-	}
-
-	return sampled
-}
-
-// findClosestDailyNeighborWithHigh finds the nearest daily point with a non-nil AvgHighPrice.
-func findClosestDailyNeighborWithHigh(points []models.PriceTimeseriesDaily, centerIdx, leftBound, rightBound int) *models.PriceTimeseriesDaily {
-	closestDist := len(points)
-	var closest *models.PriceTimeseriesDaily
-
-	for i := leftBound; i <= rightBound; i++ {
-		if points[i].AvgHighPrice != nil {
-			dist := abs(i - centerIdx)
-			if dist < closestDist {
-				closestDist = dist
-				closest = &points[i]
-			}
-		}
-	}
-	return closest
-}
-
-// findClosestDailyNeighborWithLow finds the nearest daily point with a non-nil AvgLowPrice.
-func findClosestDailyNeighborWithLow(points []models.PriceTimeseriesDaily, centerIdx, leftBound, rightBound int) *models.PriceTimeseriesDaily {
-	closestDist := len(points)
-	var closest *models.PriceTimeseriesDaily
-
-	for i := leftBound; i <= rightBound; i++ {
-		if points[i].AvgLowPrice != nil {
-			dist := abs(i - centerIdx)
-			if dist < closestDist {
-				closestDist = dist
-				closest = &points[i]
-			}
-		}
-	}
-	return closest
-}
-
-//nolint:gocyclo,gocognit,dupl // High complexity and duplication due to handling 4 different timeseries tables with batch logic; will refactor with generics
-func (r *priceRepository) InsertTimeseriesPoints(ctx context.Context, timestep string, points []models.PriceTimeseriesPoint) error {
+// batchInsertTimeseries inserts price timeseries points in batches using GORM's
+// Create with ON CONFLICT DO NOTHING. The generic type T must be one of the
+// timeseries models (PriceTimeseries5m, PriceTimeseries1h, PriceTimeseries6h,
+// PriceTimeseries24h) that embed PriceTimeseriesPoint and implement TableName().
+func batchInsertTimeseries[T any](
+	ctx context.Context,
+	dbClient *gorm.DB,
+	points []models.PriceTimeseriesPoint,
+	timestep string,
+	converter func(models.PriceTimeseriesPoint) T,
+) error {
 	if len(points) == 0 {
 		return nil
 	}
 
+	// Convert base points to typed wrapper
+	rows := make([]T, len(points))
+	for i := range points {
+		rows[i] = converter(points[i])
+	}
+
+	// Define upsert conflict strategy
 	conflict := clause.OnConflict{
 		Columns:   []clause.Column{{Name: "item_id"}, {Name: "timestamp"}},
 		DoNothing: true,
 	}
 
-	batchSize := 2000
-	switch normalizeTimestep(timestep) {
+	// Insert in batches
+	for i := 0; i < len(rows); i += upsertBatchSize {
+		end := i + upsertBatchSize
+		if end > len(rows) {
+			end = len(rows)
+		}
+		batch := rows[i:end]
+
+		if err := dbClient.WithContext(ctx).Clauses(conflict).Create(&batch).Error; err != nil {
+			return fmt.Errorf("insert timeseries %s batch: %w", timestep, err)
+		}
+	}
+
+	return nil
+}
+
+// InsertTimeseriesPoints inserts bucketed /timeseries points for a timestep (append-only).
+// Timestep must be one of: 5m, 1h, 6h, 24h (case-insensitive, normalized internally).
+func (r *priceRepository) InsertTimeseriesPoints(ctx context.Context, timestep string, points []models.PriceTimeseriesPoint) error {
+	if len(points) == 0 {
+		return nil
+	}
+
+	normalized := normalizeTimestep(timestep)
+
+	switch normalized {
 	case "5m":
-		rows := make([]models.PriceTimeseries5m, len(points))
-		for i := range points {
-			rows[i] = models.PriceTimeseries5m{PriceTimeseriesPoint: points[i]}
-		}
-		for i := 0; i < len(rows); i += batchSize {
-			end := i + batchSize
-			if end > len(rows) {
-				end = len(rows)
-			}
-			batch := rows[i:end]
-			if err := r.dbClient.WithContext(ctx).Clauses(conflict).Create(&batch).Error; err != nil {
-				return fmt.Errorf("insert timeseries 5m batch: %w", err)
-			}
-		}
-		return nil
+		return batchInsertTimeseries(ctx, r.dbClient, points, normalized, func(p models.PriceTimeseriesPoint) models.PriceTimeseries5m {
+			return models.PriceTimeseries5m{PriceTimeseriesPoint: p}
+		})
 	case "1h":
-		rows := make([]models.PriceTimeseries1h, len(points))
-		for i := range points {
-			rows[i] = models.PriceTimeseries1h{PriceTimeseriesPoint: points[i]}
-		}
-		for i := 0; i < len(rows); i += batchSize {
-			end := i + batchSize
-			if end > len(rows) {
-				end = len(rows)
-			}
-			batch := rows[i:end]
-			if err := r.dbClient.WithContext(ctx).Clauses(conflict).Create(&batch).Error; err != nil {
-				return fmt.Errorf("insert timeseries 1h batch: %w", err)
-			}
-		}
-		return nil
+		return batchInsertTimeseries(ctx, r.dbClient, points, normalized, func(p models.PriceTimeseriesPoint) models.PriceTimeseries1h {
+			return models.PriceTimeseries1h{PriceTimeseriesPoint: p}
+		})
 	case "6h":
-		rows := make([]models.PriceTimeseries6h, len(points))
-		for i := range points {
-			rows[i] = models.PriceTimeseries6h{PriceTimeseriesPoint: points[i]}
-		}
-		for i := 0; i < len(rows); i += batchSize {
-			end := i + batchSize
-			if end > len(rows) {
-				end = len(rows)
-			}
-			batch := rows[i:end]
-			if err := r.dbClient.WithContext(ctx).Clauses(conflict).Create(&batch).Error; err != nil {
-				return fmt.Errorf("insert timeseries 6h batch: %w", err)
-			}
-		}
-		return nil
+		return batchInsertTimeseries(ctx, r.dbClient, points, normalized, func(p models.PriceTimeseriesPoint) models.PriceTimeseries6h {
+			return models.PriceTimeseries6h{PriceTimeseriesPoint: p}
+		})
 	case "24h":
-		rows := make([]models.PriceTimeseries24h, len(points))
-		for i := range points {
-			rows[i] = models.PriceTimeseries24h{PriceTimeseriesPoint: points[i]}
-		}
-		for i := 0; i < len(rows); i += batchSize {
-			end := i + batchSize
-			if end > len(rows) {
-				end = len(rows)
-			}
-			batch := rows[i:end]
-			if err := r.dbClient.WithContext(ctx).Clauses(conflict).Create(&batch).Error; err != nil {
-				return fmt.Errorf("insert timeseries 24h batch: %w", err)
-			}
-		}
-		return nil
+		return batchInsertTimeseries(ctx, r.dbClient, points, normalized, func(p models.PriceTimeseriesPoint) models.PriceTimeseries24h {
+			return models.PriceTimeseries24h{PriceTimeseriesPoint: p}
+		})
 	default:
 		return fmt.Errorf("invalid timestep %q (expected one of 5m, 1h, 6h, 24h)", timestep)
 	}
@@ -520,9 +370,8 @@ func (r *priceRepository) InsertDailyPoints(ctx context.Context, points []models
 		DoNothing: true,
 	}
 
-	batchSize := 2000
-	for i := 0; i < len(points); i += batchSize {
-		end := i + batchSize
+	for i := 0; i < len(points); i += upsertBatchSize {
+		end := i + upsertBatchSize
 		if end > len(points) {
 			end = len(points)
 		}
@@ -567,7 +416,7 @@ func (r *priceRepository) GetTimeseriesPoints(ctx context.Context, itemID int, t
 	}
 
 	if params.MaxPoints != nil && len(points) > *params.MaxPoints {
-		points = sampleTimeseriesPoints(points, *params.MaxPoints)
+		points = SampleTimeseriesPoints(points, *params.MaxPoints)
 	}
 
 	return points, nil
@@ -603,7 +452,7 @@ func (r *priceRepository) GetDailyPoints(ctx context.Context, itemID int, params
 	}
 
 	if params.MaxPoints != nil && len(points) > *params.MaxPoints {
-		points = sampleDailyPoints(points, *params.MaxPoints)
+		points = SampleDailyPoints(points, *params.MaxPoints)
 	}
 
 	return points, nil

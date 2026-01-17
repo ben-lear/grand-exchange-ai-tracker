@@ -5,6 +5,8 @@ import (
 	"time"
 
 	"go.uber.org/zap"
+
+	"github.com/guavi/osrs-ge-tracker/internal/models"
 )
 
 type SSEMessage struct {
@@ -97,10 +99,44 @@ func (h *SSEHub) Broadcast(msg SSEMessage) {
 	// Non-blocking enqueue; if the hub is overloaded, drop rather than block scheduler/job loops.
 	select {
 	case h.broadcast <- msg:
+		if h.logger != nil {
+			queueUtilization := float64(len(h.broadcast)) / float64(cap(h.broadcast)) * 100
+			h.logger.Debugw("sse message queued",
+				"event", msg.Event,
+				"queue_size", len(h.broadcast),
+				"queue_capacity", cap(h.broadcast),
+				"utilization_pct", queueUtilization,
+			)
+		}
 	default:
 		if h.logger != nil {
-			h.logger.Warnw("sse hub broadcast queue full; dropping message", "event", msg.Event)
+			h.logger.Warnw("sse hub broadcast queue full; dropping message",
+				"event", msg.Event,
+				"queue_capacity", cap(h.broadcast),
+			)
 		}
+	}
+}
+
+// BulkPriceUpdateToPayload converts a BulkPriceUpdate to PriceUpdatePayload.
+func BulkPriceUpdateToPayload(update models.BulkPriceUpdate) PriceUpdatePayload {
+	var highTime, lowTime *int64
+	if update.HighPriceTime != nil {
+		t := update.HighPriceTime.Unix()
+		highTime = &t
+	}
+	if update.LowPriceTime != nil {
+		t := update.LowPriceTime.Unix()
+		lowTime = &t
+	}
+
+	return PriceUpdatePayload{
+		Timestamp: time.Now(),
+		High:      update.HighPrice,
+		Low:       update.LowPrice,
+		HighTime:  highTime,
+		LowTime:   lowTime,
+		ItemID:    update.ItemID,
 	}
 }
 

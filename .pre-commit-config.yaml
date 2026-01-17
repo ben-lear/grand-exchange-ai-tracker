@@ -1,0 +1,70 @@
+# Pre-commit configuration for OSRS Grand Exchange Tracker
+# See https://pre-commit.com for more information
+
+repos:
+  # Go linting with golangci-lint
+  - repo: https://github.com/golangci/golangci-lint
+    rev: v1.62.2  # Update to latest stable version
+    hooks:
+      - id: golangci-lint
+        name: golangci-lint (backend)
+        args: 
+          - '--config=backend/.golangci.yml'
+          - '--timeout=5m'
+          - '--fix'
+        pass_filenames: false
+        files: '^backend/.*\.go$'
+  
+  # Go formatting
+  - repo: https://github.com/dnephin/pre-commit-golang
+    rev: v0.5.1
+    hooks:
+      - id: go-fmt
+        name: go fmt (backend)
+        args: ['-w']
+        files: '^backend/.*\.go$'
+      
+      - id: go-imports
+        name: go imports (backend)
+        args: ['-w', '-local', 'github.com/guavi/osrs-ge-tracker']
+        files: '^backend/.*\.go$'
+      
+      - id: go-mod-tidy
+        name: go mod tidy (backend)
+        files: '^backend/go\.(mod|sum)$'
+  
+  # General file checks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+        exclude: '^(.*\.md|.*\.sql)$'
+      
+      - id: end-of-file-fixer
+        exclude: '^(.*\.svg|.*\.png|.*\.jpg)$'
+      
+      - id: check-yaml
+        args: ['--unsafe']
+      
+      - id: check-json
+        exclude: '^(.*\.ipynb|frontend/package-lock\.json)$'
+      
+      - id: check-merge-conflict
+      
+      - id: mixed-line-ending
+        args: ['--fix=lf']
+        exclude: '^(.*\.ps1|.*\.bat)$'
+  
+  # Markdown linting
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.43.0
+    hooks:
+      - id: markdownlint
+        args: ['--fix']
+        exclude: '^(node_modules/|\.next/|coverage/)'
+
+# Global settings
+default_install_hook_types: [pre-commit, pre-push]
+default_stages: [pre-commit]
+fail_fast: false
+minimum_pre_commit_version: '2.20.0'

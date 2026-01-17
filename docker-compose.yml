@@ -14,7 +14,7 @@ services:
       - postgres_data:/var/lib/postgresql/data
       - ./backend/migrations:/docker-entrypoint-initdb.d
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U osrs_tracker"]
+      test: [ "CMD-SHELL", "pg_isready -U osrs_tracker" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -27,7 +27,7 @@ services:
     volumes:
       - redis_data:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: [ "CMD", "redis-cli", "ping" ]
       interval: 10s
       timeout: 3s
       retries: 5
@@ -43,16 +43,20 @@ services:
       PORT: 8080
       ENVIRONMENT: development
       CORS_ORIGINS: http://localhost:3000
-      POSTGRES_HOST: postgres
-      POSTGRES_PORT: 5432
-      POSTGRES_USER: osrs_tracker
-      POSTGRES_PASSWORD: changeme
-      POSTGRES_DB: osrs_ge_tracker
-      POSTGRES_SSL_MODE: disable
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
-      REDIS_PASSWORD: ""
-      REDIS_DB: 0
+
+      # Database environment (read by Viper as database.*)
+      DATABASE_HOST: postgres
+      DATABASE_PORT: 5432
+      DATABASE_USER: osrs_tracker
+      DATABASE_PASSWORD: changeme
+      DATABASE_DB: osrs_ge_tracker
+      DATABASE_SSLMODE: disable
+
+      # Redis/Cache environment (read by Viper as cache.*)
+      CACHE_HOST: redis
+      CACHE_PORT: 6379
+      CACHE_PASSWORD: ""
+      CACHE_DB: 0
     depends_on:
       postgres:
         condition: service_healthy

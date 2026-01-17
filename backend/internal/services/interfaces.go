@@ -60,8 +60,9 @@ type PriceService interface {
 	// UpdateCurrentPrice updates the current price for an item
 	UpdateCurrentPrice(ctx context.Context, price *models.CurrentPrice) error
 
-	// SyncCurrentPrices fetches and updates all current prices from the OSRS Wiki /latest endpoint
-	SyncCurrentPrices(ctx context.Context) error
+	// SyncCurrentPrices fetches and updates all current prices from the OSRS Wiki /latest endpoint.
+	// Returns the list of price updates that were synced for SSE broadcasting.
+	SyncCurrentPrices(ctx context.Context) ([]models.BulkPriceUpdate, error)
 
 	// RunMaintenance performs retention pruning and rollups for realtime price tables.
 	RunMaintenance(ctx context.Context) error

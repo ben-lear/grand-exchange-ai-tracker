@@ -450,12 +450,13 @@ func (s *priceService) UpdateCurrentPrice(ctx context.Context, price *models.Cur
 }
 
 // SyncCurrentPrices fetches and updates all current prices from OSRS Wiki /latest.
-func (s *priceService) SyncCurrentPrices(ctx context.Context) error {
+// Returns the list of price updates that were synced for SSE broadcasting.
+func (s *priceService) SyncCurrentPrices(ctx context.Context) ([]models.BulkPriceUpdate, error) {
 	s.logger.Info("Starting price_latest sync from OSRS Wiki /latest")
 
 	latest, err := s.wikiClient.FetchLatestAll(ctx)
 	if err != nil {
-		return fmt.Errorf("fetch wiki latest: %w", err)
+		return nil, fmt.Errorf("fetch wiki latest: %w", err)
 	}
 
 	// Fetch all existing item IDs to filter out prices for non-existent items
@@ -464,7 +465,7 @@ func (s *priceService) SyncCurrentPrices(ctx context.Context) error {
 		Limit: 10000, // Get all items
 	})
 	if err != nil {
-		return fmt.Errorf("fetch existing items: %w", err)
+		return nil, fmt.Errorf("fetch existing items: %w", err)
 	}
 
 	s.logger.Infow("Fetched items for price sync validation", "item_count", len(allItems))
@@ -514,14 +515,14 @@ func (s *priceService) SyncCurrentPrices(ctx context.Context) error {
 	}
 
 	if err := s.priceRepo.BulkUpsertCurrentPrices(ctx, updates); err != nil {
-		return fmt.Errorf("insert price_latest snapshots: %w", err)
+		return nil, fmt.Errorf("insert price_latest snapshots: %w", err)
 	}
 
 	//nolint:errcheck // Cache invalidation failures are non-critical
 	_ = s.cache.DeletePattern(ctx, "price:current:*")
 
 	s.logger.Infow("Successfully synced price_latest from /latest", "count", len(updates))
-	return nil
+	return updates, nil
 }
 
 func (s *priceService) RunMaintenance(ctx context.Context) error {

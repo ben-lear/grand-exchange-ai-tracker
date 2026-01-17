@@ -127,9 +127,16 @@ func (m *MockPriceService) UpdateCurrentPrice(ctx context.Context, price *models
 	return args.Error(0)
 }
 
-func (m *MockPriceService) SyncCurrentPrices(ctx context.Context) error {
+func (m *MockPriceService) SyncCurrentPrices(ctx context.Context) ([]models.BulkPriceUpdate, error) {
 	args := m.Called(ctx)
-	return args.Error(0)
+	// Handle error case first
+	if args.Error(1) != nil {
+		return nil, args.Error(1)
+	}
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]models.BulkPriceUpdate), args.Error(1)
 }
 
 func (m *MockPriceService) RunMaintenance(ctx context.Context) error {

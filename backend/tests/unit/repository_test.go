@@ -21,7 +21,7 @@ import (
 func setupTestDB(t *testing.T) *gorm.DB {
 	dbClient, release := testutil.SharedPostgres(t)
 	t.Cleanup(release)
-	return db
+	return dbClient
 }
 
 func TestItemRepository_Create(t *testing.T) {

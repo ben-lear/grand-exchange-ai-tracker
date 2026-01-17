@@ -214,7 +214,7 @@ func (h *PriceHandler) SyncCurrentPrices(c *fiber.Ctx) error {
 	// This would typically have auth middleware
 	// For now, it's unprotected but can be called manually
 
-	err := h.priceService.SyncCurrentPrices(ctx)
+	updates, err := h.priceService.SyncCurrentPrices(ctx)
 	if err != nil {
 		h.logger.Errorf("Failed to sync current prices: %v", err)
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
@@ -223,6 +223,7 @@ func (h *PriceHandler) SyncCurrentPrices(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(fiber.Map{
-		"message": "current prices synced successfully",
+		"message":       "current prices synced successfully",
+		"synced_count":  len(updates),
 	})
 }

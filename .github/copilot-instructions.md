@@ -184,11 +184,28 @@ const { data } = useQuery({
 
 ## Coding Standards
 
-### Go
-- Use `uber-go/zap` for all logging (no fmt.Println)
+### Backend Go Standards
+
+**See [backend/CODING_STANDARDS.md](../backend/CODING_STANDARDS.md) for comprehensive naming conventions and design patterns.**
+
+#### Quick Reference
+
+**Variable Naming:**
+- Use `Client` suffix for external connections: `dbClient`, `redisClient`, `httpClient`
+- Descriptive config parameters: `dbConfig`, `cacheConfig`, `sseConfig` (not generic `cfg`)
+- Avoid package name collisions: use `sseConfig` not `config` when importing from `config` package
+
+**Config Pattern:**
+- Struct names: Implementation-specific (`PostgresConfig`, `RedisConfig`, `SSEConfig`)
+- Field names: Purpose-generic (`Database`, `Cache`, `SSE`)
+- Pass appropriate config level to reduce chaining: `NewPostgresDB(cfg.Database, logger)` not `NewPostgresDB(cfg, logger)`
+
+**General:**
+- Use `uber-go/zap` for all logging (no `fmt.Println`)
 - Return errors, don't panic
 - Use context for cancellation
 - Follow standard project layout
+- Self-documenting variable names over comments
 
 ### TypeScript
 - Strict mode enabled
