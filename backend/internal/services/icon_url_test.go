@@ -5,9 +5,9 @@ import "testing"
 func TestNormalizeItemIconURL(t *testing.T) {
 	cases := []struct {
 		name   string
-		itemID int
 		in     string
 		want   string
+		itemID int
 	}{
 		{
 			name:   "empty falls back to sprite url",

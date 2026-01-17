@@ -8,12 +8,12 @@ import (
 	"gorm.io/gorm"
 )
 
-// ErrorHandlerConfig holds error handler configuration
+// ErrorHandlerConfig holds error handler configuration.
 type ErrorHandlerConfig struct {
 	Logger *zap.SugaredLogger
 }
 
-// NewErrorHandler creates a custom error handler for Fiber
+// NewErrorHandler creates a custom error handler for Fiber.
 func NewErrorHandler(config ErrorHandlerConfig) fiber.ErrorHandler {
 	return func(c *fiber.Ctx, err error) error {
 		// Default to 500 Internal Server Error
@@ -61,7 +61,7 @@ func NewErrorHandler(config ErrorHandlerConfig) fiber.ErrorHandler {
 	}
 }
 
-// RecoverMiddleware creates a panic recovery middleware
+// RecoverMiddleware creates a panic recovery middleware.
 func RecoverMiddleware(logger *zap.SugaredLogger) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		defer func() {

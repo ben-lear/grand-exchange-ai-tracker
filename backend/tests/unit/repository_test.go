@@ -19,15 +19,15 @@ import (
 )
 
 func setupTestDB(t *testing.T) *gorm.DB {
-	db, release := testutil.SharedPostgres(t)
+	dbClient, release := testutil.SharedPostgres(t)
 	t.Cleanup(release)
 	return db
 }
 
 func TestItemRepository_Create(t *testing.T) {
-	db := setupTestDB(t)
+	dbClient := setupTestDB(t)
 	logger, _ := zap.NewDevelopment()
-	repo := repository.NewItemRepository(db, logger.Sugar())
+	repo := repository.NewItemRepository(dbClient, logger.Sugar())
 
 	ctx := context.Background()
 	item := &models.Item{
@@ -42,9 +42,9 @@ func TestItemRepository_Create(t *testing.T) {
 }
 
 func TestItemRepository_GetByItemID(t *testing.T) {
-	db := setupTestDB(t)
+	dbClient := setupTestDB(t)
 	logger, _ := zap.NewDevelopment()
-	repo := repository.NewItemRepository(db, logger.Sugar())
+	repo := repository.NewItemRepository(dbClient, logger.Sugar())
 
 	ctx := context.Background()
 	item := &models.Item{
@@ -63,9 +63,9 @@ func TestItemRepository_GetByItemID(t *testing.T) {
 }
 
 func TestItemRepository_Upsert(t *testing.T) {
-	db := setupTestDB(t)
+	dbClient := setupTestDB(t)
 	logger, _ := zap.NewDevelopment()
-	repo := repository.NewItemRepository(db, logger.Sugar())
+	repo := repository.NewItemRepository(dbClient, logger.Sugar())
 
 	ctx := context.Background()
 	item := &models.Item{
@@ -90,9 +90,9 @@ func TestItemRepository_Upsert(t *testing.T) {
 }
 
 func TestItemRepository_Search(t *testing.T) {
-	db := setupTestDB(t)
+	dbClient := setupTestDB(t)
 	logger, _ := zap.NewDevelopment()
-	repo := repository.NewItemRepository(db, logger.Sugar())
+	repo := repository.NewItemRepository(dbClient, logger.Sugar())
 
 	ctx := context.Background()
 
@@ -123,9 +123,9 @@ func TestItemRepository_Search(t *testing.T) {
 }
 
 func TestItemRepository_GetAll(t *testing.T) {
-	db := setupTestDB(t)
+	dbClient := setupTestDB(t)
 	logger, _ := zap.NewDevelopment()
-	repo := repository.NewItemRepository(db, logger.Sugar())
+	repo := repository.NewItemRepository(dbClient, logger.Sugar())
 
 	ctx := context.Background()
 
@@ -158,10 +158,10 @@ func TestItemRepository_GetAll(t *testing.T) {
 }
 
 func TestPriceRepository_UpsertCurrentPrice(t *testing.T) {
-	db := setupTestDB(t)
+	dbClient := setupTestDB(t)
 	logger, _ := zap.NewDevelopment()
-	priceRepo := repository.NewPriceRepository(db, logger.Sugar())
-	itemRepo := repository.NewItemRepository(db, logger.Sugar())
+	priceRepo := repository.NewPriceRepository(dbClient, logger.Sugar())
+	itemRepo := repository.NewItemRepository(dbClient, logger.Sugar())
 
 	ctx := context.Background()
 
@@ -201,10 +201,10 @@ func TestPriceRepository_UpsertCurrentPrice(t *testing.T) {
 }
 
 func TestPriceRepository_GetAllCurrentPrices(t *testing.T) {
-	db := setupTestDB(t)
+	dbClient := setupTestDB(t)
 	logger, _ := zap.NewDevelopment()
-	priceRepo := repository.NewPriceRepository(db, logger.Sugar())
-	itemRepo := repository.NewItemRepository(db, logger.Sugar())
+	priceRepo := repository.NewPriceRepository(dbClient, logger.Sugar())
+	itemRepo := repository.NewItemRepository(dbClient, logger.Sugar())
 
 	ctx := context.Background()
 

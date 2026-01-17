@@ -25,7 +25,6 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to initialize logger: %v", err)
 	}
-	defer zapLogger.Sync()
 
 	logger := zapLogger.Sugar()
 
@@ -36,24 +35,28 @@ func main() {
 	}
 
 	// Initialize database
-	db, err := database.NewPostgresDB(cfg)
+	// Note: Variables for external resource clients use 'Client' suffix for clarity
+	// (dbClient, redisClient) to distinguish from generic names and indicate connection nature
+	dbClient, err := database.NewPostgresDB(cfg.Database)
 	if err != nil {
 		logger.Fatalf("Failed to connect to database: %v", err)
 	}
 
 	// Initialize Redis
-	redis, err := database.NewRedisClient(cfg)
+	redisClient, err := database.NewRedisClient(cfg.Cache)
 	if err != nil {
 		logger.Fatalf("Failed to connect to Redis: %v", err)
 	}
-	defer redis.Close()
+	defer redisClient.Close()
 
 	// Initialize repositories
-	itemRepo := repository.NewItemRepository(db, logger)
-	priceRepo := repository.NewPriceRepository(db, logger)
+	// Note: Passing specific config structs (cfg.Database, cfg.Cache) instead of full cfg
+	// reduces chaining and makes dependencies explicit
+	itemRepo := repository.NewItemRepository(dbClient, logger)
+	priceRepo := repository.NewPriceRepository(dbClient, logger)
 
 	// Initialize services
-	cacheService := services.NewCacheService(redis, logger)
+	cacheService := services.NewCacheService(redisClient, logger)
 	itemService := services.NewItemService(itemRepo, cacheService, cfg.WikiPricesBaseURL, logger)
 	priceService := services.NewPriceService(priceRepo, itemRepo, cacheService, cfg.WikiPricesBaseURL, logger)
 
@@ -66,18 +69,22 @@ func main() {
 	}
 
 	// Initialize handlers
-	healthHandler := handlers.NewHealthHandler(db, redis, logger)
+	healthHandler := handlers.NewHealthHandler(dbClient, redisClient, logger)
 	itemHandler := handlers.NewItemHandler(itemService, priceService, logger)
 	priceHandler := handlers.NewPriceHandler(priceService, logger)
 
 	// Initialize SSE handler if enabled
 	var sseHandler *handlers.SSEHandler
 	if cfg.SSE.Enabled && sseHub != nil {
-		sseHandler = handlers.NewSSEHandler(sseHub, logger, handlers.SSEConfig{
-			ConnectionTimeout: cfg.SSE.ConnectionTimeout,
-			HeartbeatInterval: cfg.SSE.HeartbeatInterval,
-			MaxClients:        cfg.SSE.MaxClients,
-		})
+		sseHandler = handlers.NewSSEHandler(
+			sseHub,
+			logger,
+			handlers.SSEConfig{
+				ConnectionTimeout: cfg.SSE.ConnectionTimeout,
+				HeartbeatInterval: cfg.SSE.HeartbeatInterval,
+				MaxClients:        cfg.SSE.MaxClients,
+			},
+		)
 	}
 
 	// Create Fiber app
@@ -175,7 +182,7 @@ func main() {
 	}
 
 	// Close database connection
-	sqlDB, err := db.DB()
+	sqlDB, err := dbClient.DB()
 	if err == nil {
 		sqlDB.Close()
 	}

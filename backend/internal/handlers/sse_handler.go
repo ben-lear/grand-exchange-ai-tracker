@@ -10,25 +10,26 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
-	"github.com/guavi/osrs-ge-tracker/internal/services"
 	"go.uber.org/zap"
+
+	"github.com/guavi/osrs-ge-tracker/internal/services"
 )
 
-// SSEHandler handles Server-Sent Events connections
+// SSEHandler handles Server-Sent Events connections.
 type SSEHandler struct {
 	hub    *services.SSEHub
 	logger *zap.SugaredLogger
 	config SSEConfig
 }
 
-// SSEConfig contains SSE-specific configuration
+// SSEConfig contains SSE-specific configuration.
 type SSEConfig struct {
 	ConnectionTimeout time.Duration
 	HeartbeatInterval time.Duration
 	MaxClients        int
 }
 
-// NewSSEHandler creates a new SSE handler
+// NewSSEHandler creates a new SSE handler.
 func NewSSEHandler(hub *services.SSEHub, logger *zap.SugaredLogger, config SSEConfig) *SSEHandler {
 	// Set defaults
 	if config.ConnectionTimeout == 0 {
@@ -48,13 +49,9 @@ func NewSSEHandler(hub *services.SSEHub, logger *zap.SugaredLogger, config SSECo
 	}
 }
 
-// Stream handles the SSE endpoint for real-time price updates
-// @Summary Stream real-time price updates
-// @Description Establishes a Server-Sent Events connection for real-time price updates
-// @Tags prices
-// @Param items query string false "Comma-separated item IDs to filter (e.g., 2,4151,11832)"
-// @Success 200 {string} string "text/event-stream"
-// @Router /api/v1/prices/stream [get]
+// @Router /api/v1/prices/stream [get].
+//
+//nolint:revive // SSE streaming inherently complex: heartbeat, timeout, messages, cleanup
 func (h *SSEHandler) Stream(c *fiber.Ctx) error {
 	// Check if hub is available
 	if h.hub == nil {
@@ -129,7 +126,8 @@ func (h *SSEHandler) Stream(c *fiber.Ctx) error {
 				h.logger.Infow("SSE client connection timeout",
 					"client_id", clientID,
 					"timeout", h.config.ConnectionTimeout)
-				writeSSEEvent(w, "timeout", map[string]string{
+				//nolint:errcheck // Timeout event write failure is non-critical, stream ending anyway
+				_ = writeSSEEvent(w, "timeout", map[string]string{
 					"message": "Connection timeout reached",
 				})
 				return
@@ -167,7 +165,7 @@ func (h *SSEHandler) Stream(c *fiber.Ctx) error {
 	return nil
 }
 
-// writeSSEEvent writes an SSE event to the response writer
+// writeSSEEvent writes an SSE event to the response writer.
 func writeSSEEvent(w *bufio.Writer, event string, data interface{}) error {
 	// Write event field
 	if _, err := fmt.Fprintf(w, "event: %s\n", event); err != nil {
@@ -189,7 +187,7 @@ func writeSSEEvent(w *bufio.Writer, event string, data interface{}) error {
 	return w.Flush()
 }
 
-// parseItemFilters parses comma-separated item IDs from query string
+// parseItemFilters parses comma-separated item IDs from query string.
 func parseItemFilters(itemsQuery string) map[int]struct{} {
 	if itemsQuery == "" {
 		return nil

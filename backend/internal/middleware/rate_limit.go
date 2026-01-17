@@ -7,7 +7,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/limiter"
 )
 
-// RateLimiterConfig holds rate limiter configuration
+// RateLimiterConfig holds rate limiter configuration.
 type RateLimiterConfig struct {
 	Max                   int           // Maximum number of requests
 	Expiration            time.Duration // Time window
@@ -15,7 +15,7 @@ type RateLimiterConfig struct {
 	SkipSuccessfulRequest bool          // Don't count successful requests
 }
 
-// NewRateLimiter creates a new rate limiting middleware
+// NewRateLimiter creates a new rate limiting middleware.
 func NewRateLimiter(config RateLimiterConfig) fiber.Handler {
 	// Use defaults if not set
 	if config.Max == 0 {
@@ -43,7 +43,7 @@ func NewRateLimiter(config RateLimiterConfig) fiber.Handler {
 	})
 }
 
-// NewAPIRateLimiter creates a rate limiter specifically for API endpoints
+// NewAPIRateLimiter creates a rate limiter specifically for API endpoints.
 func NewAPIRateLimiter() fiber.Handler {
 	return NewRateLimiter(RateLimiterConfig{
 		Max:                   100,
@@ -53,7 +53,7 @@ func NewAPIRateLimiter() fiber.Handler {
 	})
 }
 
-// NewSyncRateLimiter creates a more restrictive rate limiter for sync endpoints
+// NewSyncRateLimiter creates a more restrictive rate limiter for sync endpoints.
 func NewSyncRateLimiter() fiber.Handler {
 	return NewRateLimiter(RateLimiterConfig{
 		Max:                   10,

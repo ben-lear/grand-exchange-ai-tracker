@@ -320,7 +320,7 @@ func TestCacheService_SetJSON_UnmarshallableData(t *testing.T) {
 	ctx := context.Background()
 	key := "test:invalid"
 
-	// Channels cannot be marshalled to JSON
+	// Channels cannot be marshaled to JSON
 	invalidData := make(chan int)
 
 	err := cacheService.SetJSON(ctx, key, invalidData, 1*time.Minute)
@@ -431,18 +431,18 @@ func TestCacheService_ContextCancellation(t *testing.T) {
 	_, client, cacheService := setupMiniRedis(t)
 	defer client.Close()
 
-	// Create a cancelled context
+	// Create a canceled context
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 
-	key := "test:cancelled"
+	key := "test:canceled"
 
-	// Operations with cancelled context should fail
+	// Operations with canceled context should fail
 	err := cacheService.Set(ctx, key, "value", time.Minute)
-	assert.Error(t, err, "Set should fail with cancelled context")
+	assert.Error(t, err, "Set should fail with canceled context")
 
 	_, err = cacheService.Get(ctx, key)
-	assert.Error(t, err, "Get should fail with cancelled context")
+	assert.Error(t, err, "Get should fail with canceled context")
 }
 
 func TestCacheService_ConcurrentOperations(t *testing.T) {

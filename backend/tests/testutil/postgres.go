@@ -26,13 +26,11 @@ type PostgresTestDB struct {
 }
 
 var sharedPG struct {
-	once      sync.Once
+	initErr   error
 	container *pgcontainer.PostgresContainer
 	db        *gorm.DB
-	initErr   error
-
-	// gate serializes DB-using tests so per-test truncation provides isolation.
-	gate sync.Mutex
+	once      sync.Once
+	gate      sync.Mutex
 }
 
 // SharedPostgres returns a shared Postgres-backed *gorm.DB for tests.
@@ -42,6 +40,8 @@ var sharedPG struct {
 // returns a release function that must be called (we register it via t.Cleanup).
 //
 // Note: tests using this helper should not call t.Parallel().
+//
+
 func SharedPostgres(t *testing.T) (*gorm.DB, func()) {
 	t.Helper()
 
@@ -173,7 +173,7 @@ func NewPostgresTestDB(t *testing.T) *PostgresTestDB {
 	return &PostgresTestDB{DB: gormDB, Container: pgContainer}
 }
 
-func RunMigrations(ctx context.Context, db *gorm.DB) error {
+func RunMigrations(ctx context.Context, dbClient *gorm.DB) error {
 	migrationsDir, err := repoRootRelative("backend", "migrations")
 	if err != nil {
 		return err
@@ -201,7 +201,7 @@ func RunMigrations(ctx context.Context, db *gorm.DB) error {
 		return fmt.Errorf("no .sql migrations found in %s", migrationsDir)
 	}
 
-	sqlDB, err := db.DB()
+	sqlDB, err := dbClient.DB()
 	if err != nil {
 		return fmt.Errorf("get sql db: %w", err)
 	}
@@ -219,12 +219,12 @@ func RunMigrations(ctx context.Context, db *gorm.DB) error {
 	return nil
 }
 
-func TruncateAllTables(t *testing.T, db *gorm.DB) {
+func TruncateAllTables(t *testing.T, dbClient *gorm.DB) {
 	t.Helper()
 
 	// Truncate parent partitioned tables; partitions truncate too.
 	// Order is irrelevant due to CASCADE.
-	if err := db.Exec(
+	if err := dbClient.Exec(
 		"TRUNCATE TABLE " +
 			"price_latest, " +
 			"price_timeseries_5m, price_timeseries_1h, price_timeseries_6h, price_timeseries_24h, price_timeseries_daily, " +

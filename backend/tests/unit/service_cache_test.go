@@ -17,8 +17,8 @@ import (
 )
 
 type memoryCache struct {
-	mu sync.Mutex
 	kv map[string]string
+	mu sync.Mutex
 }
 
 func newMemoryCache() *memoryCache {
@@ -36,7 +36,7 @@ func (c *memoryCache) Get(_ context.Context, key string) (string, error) {
 	return v, nil
 }
 
-func (c *memoryCache) Set(_ context.Context, key string, value string, _ time.Duration) error {
+func (c *memoryCache) Set(_ context.Context, key, value string, _ time.Duration) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -96,16 +96,13 @@ func (c *memoryCache) Exists(_ context.Context, key string) (bool, error) {
 }
 
 type fakeItemRepo struct {
-	getByItemIDCalls int
-	getByItemIDItem  *models.Item
-	getByItemIDErr   error
-
-	upsertCalls int
-	upsertErr   error
-
-	bulkUpsertCalls int
-	bulkUpsertErr   error
-
+	getByItemIDErr    error
+	upsertErr         error
+	bulkUpsertErr     error
+	getByItemIDItem   *models.Item
+	getByItemIDCalls  int
+	upsertCalls       int
+	bulkUpsertCalls   int
 	countAll          int64
 	countMembersTrue  int64
 	countMembersFalse int64
@@ -151,16 +148,14 @@ func (r *fakeItemRepo) Delete(_ context.Context, _ uint) error { return nil }
 func (r *fakeItemRepo) Count(_ context.Context) (int64, error) { return 0, nil }
 
 type fakePriceRepo struct {
-	getCurrentPriceCalls int
-	getCurrentPriceResp  *models.CurrentPrice
-	getCurrentPriceErr   error
-
-	getAllCurrentPricesCalls int
-	getAllCurrentPricesResp  []models.CurrentPrice
+	getCurrentPriceErr       error
 	getAllCurrentPricesErr   error
-
-	upsertCurrentPriceCalls int
-	upsertCurrentPriceErr   error
+	upsertCurrentPriceErr    error
+	getCurrentPriceResp      *models.CurrentPrice
+	getAllCurrentPricesResp  []models.CurrentPrice
+	getCurrentPriceCalls     int
+	getAllCurrentPricesCalls int
+	upsertCurrentPriceCalls  int
 }
 
 func (r *fakePriceRepo) GetCurrentPrice(_ context.Context, _ int) (*models.CurrentPrice, error) {
@@ -212,6 +207,10 @@ func (r *fakePriceRepo) PrunePriceLatestBefore(_ context.Context, _ time.Time) (
 
 func (r *fakePriceRepo) PruneTimeseriesBefore(_ context.Context, _ string, _ time.Time) (int64, error) {
 	return 0, nil
+}
+
+func (r *fakePriceRepo) EnsureFuturePartitions(_ context.Context, _ int) error {
+	return nil
 }
 
 func TestItemService_GetItemByItemID_UsesCache(t *testing.T) {

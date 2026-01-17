@@ -5,12 +5,12 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/cors"
 )
 
-// CORSConfig holds CORS middleware configuration
+// CORSConfig holds CORS middleware configuration.
 type CORSConfig struct {
 	AllowedOrigins []string
 }
 
-// NewCORSMiddleware creates a new CORS middleware
+// NewCORSMiddleware creates a new CORS middleware.
 func NewCORSMiddleware(config CORSConfig) fiber.Handler {
 	return cors.New(cors.Config{
 		AllowOrigins:     joinOrigins(config.AllowedOrigins),
@@ -22,7 +22,7 @@ func NewCORSMiddleware(config CORSConfig) fiber.Handler {
 	})
 }
 
-// joinOrigins joins allowed origins into a comma-separated string
+// joinOrigins joins allowed origins into a comma-separated string.
 func joinOrigins(origins []string) string {
 	if len(origins) == 0 {
 		return "*"

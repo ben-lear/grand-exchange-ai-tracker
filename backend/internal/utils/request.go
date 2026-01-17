@@ -4,7 +4,7 @@ import (
 	"fmt"
 )
 
-// ParseNullableBool parses a query parameter as a nullable bool
+// ParseNullableBool parses a query parameter as a nullable bool.
 func ParseNullableBool(value string) *bool {
 	if value == "" {
 		return nil
@@ -23,7 +23,7 @@ func ParseNullableBool(value string) *bool {
 	return nil
 }
 
-// FormatGPValue formats a gold piece value for display
+// FormatGPValue formats a gold piece value for display.
 func FormatGPValue(value int64) string {
 	if value >= 1000000 {
 		return fmt.Sprintf("%.1fM", float64(value)/1000000)

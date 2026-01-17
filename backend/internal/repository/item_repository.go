@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"go.uber.org/zap"
@@ -11,26 +12,26 @@ import (
 	"github.com/guavi/osrs-ge-tracker/internal/models"
 )
 
-// itemRepository implements ItemRepository
+// itemRepository implements ItemRepository.
 type itemRepository struct {
-	db     *gorm.DB
-	logger *zap.SugaredLogger
+	dbClient *gorm.DB
+	logger   *zap.SugaredLogger
 }
 
-// NewItemRepository creates a new item repository
-func NewItemRepository(db *gorm.DB, logger *zap.SugaredLogger) ItemRepository {
+// dbClient: Database client for executing GORM operations.
+func NewItemRepository(dbClient *gorm.DB, logger *zap.SugaredLogger) ItemRepository {
 	return &itemRepository{
-		db:     db,
-		logger: logger,
+		dbClient: dbClient,
+		logger:   logger,
 	}
 }
 
-// GetAll returns all items with pagination
+// GetAll returns all items with pagination.
 func (r *itemRepository) GetAll(ctx context.Context, params models.ItemListParams) ([]models.Item, int64, error) {
 	var items []models.Item
 	var total int64
 
-	query := r.db.WithContext(ctx).Model(&models.Item{})
+	query := r.dbClient.WithContext(ctx).Model(&models.Item{})
 
 	// Apply filters
 	if params.Members != nil {
@@ -71,11 +72,11 @@ func (r *itemRepository) GetAll(ctx context.Context, params models.ItemListParam
 	return items, total, nil
 }
 
-// GetByID returns an item by its internal ID
+// GetByID returns an item by its internal ID.
 func (r *itemRepository) GetByID(ctx context.Context, id uint) (*models.Item, error) {
 	var item models.Item
-	if err := r.db.WithContext(ctx).First(&item, id).Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
+	if err := r.dbClient.WithContext(ctx).First(&item, id).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
 		}
 		r.logger.Errorw("Failed to get item by ID", "id", id, "error", err)
@@ -84,11 +85,11 @@ func (r *itemRepository) GetByID(ctx context.Context, id uint) (*models.Item, er
 	return &item, nil
 }
 
-// GetByItemID returns an item by its OSRS item ID
+// GetByItemID returns an item by its OSRS item ID.
 func (r *itemRepository) GetByItemID(ctx context.Context, itemID int) (*models.Item, error) {
 	var item models.Item
-	if err := r.db.WithContext(ctx).Where("item_id = ?", itemID).First(&item).Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
+	if err := r.dbClient.WithContext(ctx).Where("item_id = ?", itemID).First(&item).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
 		}
 		r.logger.Errorw("Failed to get item by item_id", "itemID", itemID, "error", err)
@@ -97,12 +98,12 @@ func (r *itemRepository) GetByItemID(ctx context.Context, itemID int) (*models.I
 	return &item, nil
 }
 
-// Search searches for items by name
+// Search searches for items by name.
 func (r *itemRepository) Search(ctx context.Context, params models.ItemSearchParams) ([]models.Item, int64, error) {
 	var items []models.Item
 	var total int64
 
-	query := r.db.WithContext(ctx).Model(&models.Item{})
+	query := r.dbClient.WithContext(ctx).Model(&models.Item{})
 
 	// Apply search filter
 	if params.Query != "" {
@@ -149,27 +150,27 @@ func (r *itemRepository) Search(ctx context.Context, params models.ItemSearchPar
 	return items, total, nil
 }
 
-// Create creates a new item
+// Create creates a new item.
 func (r *itemRepository) Create(ctx context.Context, item *models.Item) error {
-	if err := r.db.WithContext(ctx).Create(item).Error; err != nil {
+	if err := r.dbClient.WithContext(ctx).Create(item).Error; err != nil {
 		r.logger.Errorw("Failed to create item", "itemID", item.ItemID, "error", err)
 		return fmt.Errorf("failed to create item: %w", err)
 	}
 	return nil
 }
 
-// Update updates an existing item
+// Update updates an existing item.
 func (r *itemRepository) Update(ctx context.Context, item *models.Item) error {
-	if err := r.db.WithContext(ctx).Save(item).Error; err != nil {
+	if err := r.dbClient.WithContext(ctx).Save(item).Error; err != nil {
 		r.logger.Errorw("Failed to update item", "itemID", item.ItemID, "error", err)
 		return fmt.Errorf("failed to update item: %w", err)
 	}
 	return nil
 }
 
-// Upsert creates or updates an item
+// Upsert creates or updates an item.
 func (r *itemRepository) Upsert(ctx context.Context, item *models.Item) error {
-	if err := r.db.WithContext(ctx).Clauses(clause.OnConflict{
+	if err := r.dbClient.WithContext(ctx).Clauses(clause.OnConflict{
 		Columns:   []clause.Column{{Name: "item_id"}},
 		DoUpdates: clause.AssignmentColumns([]string{"name", "icon_url", "members", "buy_limit", "high_alch", "low_alch", "updated_at"}),
 	}).Create(item).Error; err != nil {
@@ -179,13 +180,13 @@ func (r *itemRepository) Upsert(ctx context.Context, item *models.Item) error {
 	return nil
 }
 
-// BulkUpsert creates or updates multiple items
+// BulkUpsert creates or updates multiple items.
 func (r *itemRepository) BulkUpsert(ctx context.Context, items []models.Item) error {
 	if len(items) == 0 {
 		return nil
 	}
 
-	if err := r.db.WithContext(ctx).Clauses(clause.OnConflict{
+	if err := r.dbClient.WithContext(ctx).Clauses(clause.OnConflict{
 		Columns:   []clause.Column{{Name: "item_id"}},
 		DoUpdates: clause.AssignmentColumns([]string{"name", "icon_url", "members", "buy_limit", "high_alch", "low_alch", "updated_at"}),
 	}).Create(&items).Error; err != nil {
@@ -197,19 +198,19 @@ func (r *itemRepository) BulkUpsert(ctx context.Context, items []models.Item) er
 	return nil
 }
 
-// Delete deletes an item
+// Delete deletes an item.
 func (r *itemRepository) Delete(ctx context.Context, id uint) error {
-	if err := r.db.WithContext(ctx).Delete(&models.Item{}, id).Error; err != nil {
+	if err := r.dbClient.WithContext(ctx).Delete(&models.Item{}, id).Error; err != nil {
 		r.logger.Errorw("Failed to delete item", "id", id, "error", err)
 		return fmt.Errorf("failed to delete item: %w", err)
 	}
 	return nil
 }
 
-// Count returns the total number of items
+// Count returns the total number of items.
 func (r *itemRepository) Count(ctx context.Context) (int64, error) {
 	var count int64
-	if err := r.db.WithContext(ctx).Model(&models.Item{}).Count(&count).Error; err != nil {
+	if err := r.dbClient.WithContext(ctx).Model(&models.Item{}).Count(&count).Error; err != nil {
 		r.logger.Errorw("Failed to count items", "error", err)
 		return 0, fmt.Errorf("failed to count items: %w", err)
 	}

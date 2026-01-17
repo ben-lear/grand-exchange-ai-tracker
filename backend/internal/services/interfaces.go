@@ -7,7 +7,7 @@ import (
 	"github.com/guavi/osrs-ge-tracker/internal/models"
 )
 
-// ItemService defines the interface for item business logic
+// ItemService defines the interface for item business logic.
 type ItemService interface {
 	// ListItems returns all items with pagination
 	ListItems(ctx context.Context, params models.ItemListParams) ([]models.Item, int64, error)
@@ -40,7 +40,7 @@ type ItemService interface {
 	SyncItemsFromMapping(ctx context.Context) error
 }
 
-// PriceService defines the interface for price business logic
+// PriceService defines the interface for price business logic.
 type PriceService interface {
 	// GetCurrentPrice returns the current price for an item
 	GetCurrentPrice(ctx context.Context, itemID int) (*models.CurrentPrice, error)
@@ -70,7 +70,7 @@ type PriceService interface {
 	EnsureFuturePartitions(ctx context.Context, daysAhead int) error
 }
 
-// CacheService defines the interface for caching operations
+// CacheService defines the interface for caching operations.
 type CacheService interface {
 	// Get retrieves a value from cache
 	Get(ctx context.Context, key string) (string, error)

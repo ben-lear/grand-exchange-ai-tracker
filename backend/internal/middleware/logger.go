@@ -9,12 +9,12 @@ import (
 	"github.com/guavi/osrs-ge-tracker/internal/utils"
 )
 
-// RequestLoggerConfig holds logger middleware configuration
+// RequestLoggerConfig holds logger middleware configuration.
 type RequestLoggerConfig struct {
 	Logger *zap.SugaredLogger
 }
 
-// NewRequestLogger creates a new request logging middleware
+// NewRequestLogger creates a new request logging middleware.
 func NewRequestLogger(config RequestLoggerConfig) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		start := time.Now()
@@ -48,11 +48,12 @@ func NewRequestLogger(config RequestLoggerConfig) fiber.Handler {
 		}
 
 		// Log with appropriate level
-		if statusCode >= 500 {
+		switch {
+		case statusCode >= 500:
 			config.Logger.Errorw("Request failed", fields...)
-		} else if statusCode >= 400 {
+		case statusCode >= 400:
 			config.Logger.Warnw("Request error", fields...)
-		} else {
+		default:
 			config.Logger.Infow("Request completed", fields...)
 		}
 

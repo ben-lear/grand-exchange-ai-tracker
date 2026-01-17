@@ -19,10 +19,10 @@ import (
 // ========== InsertTimeseriesPoints Tests ==========
 
 func TestPriceRepository_InsertTimeseriesPoints_5m(t *testing.T) {
-	db := setupTestDB(t)
+	dbClient := setupTestDB(t)
 	logger, _ := zap.NewDevelopment()
-	priceRepo := repository.NewPriceRepository(db, logger.Sugar())
-	itemRepo := repository.NewItemRepository(db, logger.Sugar())
+	priceRepo := repository.NewPriceRepository(dbClient, logger.Sugar())
+	itemRepo := repository.NewItemRepository(dbClient, logger.Sugar())
 
 	ctx := context.Background()
 
@@ -69,10 +69,10 @@ func TestPriceRepository_InsertTimeseriesPoints_5m(t *testing.T) {
 }
 
 func TestPriceRepository_InsertTimeseriesPoints_1h(t *testing.T) {
-	db := setupTestDB(t)
+	dbClient := setupTestDB(t)
 	logger, _ := zap.NewDevelopment()
-	priceRepo := repository.NewPriceRepository(db, logger.Sugar())
-	itemRepo := repository.NewItemRepository(db, logger.Sugar())
+	priceRepo := repository.NewPriceRepository(dbClient, logger.Sugar())
+	itemRepo := repository.NewItemRepository(dbClient, logger.Sugar())
 
 	ctx := context.Background()
 
@@ -108,10 +108,10 @@ func TestPriceRepository_InsertTimeseriesPoints_1h(t *testing.T) {
 }
 
 func TestPriceRepository_InsertTimeseriesPoints_6h(t *testing.T) {
-	db := setupTestDB(t)
+	dbClient := setupTestDB(t)
 	logger, _ := zap.NewDevelopment()
-	priceRepo := repository.NewPriceRepository(db, logger.Sugar())
-	itemRepo := repository.NewItemRepository(db, logger.Sugar())
+	priceRepo := repository.NewPriceRepository(dbClient, logger.Sugar())
+	itemRepo := repository.NewItemRepository(dbClient, logger.Sugar())
 
 	ctx := context.Background()
 
@@ -136,10 +136,10 @@ func TestPriceRepository_InsertTimeseriesPoints_6h(t *testing.T) {
 }
 
 func TestPriceRepository_InsertTimeseriesPoints_24h(t *testing.T) {
-	db := setupTestDB(t)
+	dbClient := setupTestDB(t)
 	logger, _ := zap.NewDevelopment()
-	priceRepo := repository.NewPriceRepository(db, logger.Sugar())
-	itemRepo := repository.NewItemRepository(db, logger.Sugar())
+	priceRepo := repository.NewPriceRepository(dbClient, logger.Sugar())
+	itemRepo := repository.NewItemRepository(dbClient, logger.Sugar())
 
 	ctx := context.Background()
 
@@ -164,9 +164,9 @@ func TestPriceRepository_InsertTimeseriesPoints_24h(t *testing.T) {
 }
 
 func TestPriceRepository_InsertTimeseriesPoints_InvalidTimestep(t *testing.T) {
-	db := setupTestDB(t)
+	dbClient := setupTestDB(t)
 	logger, _ := zap.NewDevelopment()
-	priceRepo := repository.NewPriceRepository(db, logger.Sugar())
+	priceRepo := repository.NewPriceRepository(dbClient, logger.Sugar())
 
 	ctx := context.Background()
 
@@ -185,9 +185,9 @@ func TestPriceRepository_InsertTimeseriesPoints_InvalidTimestep(t *testing.T) {
 }
 
 func TestPriceRepository_InsertTimeseriesPoints_EmptySlice(t *testing.T) {
-	db := setupTestDB(t)
+	dbClient := setupTestDB(t)
 	logger, _ := zap.NewDevelopment()
-	priceRepo := repository.NewPriceRepository(db, logger.Sugar())
+	priceRepo := repository.NewPriceRepository(dbClient, logger.Sugar())
 
 	ctx := context.Background()
 
@@ -197,10 +197,10 @@ func TestPriceRepository_InsertTimeseriesPoints_EmptySlice(t *testing.T) {
 }
 
 func TestPriceRepository_InsertTimeseriesPoints_Conflict(t *testing.T) {
-	db := setupTestDB(t)
+	dbClient := setupTestDB(t)
 	logger, _ := zap.NewDevelopment()
-	priceRepo := repository.NewPriceRepository(db, logger.Sugar())
-	itemRepo := repository.NewItemRepository(db, logger.Sugar())
+	priceRepo := repository.NewPriceRepository(dbClient, logger.Sugar())
+	itemRepo := repository.NewItemRepository(dbClient, logger.Sugar())
 
 	ctx := context.Background()
 
@@ -240,10 +240,10 @@ func TestPriceRepository_InsertTimeseriesPoints_Conflict(t *testing.T) {
 // ========== GetTimeseriesPoints Tests ==========
 
 func TestPriceRepository_GetTimeseriesPoints_WithPeriodFilter(t *testing.T) {
-	db := setupTestDB(t)
+	dbClient := setupTestDB(t)
 	logger, _ := zap.NewDevelopment()
-	priceRepo := repository.NewPriceRepository(db, logger.Sugar())
-	itemRepo := repository.NewItemRepository(db, logger.Sugar())
+	priceRepo := repository.NewPriceRepository(dbClient, logger.Sugar())
+	itemRepo := repository.NewItemRepository(dbClient, logger.Sugar())
 
 	ctx := context.Background()
 
@@ -276,10 +276,10 @@ func TestPriceRepository_GetTimeseriesPoints_WithPeriodFilter(t *testing.T) {
 }
 
 func TestPriceRepository_GetTimeseriesPoints_WithTimeRange(t *testing.T) {
-	db := setupTestDB(t)
+	dbClient := setupTestDB(t)
 	logger, _ := zap.NewDevelopment()
-	priceRepo := repository.NewPriceRepository(db, logger.Sugar())
-	itemRepo := repository.NewItemRepository(db, logger.Sugar())
+	priceRepo := repository.NewPriceRepository(dbClient, logger.Sugar())
+	itemRepo := repository.NewItemRepository(dbClient, logger.Sugar())
 
 	ctx := context.Background()
 
@@ -319,10 +319,10 @@ func TestPriceRepository_GetTimeseriesPoints_WithTimeRange(t *testing.T) {
 }
 
 func TestPriceRepository_GetTimeseriesPoints_WithLimit(t *testing.T) {
-	db := setupTestDB(t)
+	dbClient := setupTestDB(t)
 	logger, _ := zap.NewDevelopment()
-	priceRepo := repository.NewPriceRepository(db, logger.Sugar())
-	itemRepo := repository.NewItemRepository(db, logger.Sugar())
+	priceRepo := repository.NewPriceRepository(dbClient, logger.Sugar())
+	itemRepo := repository.NewItemRepository(dbClient, logger.Sugar())
 
 	ctx := context.Background()
 
@@ -360,10 +360,10 @@ func TestPriceRepository_GetTimeseriesPoints_WithLimit(t *testing.T) {
 }
 
 func TestPriceRepository_GetTimeseriesPoints_WithSampling(t *testing.T) {
-	db := setupTestDB(t)
+	dbClient := setupTestDB(t)
 	logger, _ := zap.NewDevelopment()
-	priceRepo := repository.NewPriceRepository(db, logger.Sugar())
-	itemRepo := repository.NewItemRepository(db, logger.Sugar())
+	priceRepo := repository.NewPriceRepository(dbClient, logger.Sugar())
+	itemRepo := repository.NewItemRepository(dbClient, logger.Sugar())
 
 	ctx := context.Background()
 
@@ -402,10 +402,10 @@ func TestPriceRepository_GetTimeseriesPoints_WithSampling(t *testing.T) {
 }
 
 func TestPriceRepository_GetTimeseriesPoints_EmptyResult(t *testing.T) {
-	db := setupTestDB(t)
+	dbClient := setupTestDB(t)
 	logger, _ := zap.NewDevelopment()
-	priceRepo := repository.NewPriceRepository(db, logger.Sugar())
-	itemRepo := repository.NewItemRepository(db, logger.Sugar())
+	priceRepo := repository.NewPriceRepository(dbClient, logger.Sugar())
+	itemRepo := repository.NewItemRepository(dbClient, logger.Sugar())
 
 	ctx := context.Background()
 
@@ -422,10 +422,10 @@ func TestPriceRepository_GetTimeseriesPoints_EmptyResult(t *testing.T) {
 // ========== Daily Points Tests ==========
 
 func TestPriceRepository_InsertDailyPoints(t *testing.T) {
-	db := setupTestDB(t)
+	dbClient := setupTestDB(t)
 	logger, _ := zap.NewDevelopment()
-	priceRepo := repository.NewPriceRepository(db, logger.Sugar())
-	itemRepo := repository.NewItemRepository(db, logger.Sugar())
+	priceRepo := repository.NewPriceRepository(dbClient, logger.Sugar())
+	itemRepo := repository.NewItemRepository(dbClient, logger.Sugar())
 
 	ctx := context.Background()
 
@@ -459,10 +459,10 @@ func TestPriceRepository_InsertDailyPoints(t *testing.T) {
 }
 
 func TestPriceRepository_GetDailyPoints_WithPeriodFilter(t *testing.T) {
-	db := setupTestDB(t)
+	dbClient := setupTestDB(t)
 	logger, _ := zap.NewDevelopment()
-	priceRepo := repository.NewPriceRepository(db, logger.Sugar())
-	itemRepo := repository.NewItemRepository(db, logger.Sugar())
+	priceRepo := repository.NewPriceRepository(dbClient, logger.Sugar())
+	itemRepo := repository.NewItemRepository(dbClient, logger.Sugar())
 
 	ctx := context.Background()
 
@@ -502,10 +502,10 @@ func TestPriceRepository_GetDailyPoints_WithPeriodFilter(t *testing.T) {
 }
 
 func TestPriceRepository_Rollup24hToDailyBefore(t *testing.T) {
-	db := setupTestDB(t)
+	dbClient := setupTestDB(t)
 	logger, _ := zap.NewDevelopment()
-	priceRepo := repository.NewPriceRepository(db, logger.Sugar())
-	itemRepo := repository.NewItemRepository(db, logger.Sugar())
+	priceRepo := repository.NewPriceRepository(dbClient, logger.Sugar())
+	itemRepo := repository.NewItemRepository(dbClient, logger.Sugar())
 
 	ctx := context.Background()
 
@@ -543,9 +543,9 @@ func TestPriceRepository_Rollup24hToDailyBefore(t *testing.T) {
 }
 
 func TestPriceRepository_Rollup24hToDailyBefore_NoData(t *testing.T) {
-	db := setupTestDB(t)
+	dbClient := setupTestDB(t)
 	logger, _ := zap.NewDevelopment()
-	priceRepo := repository.NewPriceRepository(db, logger.Sugar())
+	priceRepo := repository.NewPriceRepository(dbClient, logger.Sugar())
 
 	ctx := context.Background()
 	cutoffTime := time.Now().UTC().Add(-48 * time.Hour)
@@ -557,10 +557,10 @@ func TestPriceRepository_Rollup24hToDailyBefore_NoData(t *testing.T) {
 }
 
 func TestPriceRepository_Rollup24hToDailyBefore_Idempotent(t *testing.T) {
-	db := setupTestDB(t)
+	dbClient := setupTestDB(t)
 	logger, _ := zap.NewDevelopment()
-	priceRepo := repository.NewPriceRepository(db, logger.Sugar())
-	itemRepo := repository.NewItemRepository(db, logger.Sugar())
+	priceRepo := repository.NewPriceRepository(dbClient, logger.Sugar())
+	itemRepo := repository.NewItemRepository(dbClient, logger.Sugar())
 
 	ctx := context.Background()
 

@@ -21,13 +21,13 @@ import (
 )
 
 func TestItemHandler_GetByID_NotFoundDoesNotPanic(t *testing.T) {
-	db, release := testutil.SharedPostgres(t)
+	dbClient, release := testutil.SharedPostgres(t)
 	t.Cleanup(release)
 
 	logger := zap.NewNop().Sugar()
 	ctx := context.Background()
 
-	itemRepo := repository.NewItemRepository(db, logger)
+	itemRepo := repository.NewItemRepository(dbClient, logger)
 	cache := testutil.NewNoopCache()
 	itemSvc := services.NewItemService(itemRepo, cache, "", logger)
 	priceService := testutil.NewNoopPriceService()
@@ -49,13 +49,13 @@ func TestItemHandler_GetByID_NotFoundDoesNotPanic(t *testing.T) {
 }
 
 func TestItemHandler_ListSearchCount_PostgresBacked(t *testing.T) {
-	db, release := testutil.SharedPostgres(t)
+	dbClient, release := testutil.SharedPostgres(t)
 	t.Cleanup(release)
 
 	logger := zap.NewNop().Sugar()
 	ctx := context.Background()
 
-	itemRepo := repository.NewItemRepository(db, logger)
+	itemRepo := repository.NewItemRepository(dbClient, logger)
 	cache := testutil.NewNoopCache()
 	itemSvc := services.NewItemService(itemRepo, cache, "", logger)
 	priceService := testutil.NewNoopPriceService()
@@ -158,12 +158,12 @@ func TestItemHandler_ListSearchCount_PostgresBacked(t *testing.T) {
 }
 
 func TestItemHandler_ValidationErrors(t *testing.T) {
-	db, release := testutil.SharedPostgres(t)
+	dbClient, release := testutil.SharedPostgres(t)
 	t.Cleanup(release)
 
 	logger := zap.NewNop().Sugar()
 
-	itemRepo := repository.NewItemRepository(db, logger)
+	itemRepo := repository.NewItemRepository(dbClient, logger)
 	cache := testutil.NewNoopCache()
 	itemSvc := services.NewItemService(itemRepo, cache, "", logger)
 	priceService := testutil.NewNoopPriceService()

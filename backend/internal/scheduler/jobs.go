@@ -5,12 +5,13 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/guavi/osrs-ge-tracker/internal/services"
 	"github.com/robfig/cron/v3"
 	"go.uber.org/zap"
+
+	"github.com/guavi/osrs-ge-tracker/internal/services"
 )
 
-// Scheduler manages scheduled jobs
+// Scheduler manages scheduled jobs.
 type Scheduler struct {
 	cron         *cron.Cron
 	priceService services.PriceService
@@ -20,7 +21,7 @@ type Scheduler struct {
 	itemsSynced  atomic.Bool
 }
 
-// NewScheduler creates a new scheduler
+// NewScheduler creates a new scheduler.
 func NewScheduler(
 	priceService services.PriceService,
 	itemService services.ItemService,
@@ -39,7 +40,7 @@ func NewScheduler(
 	}
 }
 
-// Start starts all scheduled jobs
+// Start starts all scheduled jobs.
 func (s *Scheduler) Start() error {
 	s.logger.Info("Starting scheduler...")
 	s.itemsSynced.Store(false)
@@ -83,7 +84,7 @@ func (s *Scheduler) Start() error {
 	return nil
 }
 
-// Stop stops all scheduled jobs
+// Stop stops all scheduled jobs.
 func (s *Scheduler) Stop() {
 	s.logger.Info("Stopping scheduler...")
 	ctx := s.cron.Stop()
@@ -91,7 +92,7 @@ func (s *Scheduler) Stop() {
 	s.logger.Info("Scheduler stopped")
 }
 
-// syncItemsJob syncs all items from the OSRS Wiki mapping endpoint
+// syncItemsJob syncs all items from the OSRS Wiki mapping endpoint.
 func (s *Scheduler) syncItemsJob() {
 	s.logger.Info("Starting items sync job")
 	start := time.Now()
@@ -119,7 +120,7 @@ func (s *Scheduler) syncItemsJob() {
 	)
 }
 
-// syncCurrentPricesJob syncs current prices from OSRS Wiki /latest
+// syncCurrentPricesJob syncs current prices from OSRS Wiki /latest.
 func (s *Scheduler) syncCurrentPricesJob() {
 	if !s.itemsSynced.Load() {
 		s.logger.Info("Skipping current prices sync; items have not been synced yet")

@@ -9,11 +9,23 @@ import (
 	"github.com/guavi/osrs-ge-tracker/internal/config"
 )
 
-func NewRedisClient(cfg *config.Config) (*redis.Client, error) {
+// NewRedisClient creates a new Redis client using the provided cache configuration.
+// The function accepts a RedisConfig struct directly (instead of the full Config) to reduce chaining
+// and make the dependency explicit. This follows the naming convention where parameter names are
+// descriptive (cacheConfig) and match the purpose of the configuration being passed.
+//
+// The client is configured with:
+// - Host and port from the config
+// - Optional password authentication
+// - Configurable database number (0-15)
+//
+// The function tests the connection with a PING command before returning.
+// Returns an error if the connection fails or if PING returns an error.
+func NewRedisClient(cacheConfig config.RedisConfig) (*redis.Client, error) {
 	client := redis.NewClient(&redis.Options{
-		Addr:     fmt.Sprintf("%s:%s", cfg.RedisHost, cfg.RedisPort),
-		Password: cfg.RedisPassword,
-		DB:       cfg.RedisDB,
+		Addr:     fmt.Sprintf("%s:%s", cacheConfig.Host, cacheConfig.Port),
+		Password: cacheConfig.Password,
+		DB:       cacheConfig.DB,
 	})
 
 	// Test connection

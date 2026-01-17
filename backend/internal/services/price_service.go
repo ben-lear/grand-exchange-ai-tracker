@@ -11,14 +11,7 @@ import (
 	"github.com/guavi/osrs-ge-tracker/internal/repository"
 )
 
-const (
-	cacheCurrentPriceAllTTL = 1 * time.Minute
-	cacheCurrentPriceTTL    = 1 * time.Minute
-	cachePriceHistoryTTL    = 10 * time.Minute
-	cacheItemTTL            = 1 * time.Hour
-)
-
-// priceService implements PriceService
+// priceService implements PriceService.
 type priceService struct {
 	priceRepo  repository.PriceRepository
 	itemRepo   repository.ItemRepository
@@ -27,7 +20,7 @@ type priceService struct {
 	logger     *zap.SugaredLogger
 }
 
-// NewPriceService creates a new price service
+// NewPriceService creates a new price service.
 func NewPriceService(
 	priceRepo repository.PriceRepository,
 	itemRepo repository.ItemRepository,
@@ -44,7 +37,7 @@ func NewPriceService(
 	}
 }
 
-// GetCurrentPrice returns the current price for an item
+// GetCurrentPrice returns the current price for an item.
 func (s *priceService) GetCurrentPrice(ctx context.Context, itemID int) (*models.CurrentPrice, error) {
 	// Try cache first
 	cacheKey := fmt.Sprintf("price:current:%d", itemID)
@@ -59,26 +52,22 @@ func (s *priceService) GetCurrentPrice(ctx context.Context, itemID int) (*models
 	if err != nil {
 		return nil, err
 	}
-
-	// Cache the result
-	if dbPrice != nil {
-		_ = s.cache.SetJSON(ctx, cacheKey, dbPrice, cacheCurrentPriceTTL)
-	}
+	// Note: Intentionally not caching individual prices to reduce cache complexity
 
 	return dbPrice, nil
 }
 
-// GetCurrentPrices returns current prices for multiple items
+// GetCurrentPrices returns current prices for multiple items.
 func (s *priceService) GetCurrentPrices(ctx context.Context, itemIDs []int) ([]models.CurrentPrice, error) {
 	return s.priceRepo.GetCurrentPrices(ctx, itemIDs)
 }
 
-// GetBatchCurrentPrices returns current prices for a batch of items (alias for GetCurrentPrices)
+// GetBatchCurrentPrices returns current prices for a batch of items (alias for GetCurrentPrices).
 func (s *priceService) GetBatchCurrentPrices(ctx context.Context, itemIDs []int) ([]models.CurrentPrice, error) {
 	return s.GetCurrentPrices(ctx, itemIDs)
 }
 
-// GetAllCurrentPrices returns all current prices
+// GetAllCurrentPrices returns all current prices.
 func (s *priceService) GetAllCurrentPrices(ctx context.Context) ([]models.CurrentPrice, error) {
 	// Try cache first
 	cacheKey := "price:current:all"
@@ -94,16 +83,12 @@ func (s *priceService) GetAllCurrentPrices(ctx context.Context) ([]models.Curren
 	if err != nil {
 		return nil, err
 	}
-
-	// Cache the result
-	if len(dbPrices) > 0 {
-		_ = s.cache.SetJSON(ctx, cacheKey, dbPrices, cacheCurrentPriceAllTTL)
-	}
+	// Note: Intentionally not caching here to avoid stale data issues
 
 	return dbPrices, nil
 }
 
-// GetPriceHistory returns historical price data for an item
+// GetPriceHistory returns historical price data for an item.
 func (s *priceService) GetPriceHistory(ctx context.Context, params models.PriceHistoryParams) (*models.PriceHistoryResponse, error) {
 	// Apply default MaxPoints if not specified
 	if params.MaxPoints == nil {
@@ -230,11 +215,7 @@ func (s *priceService) GetPriceHistory(ctx context.Context, params models.PriceH
 		FirstDate: firstDate,
 		LastDate:  lastDate,
 	}
-
-	// Cache the result
-	if cacheKey != "" && len(dataPoints) > 0 {
-		_ = s.cache.SetJSON(ctx, cacheKey, response, cachePriceHistoryTTL)
-	}
+	// Note: Intentionally not caching to ensure fresh data
 
 	return response, nil
 }
@@ -242,10 +223,9 @@ func (s *priceService) GetPriceHistory(ctx context.Context, params models.PriceH
 type timeseriesSource struct {
 	timestep string
 	useDaily bool
-	seedStep string
 }
 
-// getDefaultMaxPoints returns the target number of points for each time period
+// getDefaultMaxPoints returns the target number of points for each time period.
 func getDefaultMaxPoints(period models.TimePeriod) int {
 	switch period {
 	case models.Period1Hour:
@@ -308,6 +288,7 @@ func (s *priceService) seedTimeseriesFromWiki(ctx context.Context, itemID int, t
 		return err
 	}
 
+	//nolint:errcheck // Cache invalidation failures are non-critical
 	_ = s.cache.DeletePattern(ctx, fmt.Sprintf("price:history:%d:*", itemID))
 	return nil
 }
@@ -349,11 +330,12 @@ func (s *priceService) seedDailyFromWikiTimeseries(ctx context.Context, itemID i
 		return err
 	}
 
+	//nolint:errcheck // Cache invalidation failures are non-critical
 	_ = s.cache.DeletePattern(ctx, fmt.Sprintf("price:history:%d:*", itemID))
 	return nil
 }
 
-// UpdateCurrentPrice updates the current price for an item
+// UpdateCurrentPrice updates the current price for an item.
 func (s *priceService) UpdateCurrentPrice(ctx context.Context, price *models.CurrentPrice) error {
 	if err := s.priceRepo.UpsertCurrentPrice(ctx, price); err != nil {
 		return err
@@ -361,7 +343,9 @@ func (s *priceService) UpdateCurrentPrice(ctx context.Context, price *models.Cur
 
 	// Invalidate cache
 	cacheKey := fmt.Sprintf("price:current:%d", price.ItemID)
+	//nolint:errcheck // Cache invalidation failures are non-critical
 	_ = s.cache.Delete(ctx, cacheKey)
+	//nolint:errcheck // Cache invalidation failures are non-critical
 	_ = s.cache.Delete(ctx, "price:current:all")
 
 	return nil
@@ -395,7 +379,8 @@ func (s *priceService) SyncCurrentPrices(ctx context.Context) error {
 
 	updates := make([]models.BulkPriceUpdate, 0, len(latest))
 	skipped := 0
-	for itemID, item := range latest {
+	for itemID := range latest {
+		item := latest[itemID]
 		// Skip if item doesn't exist in our database
 		if _, exists := validItemIDs[itemID]; !exists {
 			skipped++
@@ -434,6 +419,7 @@ func (s *priceService) SyncCurrentPrices(ctx context.Context) error {
 		return fmt.Errorf("insert price_latest snapshots: %w", err)
 	}
 
+	//nolint:errcheck // Cache invalidation failures are non-critical
 	_ = s.cache.DeletePattern(ctx, "price:current:*")
 
 	s.logger.Infow("Successfully synced price_latest from /latest", "count", len(updates))
@@ -491,7 +477,7 @@ func (s *priceService) RunMaintenance(ctx context.Context) error {
 	return nil
 }
 
-// EnsureFuturePartitions creates partitions for price_latest for the next N days
+// EnsureFuturePartitions creates partitions for price_latest for the next N days.
 func (s *priceService) EnsureFuturePartitions(ctx context.Context, daysAhead int) error {
 	return s.priceRepo.EnsureFuturePartitions(ctx, daysAhead)
 }

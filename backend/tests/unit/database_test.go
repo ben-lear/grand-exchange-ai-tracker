@@ -14,23 +14,23 @@ import (
 	"github.com/guavi/osrs-ge-tracker/internal/database"
 )
 
-// TestNewPostgresDB_Success tests successful PostgreSQL connection with valid config
+// TestNewPostgresDB_Success tests successful PostgreSQL connection with valid config.
 func TestNewPostgresDB_Success(t *testing.T) {
-	cfg := &config.Config{
-		PostgresHost:     "localhost",
-		PostgresPort:     "5432",
-		PostgresUser:     "osrs_tracker",
-		PostgresPassword: "changeme",
-		PostgresDB:       "osrs_ge_tracker",
-		PostgresSSLMode:  "disable",
+	dbConfig := config.PostgresConfig{
+		Host:     "localhost",
+		Port:     "5432",
+		User:     "osrs_tracker",
+		Password: "changeme",
+		DB:       "osrs_ge_tracker",
+		SSLMode:  "disable",
 	}
 
-	db, err := database.NewPostgresDB(cfg)
+	dbClient, err := database.NewPostgresDB(dbConfig)
 	require.NoError(t, err)
-	require.NotNil(t, db)
+	require.NotNil(t, dbClient)
 
 	// Verify connection pool settings
-	sqlDB, err := db.DB()
+	sqlDB, err := dbClient.DB()
 	require.NoError(t, err)
 
 	stats := sqlDB.Stats()
@@ -40,88 +40,88 @@ func TestNewPostgresDB_Success(t *testing.T) {
 	sqlDB.Close()
 }
 
-// TestNewPostgresDB_InvalidHost tests connection failure with invalid host
+// TestNewPostgresDB_InvalidHost tests connection failure with invalid host.
 func TestNewPostgresDB_InvalidHost(t *testing.T) {
-	cfg := &config.Config{
-		PostgresHost:     "invalid-host-that-does-not-exist",
-		PostgresPort:     "5432",
-		PostgresUser:     "osrs_tracker",
-		PostgresPassword: "changeme",
-		PostgresDB:       "osrs_ge_tracker",
-		PostgresSSLMode:  "disable",
+	dbConfig := config.PostgresConfig{
+		Host:     "invalid-host-that-does-not-exist",
+		Port:     "5432",
+		User:     "osrs_tracker",
+		Password: "changeme",
+		DB:       "osrs_ge_tracker",
+		SSLMode:  "disable",
 	}
 
-	db, err := database.NewPostgresDB(cfg)
+	dbClient, err := database.NewPostgresDB(dbConfig)
 	assert.Error(t, err)
-	assert.Nil(t, db)
+	assert.Nil(t, dbClient)
 	assert.Contains(t, err.Error(), "failed to")
 }
 
-// TestNewPostgresDB_InvalidPort tests connection failure with invalid port
+// TestNewPostgresDB_InvalidPort tests connection failure with invalid port.
 func TestNewPostgresDB_InvalidPort(t *testing.T) {
-	cfg := &config.Config{
-		PostgresHost:     "localhost",
-		PostgresPort:     "9999", // Invalid port
-		PostgresUser:     "osrs_tracker",
-		PostgresPassword: "changeme",
-		PostgresDB:       "osrs_ge_tracker",
-		PostgresSSLMode:  "disable",
+	dbConfig := config.PostgresConfig{
+		Host:     "localhost",
+		Port:     "9999", // Invalid port
+		User:     "osrs_tracker",
+		Password: "changeme",
+		DB:       "osrs_ge_tracker",
+		SSLMode:  "disable",
 	}
 
-	db, err := database.NewPostgresDB(cfg)
+	dbClient, err := database.NewPostgresDB(dbConfig)
 	assert.Error(t, err)
-	assert.Nil(t, db)
+	assert.Nil(t, dbClient)
 }
 
-// TestNewPostgresDB_InvalidCredentials tests connection failure with wrong credentials
+// TestNewPostgresDB_InvalidCredentials tests connection failure with wrong credentials.
 func TestNewPostgresDB_InvalidCredentials(t *testing.T) {
-	cfg := &config.Config{
-		PostgresHost:     "localhost",
-		PostgresPort:     "5432",
-		PostgresUser:     "wrong_user",
-		PostgresPassword: "wrong_password",
-		PostgresDB:       "osrs_ge_tracker",
-		PostgresSSLMode:  "disable",
+	dbConfig := config.PostgresConfig{
+		Host:     "localhost",
+		Port:     "5432",
+		User:     "wrong_user",
+		Password: "wrong_password",
+		DB:       "osrs_ge_tracker",
+		SSLMode:  "disable",
 	}
 
-	db, err := database.NewPostgresDB(cfg)
+	dbClient, err := database.NewPostgresDB(dbConfig)
 	assert.Error(t, err)
-	assert.Nil(t, db)
+	assert.Nil(t, dbClient)
 	assert.Contains(t, err.Error(), "failed to")
 }
 
-// TestNewPostgresDB_InvalidDatabase tests connection failure with non-existent database
+// TestNewPostgresDB_InvalidDatabase tests connection failure with non-existent database.
 func TestNewPostgresDB_InvalidDatabase(t *testing.T) {
-	cfg := &config.Config{
-		PostgresHost:     "localhost",
-		PostgresPort:     "5432",
-		PostgresUser:     "osrs_tracker",
-		PostgresPassword: "changeme",
-		PostgresDB:       "nonexistent_database_12345",
-		PostgresSSLMode:  "disable",
+	dbConfig := config.PostgresConfig{
+		Host:     "localhost",
+		Port:     "5432",
+		User:     "osrs_tracker",
+		Password: "changeme",
+		DB:       "nonexistent_database_12345",
+		SSLMode:  "disable",
 	}
 
-	db, err := database.NewPostgresDB(cfg)
+	dbClient, err := database.NewPostgresDB(dbConfig)
 	assert.Error(t, err)
-	assert.Nil(t, db)
+	assert.Nil(t, dbClient)
 }
 
-// TestNewPostgresDB_ConnectionPoolSettings verifies connection pool configuration
+// TestNewPostgresDB_ConnectionPoolSettings verifies connection pool configuration.
 func TestNewPostgresDB_ConnectionPoolSettings(t *testing.T) {
-	cfg := &config.Config{
-		PostgresHost:     "localhost",
-		PostgresPort:     "5432",
-		PostgresUser:     "osrs_tracker",
-		PostgresPassword: "changeme",
-		PostgresDB:       "osrs_ge_tracker",
-		PostgresSSLMode:  "disable",
+	dbConfig := config.PostgresConfig{
+		Host:     "localhost",
+		Port:     "5432",
+		User:     "osrs_tracker",
+		Password: "changeme",
+		DB:       "osrs_ge_tracker",
+		SSLMode:  "disable",
 	}
 
-	db, err := database.NewPostgresDB(cfg)
+	dbClient, err := database.NewPostgresDB(dbConfig)
 	require.NoError(t, err)
-	require.NotNil(t, db)
+	require.NotNil(t, dbClient)
 
-	sqlDB, err := db.DB()
+	sqlDB, err := dbClient.DB()
 	require.NoError(t, err)
 	defer sqlDB.Close()
 
@@ -133,85 +133,85 @@ func TestNewPostgresDB_ConnectionPoolSettings(t *testing.T) {
 	assert.LessOrEqual(t, 10, stats.MaxOpenConnections, "MaxIdleConns should be <= MaxOpenConns")
 }
 
-// TestNewPostgresDB_DSNFormat verifies DSN string construction
+// TestNewPostgresDB_DSNFormat verifies DSN string construction.
 func TestNewPostgresDB_DSNFormat(t *testing.T) {
 	// This test verifies DSN construction without actually connecting
-	cfg := &config.Config{
-		PostgresHost:     "testhost",
-		PostgresPort:     "5433",
-		PostgresUser:     "testuser",
-		PostgresPassword: "testpass",
-		PostgresDB:       "testdb",
-		PostgresSSLMode:  "require",
+	dbConfig := config.PostgresConfig{
+		Host:     "testhost",
+		Port:     "5433",
+		User:     "testuser",
+		Password: "testpass",
+		DB:       "testdb",
+		SSLMode:  "require",
 	}
 
 	// We expect DSN to be constructed correctly, but connection will fail
 	// This indirectly tests DSN construction
-	db, err := database.NewPostgresDB(cfg)
+	dbClient, err := database.NewPostgresDB(dbConfig)
 
 	// Should fail because testhost doesn't exist
 	assert.Error(t, err)
-	assert.Nil(t, db)
+	assert.Nil(t, dbClient)
 
 	// Error should indicate connection attempt was made with the config
 	assert.Contains(t, err.Error(), "failed to")
 }
 
-// TestNewPostgresDB_PingFailure tests ping failure scenario
+// TestNewPostgresDB_PingFailure tests ping failure scenario.
 func TestNewPostgresDB_PingFailure(t *testing.T) {
 	// Use invalid config that will fail on ping
-	cfg := &config.Config{
-		PostgresHost:     "localhost",
-		PostgresPort:     "1", // Invalid port that won't accept connections
-		PostgresUser:     "user",
-		PostgresPassword: "pass",
-		PostgresDB:       "db",
-		PostgresSSLMode:  "disable",
+	dbConfig := config.PostgresConfig{
+		Host:     "localhost",
+		Port:     "1", // Invalid port that won't accept connections
+		User:     "user",
+		Password: "pass",
+		DB:       "db",
+		SSLMode:  "disable",
 	}
 
-	db, err := database.NewPostgresDB(cfg)
+	dbClient, err := database.NewPostgresDB(dbConfig)
 	assert.Error(t, err)
-	assert.Nil(t, db)
+	assert.Nil(t, dbClient)
 }
 
-// TestNewPostgresDB_GORMConfiguration verifies GORM config is applied
+// TestNewPostgresDB_GORMConfiguration verifies GORM config is applied.
 func TestNewPostgresDB_GORMConfiguration(t *testing.T) {
-	cfg := &config.Config{
-		PostgresHost:     "localhost",
-		PostgresPort:     "5432",
-		PostgresUser:     "osrs_tracker",
-		PostgresPassword: "changeme",
-		PostgresDB:       "osrs_ge_tracker",
-		PostgresSSLMode:  "disable",
+	dbConfig := config.PostgresConfig{
+		Host:     "localhost",
+		Port:     "5432",
+		User:     "osrs_tracker",
+		Password: "changeme",
+		DB:       "osrs_ge_tracker",
+		SSLMode:  "disable",
 	}
 
-	db, err := database.NewPostgresDB(cfg)
+	dbClient, err := database.NewPostgresDB(dbConfig)
 	require.NoError(t, err)
-	require.NotNil(t, db)
+	require.NotNil(t, dbClient)
 
-	sqlDB, err := db.DB()
+	sqlDB, err := dbClient.DB()
 	require.NoError(t, err)
 	defer sqlDB.Close()
 
 	// Verify GORM NowFunc uses UTC
-	now := db.NowFunc()
+	now := dbClient.NowFunc()
 	assert.Equal(t, time.UTC, now.Location(), "GORM should use UTC for timestamps")
 }
 
-// TestNewRedisClient_Success tests successful Redis connection
+// TestNewRedisClient_Success tests successful Redis connection.
 func TestNewRedisClient_Success(t *testing.T) {
 	// Start miniredis server
 	mr := miniredis.RunT(t)
 	defer mr.Close()
 
-	cfg := &config.Config{
-		RedisHost:     mr.Host(),
-		RedisPort:     mr.Port(),
-		RedisPassword: "",
-		RedisDB:       0,
+	cacheConfig := config.RedisConfig{
+		Host:     mr.Host(),
+		Port:     mr.Port(),
+		Password: "",
+		DB:       0,
 	}
 
-	client, err := database.NewRedisClient(cfg)
+	client, err := database.NewRedisClient(cacheConfig)
 	require.NoError(t, err)
 	require.NotNil(t, client)
 
@@ -225,21 +225,21 @@ func TestNewRedisClient_Success(t *testing.T) {
 	client.Close()
 }
 
-// TestNewRedisClient_WithPassword tests Redis connection with password
+// TestNewRedisClient_WithPassword tests Redis connection with password.
 func TestNewRedisClient_WithPassword(t *testing.T) {
 	// Start miniredis server with password
 	mr := miniredis.RunT(t)
 	defer mr.Close()
 	mr.RequireAuth("secret-password")
 
-	cfg := &config.Config{
-		RedisHost:     mr.Host(),
-		RedisPort:     mr.Port(),
-		RedisPassword: "secret-password",
-		RedisDB:       0,
+	cacheConfig := config.RedisConfig{
+		Host:     mr.Host(),
+		Port:     mr.Port(),
+		Password: "secret-password",
+		DB:       0,
 	}
 
-	client, err := database.NewRedisClient(cfg)
+	client, err := database.NewRedisClient(cacheConfig)
 	require.NoError(t, err)
 	require.NotNil(t, client)
 
@@ -252,55 +252,55 @@ func TestNewRedisClient_WithPassword(t *testing.T) {
 	client.Close()
 }
 
-// TestNewRedisClient_WrongPassword tests Redis connection with incorrect password
+// TestNewRedisClient_WrongPassword tests Redis connection with incorrect password.
 func TestNewRedisClient_WrongPassword(t *testing.T) {
 	mr := miniredis.RunT(t)
 	defer mr.Close()
 	mr.RequireAuth("correct-password")
 
-	cfg := &config.Config{
-		RedisHost:     mr.Host(),
-		RedisPort:     mr.Port(),
-		RedisPassword: "wrong-password",
-		RedisDB:       0,
+	cacheConfig := config.RedisConfig{
+		Host:     mr.Host(),
+		Port:     mr.Port(),
+		Password: "wrong-password",
+		DB:       0,
 	}
 
-	client, err := database.NewRedisClient(cfg)
+	client, err := database.NewRedisClient(cacheConfig)
 	assert.Error(t, err)
 	assert.Nil(t, client)
 	assert.Contains(t, err.Error(), "failed to connect to Redis")
 }
 
-// TestNewRedisClient_InvalidHost tests connection failure with invalid host
+// TestNewRedisClient_InvalidHost tests connection failure with invalid host.
 func TestNewRedisClient_InvalidHost(t *testing.T) {
-	cfg := &config.Config{
-		RedisHost:     "invalid-redis-host-that-does-not-exist",
-		RedisPort:     "6379",
-		RedisPassword: "",
-		RedisDB:       0,
+	cacheConfig := config.RedisConfig{
+		Host:     "invalid-redis-host-that-does-not-exist",
+		Port:     "6379",
+		Password: "",
+		DB:       0,
 	}
 
-	client, err := database.NewRedisClient(cfg)
+	client, err := database.NewRedisClient(cacheConfig)
 	assert.Error(t, err)
 	assert.Nil(t, client)
 	assert.Contains(t, err.Error(), "failed to connect to Redis")
 }
 
-// TestNewRedisClient_InvalidPort tests connection failure with invalid port
+// TestNewRedisClient_InvalidPort tests connection failure with invalid port.
 func TestNewRedisClient_InvalidPort(t *testing.T) {
-	cfg := &config.Config{
-		RedisHost:     "localhost",
-		RedisPort:     "9999", // Invalid port
-		RedisPassword: "",
-		RedisDB:       0,
+	cacheConfig := config.RedisConfig{
+		Host:     "localhost",
+		Port:     "9999", // Invalid port
+		Password: "",
+		DB:       0,
 	}
 
-	client, err := database.NewRedisClient(cfg)
+	client, err := database.NewRedisClient(cacheConfig)
 	assert.Error(t, err)
 	assert.Nil(t, client)
 }
 
-// TestNewRedisClient_DifferentDB tests connection to different Redis DB
+// TestNewRedisClient_DifferentDB tests connection to different Redis DB.
 func TestNewRedisClient_DifferentDB(t *testing.T) {
 	mr := miniredis.RunT(t)
 	defer mr.Close()
@@ -314,14 +314,14 @@ func TestNewRedisClient_DifferentDB(t *testing.T) {
 	mr.Set("test-key", "value-in-db1")
 
 	// Connect to DB 1
-	cfg := &config.Config{
-		RedisHost:     mr.Host(),
-		RedisPort:     mr.Port(),
-		RedisPassword: "",
-		RedisDB:       1,
+	cacheConfig := config.RedisConfig{
+		Host:     mr.Host(),
+		Port:     mr.Port(),
+		Password: "",
+		DB:       1,
 	}
 
-	client, err := database.NewRedisClient(cfg)
+	client, err := database.NewRedisClient(cacheConfig)
 	require.NoError(t, err)
 	require.NotNil(t, client)
 	defer client.Close()
@@ -333,19 +333,19 @@ func TestNewRedisClient_DifferentDB(t *testing.T) {
 	assert.Equal(t, "value-in-db1", val)
 }
 
-// TestNewRedisClient_AddressFormat verifies address string construction
+// TestNewRedisClient_AddressFormat verifies address string construction.
 func TestNewRedisClient_AddressFormat(t *testing.T) {
 	mr := miniredis.RunT(t)
 	defer mr.Close()
 
-	cfg := &config.Config{
-		RedisHost:     mr.Host(),
-		RedisPort:     mr.Port(),
-		RedisPassword: "",
-		RedisDB:       5,
+	cacheConfig := config.RedisConfig{
+		Host:     mr.Host(),
+		Port:     mr.Port(),
+		Password: "",
+		DB:       5,
 	}
 
-	client, err := database.NewRedisClient(cfg)
+	client, err := database.NewRedisClient(cacheConfig)
 	require.NoError(t, err)
 	require.NotNil(t, client)
 	defer client.Close()
@@ -357,19 +357,19 @@ func TestNewRedisClient_AddressFormat(t *testing.T) {
 	assert.Equal(t, 5, options.DB)
 }
 
-// TestNewRedisClient_Ping tests the ping functionality
+// TestNewRedisClient_Ping tests the ping functionality.
 func TestNewRedisClient_Ping(t *testing.T) {
 	mr := miniredis.RunT(t)
 	defer mr.Close()
 
-	cfg := &config.Config{
-		RedisHost:     mr.Host(),
-		RedisPort:     mr.Port(),
-		RedisPassword: "",
-		RedisDB:       0,
+	cacheConfig := config.RedisConfig{
+		Host:     mr.Host(),
+		Port:     mr.Port(),
+		Password: "",
+		DB:       0,
 	}
 
-	client, err := database.NewRedisClient(cfg)
+	client, err := database.NewRedisClient(cacheConfig)
 	require.NoError(t, err)
 	require.NotNil(t, client)
 	defer client.Close()
@@ -383,26 +383,26 @@ func TestNewRedisClient_Ping(t *testing.T) {
 	}
 }
 
-// TestPostgresDB_MultipleConnections tests multiple simultaneous connections
+// TestPostgresDB_MultipleConnections tests multiple simultaneous connections.
 func TestPostgresDB_MultipleConnections(t *testing.T) {
-	cfg := &config.Config{
-		PostgresHost:     "localhost",
-		PostgresPort:     "5432",
-		PostgresUser:     "osrs_tracker",
-		PostgresPassword: "changeme",
-		PostgresDB:       "osrs_ge_tracker",
-		PostgresSSLMode:  "disable",
+	dbConfig := config.PostgresConfig{
+		Host:     "localhost",
+		Port:     "5432",
+		User:     "osrs_tracker",
+		Password: "changeme",
+		DB:       "osrs_ge_tracker",
+		SSLMode:  "disable",
 	}
 
 	// Create multiple connections
-	db1, err := database.NewPostgresDB(cfg)
+	db1, err := database.NewPostgresDB(dbConfig)
 	require.NoError(t, err)
 	defer func() {
 		sqlDB, _ := db1.DB()
 		sqlDB.Close()
 	}()
 
-	db2, err := database.NewPostgresDB(cfg)
+	db2, err := database.NewPostgresDB(dbConfig)
 	require.NoError(t, err)
 	defer func() {
 		sqlDB, _ := db2.DB()
@@ -419,24 +419,24 @@ func TestPostgresDB_MultipleConnections(t *testing.T) {
 	assert.NoError(t, sqlDB2.Ping())
 }
 
-// TestRedisClient_MultipleClients tests multiple Redis clients
+// TestRedisClient_MultipleClients tests multiple Redis clients.
 func TestRedisClient_MultipleClients(t *testing.T) {
 	mr := miniredis.RunT(t)
 	defer mr.Close()
 
-	cfg := &config.Config{
-		RedisHost:     mr.Host(),
-		RedisPort:     mr.Port(),
-		RedisPassword: "",
-		RedisDB:       0,
+	cacheConfig := config.RedisConfig{
+		Host:     mr.Host(),
+		Port:     mr.Port(),
+		Password: "",
+		DB:       0,
 	}
 
 	// Create multiple clients
-	client1, err := database.NewRedisClient(cfg)
+	client1, err := database.NewRedisClient(cacheConfig)
 	require.NoError(t, err)
 	defer client1.Close()
 
-	client2, err := database.NewRedisClient(cfg)
+	client2, err := database.NewRedisClient(cacheConfig)
 	require.NoError(t, err)
 	defer client2.Close()
 
@@ -451,21 +451,21 @@ func TestRedisClient_MultipleClients(t *testing.T) {
 	assert.Equal(t, "value1", val)
 }
 
-// TestPostgresDB_ConnectionLifetime tests connection max lifetime
+// TestPostgresDB_ConnectionLifetime tests connection max lifetime.
 func TestPostgresDB_ConnectionLifetime(t *testing.T) {
-	cfg := &config.Config{
-		PostgresHost:     "localhost",
-		PostgresPort:     "5432",
-		PostgresUser:     "osrs_tracker",
-		PostgresPassword: "changeme",
-		PostgresDB:       "osrs_ge_tracker",
-		PostgresSSLMode:  "disable",
+	dbConfig := config.PostgresConfig{
+		Host:     "localhost",
+		Port:     "5432",
+		User:     "osrs_tracker",
+		Password: "changeme",
+		DB:       "osrs_ge_tracker",
+		SSLMode:  "disable",
 	}
 
-	db, err := database.NewPostgresDB(cfg)
+	dbClient, err := database.NewPostgresDB(dbConfig)
 	require.NoError(t, err)
 
-	sqlDB, err := db.DB()
+	sqlDB, err := dbClient.DB()
 	require.NoError(t, err)
 	defer sqlDB.Close()
 
@@ -477,46 +477,46 @@ func TestPostgresDB_ConnectionLifetime(t *testing.T) {
 	assert.NoError(t, sqlDB.Ping())
 }
 
-// TestRedisClient_ContextCancellation tests context handling
+// TestRedisClient_ContextCancellation tests context handling.
 func TestRedisClient_ContextCancellation(t *testing.T) {
 	mr := miniredis.RunT(t)
 	defer mr.Close()
 
-	cfg := &config.Config{
-		RedisHost:     mr.Host(),
-		RedisPort:     mr.Port(),
-		RedisPassword: "",
-		RedisDB:       0,
+	cacheConfig := config.RedisConfig{
+		Host:     mr.Host(),
+		Port:     mr.Port(),
+		Password: "",
+		DB:       0,
 	}
 
-	client, err := database.NewRedisClient(cfg)
+	client, err := database.NewRedisClient(cacheConfig)
 	require.NoError(t, err)
 	defer client.Close()
 
-	// Create cancelled context
+	// Create canceled context
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 
-	// Operations with cancelled context should fail
+	// Operations with canceled context should fail
 	err = client.Set(ctx, "key", "value", 0).Err()
 	assert.Error(t, err)
 }
 
-// TestPostgresDB_GORMDialector verifies correct GORM dialector is used
+// TestPostgresDB_GORMDialector verifies correct GORM dialector is used.
 func TestPostgresDB_GORMDialector(t *testing.T) {
-	cfg := &config.Config{
-		PostgresHost:     "localhost",
-		PostgresPort:     "5432",
-		PostgresUser:     "osrs_tracker",
-		PostgresPassword: "changeme",
-		PostgresDB:       "osrs_ge_tracker",
-		PostgresSSLMode:  "disable",
+	dbConfig := config.PostgresConfig{
+		Host:     "localhost",
+		Port:     "5432",
+		User:     "osrs_tracker",
+		Password: "changeme",
+		DB:       "osrs_ge_tracker",
+		SSLMode:  "disable",
 	}
 
-	db, err := database.NewPostgresDB(cfg)
+	dbClient, err := database.NewPostgresDB(dbConfig)
 	require.NoError(t, err)
 
-	sqlDB, err := db.DB()
+	sqlDB, err := dbClient.DB()
 	require.NoError(t, err)
 	defer sqlDB.Close()
 
@@ -526,19 +526,19 @@ func TestPostgresDB_GORMDialector(t *testing.T) {
 	assert.NotNil(t, sqlDB.Driver(), "Driver should be initialized")
 }
 
-// TestNewRedisClient_EmptyPassword tests connection with empty password (no auth)
+// TestNewRedisClient_EmptyPassword tests connection with empty password (no auth).
 func TestNewRedisClient_EmptyPassword(t *testing.T) {
 	mr := miniredis.RunT(t)
 	defer mr.Close()
 
-	cfg := &config.Config{
-		RedisHost:     mr.Host(),
-		RedisPort:     mr.Port(),
-		RedisPassword: "", // Empty password (no auth)
-		RedisDB:       0,
+	cacheConfig := config.RedisConfig{
+		Host:     mr.Host(),
+		Port:     mr.Port(),
+		Password: "", // Empty password (no auth)
+		DB:       0,
 	}
 
-	client, err := database.NewRedisClient(cfg)
+	client, err := database.NewRedisClient(cacheConfig)
 	require.NoError(t, err)
 	require.NotNil(t, client)
 	defer client.Close()

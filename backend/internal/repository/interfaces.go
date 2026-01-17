@@ -7,7 +7,7 @@ import (
 	"github.com/guavi/osrs-ge-tracker/internal/models"
 )
 
-// ItemRepository defines the interface for item data operations
+// ItemRepository defines the interface for item data operations.
 type ItemRepository interface {
 	// GetAll returns all items with pagination
 	GetAll(ctx context.Context, params models.ItemListParams) ([]models.Item, int64, error)
@@ -40,7 +40,7 @@ type ItemRepository interface {
 	Count(ctx context.Context) (int64, error)
 }
 
-// PriceRepository defines the interface for price data operations
+// PriceRepository defines the interface for price data operations.
 type PriceRepository interface {
 	// GetCurrentPrice returns the current price for an item
 	GetCurrentPrice(ctx context.Context, itemID int) (*models.CurrentPrice, error)

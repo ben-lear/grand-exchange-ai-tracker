@@ -2,6 +2,7 @@ package unit
 
 import (
 	"encoding/json"
+	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
@@ -22,7 +23,7 @@ func TestRequestLogger_SetsRequestIDHeader(t *testing.T) {
 		return c.SendStatus(fiber.StatusOK)
 	})
 
-	resp, err := app.Test(httptest.NewRequest("GET", "/ok", nil))
+	resp, err := app.Test(httptest.NewRequest("GET", "/ok", http.NoBody))
 	require.NoError(t, err)
 	require.Equal(t, 200, resp.StatusCode)
 	// Fiber writes response headers; we expect the request-id to be set.
@@ -34,11 +35,11 @@ func TestErrorHandler_FiberError_UsesStatusAndMessage(t *testing.T) {
 	app := fiber.New(fiber.Config{
 		ErrorHandler: middleware.NewErrorHandler(middleware.ErrorHandlerConfig{Logger: logger}),
 	})
-	app.Get("/bad", func(c *fiber.Ctx) error {
+	app.Get("/bad", func(_ *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, "bad request")
 	})
 
-	resp, err := app.Test(httptest.NewRequest("GET", "/bad", nil))
+	resp, err := app.Test(httptest.NewRequest("GET", "/bad", http.NoBody))
 	require.NoError(t, err)
 	require.Equal(t, 400, resp.StatusCode)
 
@@ -53,11 +54,11 @@ func TestErrorHandler_GormNotFound_MapsTo404(t *testing.T) {
 	app := fiber.New(fiber.Config{
 		ErrorHandler: middleware.NewErrorHandler(middleware.ErrorHandlerConfig{Logger: logger}),
 	})
-	app.Get("/missing", func(c *fiber.Ctx) error {
+	app.Get("/missing", func(_ *fiber.Ctx) error {
 		return gorm.ErrRecordNotFound
 	})
 
-	resp, err := app.Test(httptest.NewRequest("GET", "/missing", nil))
+	resp, err := app.Test(httptest.NewRequest("GET", "/missing", http.NoBody))
 	require.NoError(t, err)
 	require.Equal(t, 404, resp.StatusCode)
 }
@@ -66,11 +67,11 @@ func TestRecoverMiddleware_ConvertsPanicTo500(t *testing.T) {
 	logger := zap.NewNop().Sugar()
 	app := fiber.New()
 	app.Use(middleware.RecoverMiddleware(logger))
-	app.Get("/panic", func(c *fiber.Ctx) error {
+	app.Get("/panic", func(_ *fiber.Ctx) error {
 		panic("boom")
 	})
 
-	resp, err := app.Test(httptest.NewRequest("GET", "/panic", nil))
+	resp, err := app.Test(httptest.NewRequest("GET", "/panic", http.NoBody))
 	require.NoError(t, err)
 	require.Equal(t, 500, resp.StatusCode)
 
@@ -89,13 +90,13 @@ func TestRateLimiter_EnforcesLimit(t *testing.T) {
 
 	// First 2 should pass.
 	for i := 0; i < 2; i++ {
-		resp, err := app.Test(httptest.NewRequest("GET", "/ok", nil))
+		resp, err := app.Test(httptest.NewRequest("GET", "/ok", http.NoBody))
 		require.NoError(t, err)
 		require.Equal(t, 200, resp.StatusCode)
 	}
 
 	// Third should be rate limited.
-	resp, err := app.Test(httptest.NewRequest("GET", "/ok", nil))
+	resp, err := app.Test(httptest.NewRequest("GET", "/ok", http.NoBody))
 	require.NoError(t, err)
 	require.Equal(t, 429, resp.StatusCode)
 
@@ -110,7 +111,7 @@ func TestCORS_AllowsConfiguredOrigin_Preflight(t *testing.T) {
 	app.Use(middleware.NewCORSMiddleware(middleware.CORSConfig{AllowedOrigins: []string{"http://localhost:5173"}}))
 	app.Get("/ok", func(c *fiber.Ctx) error { return c.SendStatus(200) })
 
-	req := httptest.NewRequest("OPTIONS", "/ok", nil)
+	req := httptest.NewRequest("OPTIONS", "/ok", http.NoBody)
 	req.Header.Set("Origin", "http://localhost:5173")
 	req.Header.Set("Access-Control-Request-Method", "GET")
 

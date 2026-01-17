@@ -3,6 +3,7 @@ package unit
 import (
 	"encoding/json"
 	"errors"
+	"net/http"
 	"net/http/httptest"
 	"testing"
 
@@ -34,7 +35,7 @@ func TestItemHandler_ListItems(t *testing.T) {
 	app.Get("/items", handler.ListItems)
 
 	// Create request
-	req := httptest.NewRequest("GET", "/items?page=1&limit=50", nil)
+	req := httptest.NewRequest("GET", "/items?page=1&limit=50", http.NoBody)
 	resp, err := app.Test(req)
 
 	// Assertions
@@ -60,7 +61,7 @@ func TestItemHandler_ListItems_InvalidPagination(t *testing.T) {
 	app := fiber.New()
 	app.Get("/items", handler.ListItems)
 
-	resp, err := app.Test(httptest.NewRequest("GET", "/items?page=0&limit=50", nil))
+	resp, err := app.Test(httptest.NewRequest("GET", "/items?page=0&limit=50", http.NoBody))
 	assert.NoError(t, err)
 	assert.Equal(t, 400, resp.StatusCode)
 
@@ -80,7 +81,7 @@ func TestItemHandler_ListItems_InvalidSort(t *testing.T) {
 	app := fiber.New()
 	app.Get("/items", handler.ListItems)
 
-	resp, err := app.Test(httptest.NewRequest("GET", "/items?sort_by=bad_field", nil))
+	resp, err := app.Test(httptest.NewRequest("GET", "/items?sort_by=bad_field", http.NoBody))
 	assert.NoError(t, err)
 	assert.Equal(t, 400, resp.StatusCode)
 
@@ -103,7 +104,7 @@ func TestItemHandler_ListItems_ServiceError(t *testing.T) {
 	app := fiber.New()
 	app.Get("/items", handler.ListItems)
 
-	resp, err := app.Test(httptest.NewRequest("GET", "/items", nil))
+	resp, err := app.Test(httptest.NewRequest("GET", "/items", http.NoBody))
 	assert.NoError(t, err)
 	assert.Equal(t, 500, resp.StatusCode)
 
@@ -133,7 +134,7 @@ func TestItemHandler_GetItemByID(t *testing.T) {
 	app.Get("/items/:id", handler.GetItemByID)
 
 	// Create request
-	req := httptest.NewRequest("GET", "/items/1", nil)
+	req := httptest.NewRequest("GET", "/items/1", http.NoBody)
 	resp, err := app.Test(req)
 
 	// Assertions
@@ -153,7 +154,7 @@ func TestItemHandler_GetItemByID_InvalidID(t *testing.T) {
 	app := fiber.New()
 	app.Get("/items/:id", handler.GetItemByID)
 
-	resp, err := app.Test(httptest.NewRequest("GET", "/items/abc", nil))
+	resp, err := app.Test(httptest.NewRequest("GET", "/items/abc", http.NoBody))
 	assert.NoError(t, err)
 	assert.Equal(t, 400, resp.StatusCode)
 
@@ -175,7 +176,7 @@ func TestItemHandler_GetItemByID_NotFound(t *testing.T) {
 	app := fiber.New()
 	app.Get("/items/:id", handler.GetItemByID)
 
-	resp, err := app.Test(httptest.NewRequest("GET", "/items/123", nil))
+	resp, err := app.Test(httptest.NewRequest("GET", "/items/123", http.NoBody))
 	assert.NoError(t, err)
 	assert.Equal(t, 404, resp.StatusCode)
 
@@ -204,7 +205,7 @@ func TestItemHandler_SearchItems(t *testing.T) {
 	app.Get("/items/search", handler.SearchItems)
 
 	// Create request
-	req := httptest.NewRequest("GET", "/items/search?q=dragon", nil)
+	req := httptest.NewRequest("GET", "/items/search?q=dragon", http.NoBody)
 	resp, err := app.Test(req)
 
 	// Assertions
@@ -225,7 +226,7 @@ func TestItemHandler_SearchItems_MissingQuery(t *testing.T) {
 	app.Get("/items/search", handler.SearchItems)
 
 	// Create request without query parameter
-	req := httptest.NewRequest("GET", "/items/search", nil)
+	req := httptest.NewRequest("GET", "/items/search", http.NoBody)
 	resp, err := app.Test(req)
 
 	// Assertions
@@ -242,7 +243,7 @@ func TestItemHandler_SearchItems_InvalidLimit(t *testing.T) {
 	app := fiber.New()
 	app.Get("/items/search", handler.SearchItems)
 
-	resp, err := app.Test(httptest.NewRequest("GET", "/items/search?q=dragon&limit=999", nil))
+	resp, err := app.Test(httptest.NewRequest("GET", "/items/search?q=dragon&limit=999", http.NoBody))
 	assert.NoError(t, err)
 	assert.Equal(t, 400, resp.StatusCode)
 
@@ -265,7 +266,7 @@ func TestItemHandler_SearchItems_ServiceError(t *testing.T) {
 	app := fiber.New()
 	app.Get("/items/search", handler.SearchItems)
 
-	resp, err := app.Test(httptest.NewRequest("GET", "/items/search?q=dragon", nil))
+	resp, err := app.Test(httptest.NewRequest("GET", "/items/search?q=dragon", http.NoBody))
 	assert.NoError(t, err)
 	assert.Equal(t, 500, resp.StatusCode)
 
@@ -287,7 +288,7 @@ func TestItemHandler_GetItemCount_OK(t *testing.T) {
 	app := fiber.New()
 	app.Get("/items/count", handler.GetItemCount)
 
-	resp, err := app.Test(httptest.NewRequest("GET", "/items/count", nil))
+	resp, err := app.Test(httptest.NewRequest("GET", "/items/count", http.NoBody))
 	assert.NoError(t, err)
 	assert.Equal(t, 200, resp.StatusCode)
 
@@ -309,7 +310,7 @@ func TestItemHandler_GetItemCount_ServiceError(t *testing.T) {
 	app := fiber.New()
 	app.Get("/items/count", handler.GetItemCount)
 
-	resp, err := app.Test(httptest.NewRequest("GET", "/items/count", nil))
+	resp, err := app.Test(httptest.NewRequest("GET", "/items/count", http.NoBody))
 	assert.NoError(t, err)
 	assert.Equal(t, 500, resp.StatusCode)
 

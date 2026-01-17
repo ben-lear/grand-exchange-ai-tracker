@@ -5,14 +5,14 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
-// LogConfig contains logging configuration
+// LogConfig contains logging configuration.
 type LogConfig struct {
 	Level       string // debug, info, warn, error
 	Environment string // development, production
 	OutputPaths []string
 }
 
-// NewLogger creates a new Zap logger with the given configuration
+// NewLogger creates a new Zap logger with the given configuration.
 func NewLogger(config LogConfig) (*zap.Logger, error) {
 	// Parse log level
 	level := zapcore.InfoLevel
@@ -50,7 +50,7 @@ func NewLogger(config LogConfig) (*zap.Logger, error) {
 	return logger, nil
 }
 
-// NewDefaultLogger creates a logger with default settings
+// NewDefaultLogger creates a logger with default settings.
 func NewDefaultLogger() (*zap.Logger, error) {
 	return NewLogger(LogConfig{
 		Level:       "info",
@@ -59,7 +59,7 @@ func NewDefaultLogger() (*zap.Logger, error) {
 	})
 }
 
-// NewProductionLogger creates a production-ready logger
+// NewProductionLogger creates a production-ready logger.
 func NewProductionLogger() (*zap.Logger, error) {
 	return NewLogger(LogConfig{
 		Level:       "info",
@@ -68,22 +68,22 @@ func NewProductionLogger() (*zap.Logger, error) {
 	})
 }
 
-// WithRequestID adds a request ID to the logger context
+// WithRequestID adds a request ID to the logger context.
 func WithRequestID(logger *zap.Logger, requestID string) *zap.Logger {
 	return logger.With(zap.String("requestId", requestID))
 }
 
-// WithItemID adds an item ID to the logger context
+// WithItemID adds an item ID to the logger context.
 func WithItemID(logger *zap.Logger, itemID int) *zap.Logger {
 	return logger.With(zap.Int("itemId", itemID))
 }
 
-// WithError adds an error to the logger context
+// WithError adds an error to the logger context.
 func WithError(logger *zap.Logger, err error) *zap.Logger {
 	return logger.With(zap.Error(err))
 }
 
-// LoggerMiddlewareFields creates fields for HTTP middleware logging
+// LoggerMiddlewareFields creates fields for HTTP middleware logging.
 func LoggerMiddlewareFields(method, path string, statusCode int, duration int64) []zapcore.Field {
 	return []zapcore.Field{
 		zap.String("method", method),

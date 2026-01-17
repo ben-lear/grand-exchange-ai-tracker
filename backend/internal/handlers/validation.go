@@ -2,14 +2,14 @@ package handlers
 
 import "github.com/gofiber/fiber/v2"
 
-// Validation constants
+// Validation constants.
 const (
 	MinLimit = 1
 	MaxLimit = 200
 	MinPage  = 1
 )
 
-// ValidSortFields defines valid sort fields for items
+// ValidSortFields defines valid sort fields for items.
 var ValidSortFields = map[string]bool{
 	"name":      true,
 	"item_id":   true,
@@ -18,20 +18,20 @@ var ValidSortFields = map[string]bool{
 	"low_alch":  true,
 }
 
-// ValidSortOrders defines valid sort orders
+// ValidSortOrders defines valid sort orders.
 var ValidSortOrders = map[string]bool{
 	"asc":  true,
 	"desc": true,
 }
 
-// errorResponse returns a standardized error response
+// errorResponse returns a standardized error response.
 func errorResponse(c *fiber.Ctx, statusCode int, message string) error {
 	return c.Status(statusCode).JSON(fiber.Map{
 		"error": message,
 	})
 }
 
-// validatePagination validates pagination parameters
+// validatePagination validates pagination parameters.
 func validatePagination(page, limit int) error {
 	if page < MinPage {
 		return fiber.NewError(fiber.StatusBadRequest, "page must be greater than 0")
@@ -42,7 +42,7 @@ func validatePagination(page, limit int) error {
 	return nil
 }
 
-// validateSortParams validates sort parameters
+// validateSortParams validates sort parameters.
 func validateSortParams(sortBy, order string) error {
 	if !ValidSortFields[sortBy] {
 		return fiber.NewError(fiber.StatusBadRequest, "invalid sort_by field")

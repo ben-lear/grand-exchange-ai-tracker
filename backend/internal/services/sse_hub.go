@@ -8,46 +8,37 @@ import (
 )
 
 type SSEMessage struct {
-	Event     string    `json:"event"`
-	Data      any       `json:"data"`
 	Timestamp time.Time `json:"timestamp"`
-
-	// ItemID is used for server-side filtering and is not serialized.
-	ItemID *int `json:"-"`
+	Data      any       `json:"data"`
+	ItemID    *int      `json:"-"`
+	Event     string    `json:"event"`
 }
 
 type PriceUpdatePayload struct {
-	ItemID    int       `json:"item_id"`
+	Timestamp time.Time `json:"timestamp"`
 	High      *int64    `json:"high"`
 	Low       *int64    `json:"low"`
 	HighTime  *int64    `json:"high_time"`
 	LowTime   *int64    `json:"low_time"`
-	Timestamp time.Time `json:"timestamp"`
+	ItemID    int       `json:"item_id"`
 }
 
 type SSEClient struct {
-	ID          string
-	MessageChan chan SSEMessage
-
-	// ItemFilters: if empty/nil => receive all items.
-	// If non-empty => only receive messages where msg.ItemID is in the set.
-	ItemFilters map[int]struct{}
-
 	ConnectedAt time.Time
+	MessageChan chan SSEMessage
+	ItemFilters map[int]struct{}
+	ID          string
 }
 
 type SSEHub struct {
-	logger *zap.SugaredLogger
-
-	maxClients int
-
-	mu      sync.RWMutex
-	clients map[string]*SSEClient
-
+	logger     *zap.SugaredLogger
+	clients    map[string]*SSEClient
 	register   chan *SSEClient
 	unregister chan string
 	broadcast  chan SSEMessage
 	stop       chan struct{}
+	maxClients int
+	mu         sync.RWMutex
 }
 
 func NewSSEHub(logger *zap.SugaredLogger, maxClients int) *SSEHub {

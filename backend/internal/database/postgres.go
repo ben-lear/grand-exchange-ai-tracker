@@ -11,15 +11,27 @@ import (
 	"github.com/guavi/osrs-ge-tracker/internal/config"
 )
 
-func NewPostgresDB(cfg *config.Config) (*gorm.DB, error) {
+// NewPostgresDB creates a new PostgreSQL database connection using the provided database configuration.
+// The function accepts a PostgresConfig struct directly (instead of the full Config) to reduce chaining
+// and make the dependency explicit. This follows the naming convention where parameter names are
+// descriptive (dbConfig) and match the purpose of the configuration being passed.
+//
+// The connection includes:
+// - GORM with Info-level logging
+// - UTC timezone for all timestamps
+// - Connection pool with 10 idle and 100 max open connections
+// - 1 hour connection lifetime
+//
+// Returns an error if the connection fails or if the database cannot be pinged.
+func NewPostgresDB(dbConfig config.PostgresConfig) (*gorm.DB, error) {
 	dsn := fmt.Sprintf(
 		"host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
-		cfg.PostgresHost,
-		cfg.PostgresPort,
-		cfg.PostgresUser,
-		cfg.PostgresPassword,
-		cfg.PostgresDB,
-		cfg.PostgresSSLMode,
+		dbConfig.Host,
+		dbConfig.Port,
+		dbConfig.User,
+		dbConfig.Password,
+		dbConfig.DB,
+		dbConfig.SSLMode,
 	)
 
 	// Configure GORM

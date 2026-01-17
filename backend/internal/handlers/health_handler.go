@@ -10,39 +10,46 @@ import (
 	"gorm.io/gorm"
 )
 
-// HealthHandler handles health check endpoints
+// Health status constants.
+const (
+	healthStatusOK       = "ok"
+	healthStatusDegraded = "degraded"
+	healthStatusDown     = "down"
+)
+
+// HealthHandler handles health check endpoints.
 type HealthHandler struct {
-	db     *gorm.DB
-	redis  *redis.Client
-	logger *zap.SugaredLogger
+	dbClient    *gorm.DB
+	redisClient *redis.Client
+	logger      *zap.SugaredLogger
 }
 
-// NewHealthHandler creates a new health handler
-func NewHealthHandler(db *gorm.DB, redis *redis.Client, logger *zap.SugaredLogger) *HealthHandler {
+// redisClient: Redis client for cache health checks.
+func NewHealthHandler(dbClient *gorm.DB, redisClient *redis.Client, logger *zap.SugaredLogger) *HealthHandler {
 	return &HealthHandler{
-		db:     db,
-		redis:  redis,
-		logger: logger,
+		dbClient:    dbClient,
+		redisClient: redisClient,
+		logger:      logger,
 	}
 }
 
-// HealthResponse represents the health check response
+// HealthResponse represents the health check response.
 type HealthResponse struct {
-	Status   string                 `json:"status"`
-	Service  string                 `json:"service"`
-	Version  string                 `json:"version"`
 	Time     time.Time              `json:"time"`
 	Database map[string]interface{} `json:"database"`
 	Cache    map[string]interface{} `json:"cache"`
+	Status   string                 `json:"status"`
+	Service  string                 `json:"service"`
+	Version  string                 `json:"version"`
 }
 
-// Health handles GET /health
+// Health handles GET /health.
 func (h *HealthHandler) Health(c *fiber.Ctx) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	response := HealthResponse{
-		Status:  "ok",
+		Status:  healthStatusOK,
 		Service: "osrs-ge-tracker",
 		Version: "1.0.0",
 		Time:    time.Now(),
@@ -55,19 +62,19 @@ func (h *HealthHandler) Health(c *fiber.Ctx) error {
 	}
 
 	// Check database connection
-	sqlDB, err := h.db.DB()
+	sqlDB, err := h.dbClient.DB()
 	if err != nil {
 		h.logger.Errorf("Failed to get database instance: %v", err)
 		response.Database["status"] = "error"
 		response.Database["error"] = err.Error()
-		response.Status = "degraded"
+		response.Status = healthStatusDegraded
 	} else {
 		err = sqlDB.PingContext(ctx)
 		if err != nil {
 			h.logger.Errorf("Database ping failed: %v", err)
 			response.Database["status"] = "down"
 			response.Database["error"] = err.Error()
-			response.Status = "degraded"
+			response.Status = healthStatusDegraded
 		} else {
 			stats := sqlDB.Stats()
 			response.Database["status"] = "up"
@@ -78,17 +85,17 @@ func (h *HealthHandler) Health(c *fiber.Ctx) error {
 	}
 
 	// Check Redis connection
-	err = h.redis.Ping(ctx).Err()
+	err = h.redisClient.Ping(ctx).Err()
 	if err != nil {
 		h.logger.Errorf("Redis ping failed: %v", err)
 		response.Cache["status"] = "down"
 		response.Cache["error"] = err.Error()
-		response.Status = "degraded"
+		response.Status = healthStatusDegraded
 	} else {
 		response.Cache["status"] = "up"
 
 		// Get Redis info
-		info, err := h.redis.DBSize(ctx).Result()
+		info, err := h.redisClient.DBSize(ctx).Result()
 		if err == nil {
 			response.Cache["keys"] = info
 		}
@@ -96,21 +103,21 @@ func (h *HealthHandler) Health(c *fiber.Ctx) error {
 
 	// Return appropriate status code
 	statusCode := fiber.StatusOK
-	if response.Status == "degraded" {
+	if response.Status == healthStatusDegraded {
 		statusCode = fiber.StatusServiceUnavailable
 	}
 
 	return c.Status(statusCode).JSON(response)
 }
 
-// Liveness handles GET /health/live - simple liveness probe
+// Liveness handles GET /health/live - simple liveness probe.
 func (h *HealthHandler) Liveness(c *fiber.Ctx) error {
 	return c.JSON(fiber.Map{
 		"status": "alive",
 	})
 }
 
-// Readiness handles GET /health/ready - readiness probe with dependency checks
+// Readiness handles GET /health/ready - readiness probe with dependency checks.
 func (h *HealthHandler) Readiness(c *fiber.Ctx) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
@@ -119,7 +126,7 @@ func (h *HealthHandler) Readiness(c *fiber.Ctx) error {
 	checks := make(map[string]bool)
 
 	// Check database
-	sqlDB, err := h.db.DB()
+	sqlDB, err := h.dbClient.DB()
 	if err != nil {
 		checks["database"] = false
 		ready = false
@@ -132,7 +139,7 @@ func (h *HealthHandler) Readiness(c *fiber.Ctx) error {
 	}
 
 	// Check Redis
-	err = h.redis.Ping(ctx).Err()
+	err = h.redisClient.Ping(ctx).Err()
 	checks["cache"] = err == nil
 	if err != nil {
 		ready = false

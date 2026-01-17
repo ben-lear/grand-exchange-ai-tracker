@@ -23,14 +23,14 @@ import (
 )
 
 func TestPriceHandler_ReadEndpoints_PostgresBacked(t *testing.T) {
-	db, release := testutil.SharedPostgres(t)
+	dbClient, release := testutil.SharedPostgres(t)
 	t.Cleanup(release)
 
 	logger := zap.NewNop().Sugar()
 	ctx := context.Background()
 
-	itemRepo := repository.NewItemRepository(db, logger)
-	priceRepo := repository.NewPriceRepository(db, logger)
+	itemRepo := repository.NewItemRepository(dbClient, logger)
+	priceRepo := repository.NewPriceRepository(dbClient, logger)
 
 	// Seed items + prices
 	items := []models.Item{{ItemID: 100, Name: "Item 100"}, {ItemID: 200, Name: "Item 200"}}

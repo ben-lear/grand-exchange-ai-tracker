@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"time"
 
@@ -10,13 +11,13 @@ import (
 	"go.uber.org/zap"
 )
 
-// cacheService implements CacheService
+// cacheService implements CacheService.
 type cacheService struct {
 	client *redis.Client
 	logger *zap.SugaredLogger
 }
 
-// NewCacheService creates a new cache service
+// NewCacheService creates a new cache service.
 func NewCacheService(client *redis.Client, logger *zap.SugaredLogger) CacheService {
 	return &cacheService{
 		client: client,
@@ -24,10 +25,10 @@ func NewCacheService(client *redis.Client, logger *zap.SugaredLogger) CacheServi
 	}
 }
 
-// Get retrieves a value from cache
+// Get retrieves a value from cache.
 func (s *cacheService) Get(ctx context.Context, key string) (string, error) {
 	val, err := s.client.Get(ctx, key).Result()
-	if err == redis.Nil {
+	if errors.Is(err, redis.Nil) {
 		return "", fmt.Errorf("key not found: %s", key)
 	}
 	if err != nil {
@@ -37,8 +38,8 @@ func (s *cacheService) Get(ctx context.Context, key string) (string, error) {
 	return val, nil
 }
 
-// Set stores a value in cache with expiration
-func (s *cacheService) Set(ctx context.Context, key string, value string, expiration time.Duration) error {
+// Set stores a value in cache with expiration.
+func (s *cacheService) Set(ctx context.Context, key, value string, expiration time.Duration) error {
 	if err := s.client.Set(ctx, key, value, expiration).Err(); err != nil {
 		s.logger.Errorw("Failed to set cache", "key", key, "error", err)
 		return err
@@ -46,7 +47,7 @@ func (s *cacheService) Set(ctx context.Context, key string, value string, expira
 	return nil
 }
 
-// Delete removes a value from cache
+// Delete removes a value from cache.
 func (s *cacheService) Delete(ctx context.Context, key string) error {
 	if err := s.client.Del(ctx, key).Err(); err != nil {
 		s.logger.Errorw("Failed to delete from cache", "key", key, "error", err)
@@ -55,7 +56,7 @@ func (s *cacheService) Delete(ctx context.Context, key string) error {
 	return nil
 }
 
-// DeletePattern removes all keys matching a pattern
+// DeletePattern removes all keys matching a pattern.
 func (s *cacheService) DeletePattern(ctx context.Context, pattern string) error {
 	var cursor uint64
 	var keys []string
@@ -89,7 +90,7 @@ func (s *cacheService) DeletePattern(ctx context.Context, pattern string) error 
 	return nil
 }
 
-// GetJSON retrieves and unmarshals a JSON value from cache
+// GetJSON retrieves and unmarshals a JSON value from cache.
 func (s *cacheService) GetJSON(ctx context.Context, key string, dest interface{}) error {
 	val, err := s.Get(ctx, key)
 	if err != nil {
@@ -104,7 +105,7 @@ func (s *cacheService) GetJSON(ctx context.Context, key string, dest interface{}
 	return nil
 }
 
-// SetJSON marshals and stores a JSON value in cache
+// SetJSON marshals and stores a JSON value in cache.
 func (s *cacheService) SetJSON(ctx context.Context, key string, value interface{}, expiration time.Duration) error {
 	data, err := json.Marshal(value)
 	if err != nil {
@@ -115,7 +116,7 @@ func (s *cacheService) SetJSON(ctx context.Context, key string, value interface{
 	return s.Set(ctx, key, string(data), expiration)
 }
 
-// Exists checks if a key exists in cache
+// Exists checks if a key exists in cache.
 func (s *cacheService) Exists(ctx context.Context, key string) (bool, error) {
 	count, err := s.client.Exists(ctx, key).Result()
 	if err != nil {

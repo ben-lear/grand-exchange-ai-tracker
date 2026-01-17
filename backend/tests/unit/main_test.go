@@ -9,7 +9,7 @@ import (
 	"github.com/guavi/osrs-ge-tracker/internal/models"
 )
 
-// MockItemService is a mock implementation of ItemService
+// MockItemService is a mock implementation of ItemService.
 type MockItemService struct {
 	mock.Mock
 }
@@ -86,7 +86,7 @@ func (m *MockItemService) SyncItemsFromMapping(ctx context.Context) error {
 	return args.Error(0)
 }
 
-// MockPriceService is a mock implementation of PriceService
+// MockPriceService is a mock implementation of PriceService.
 type MockPriceService struct {
 	mock.Mock
 }
@@ -134,6 +134,11 @@ func (m *MockPriceService) SyncCurrentPrices(ctx context.Context) error {
 
 func (m *MockPriceService) RunMaintenance(ctx context.Context) error {
 	args := m.Called(ctx)
+	return args.Error(0)
+}
+
+func (m *MockPriceService) EnsureFuturePartitions(ctx context.Context, daysAhead int) error {
+	args := m.Called(ctx, daysAhead)
 	return args.Error(0)
 }
 

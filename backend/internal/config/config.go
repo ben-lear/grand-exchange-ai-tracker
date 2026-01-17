@@ -1,40 +1,52 @@
 package config
 
 import (
+	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/spf13/viper"
 )
 
-type Config struct {
-	// Server
-	Port        string
-	Environment string
-	CorsOrigins string
-
-	// Database
-	PostgresHost     string
-	PostgresPort     string
-	PostgresUser     string
-	PostgresPassword string
-	PostgresDB       string
-	PostgresSSLMode  string
-
-	// Redis
-	RedisHost     string
-	RedisPort     string
-	RedisPassword string
-	RedisDB       int
-
-	// OSRS Wiki Real-time Prices API
-	WikiPricesBaseURL string
-
-	// SSE (Server-Sent Events)
-	SSE SSEConfig
+// PostgresConfig holds PostgreSQL database configuration.
+// Implementation-specific struct name, used as purpose-generic field "Database" in main Config.
+type PostgresConfig struct {
+	Host     string
+	Port     string
+	User     string
+	Password string
+	DB       string
+	SSLMode  string
 }
 
-// SSEConfig contains SSE-specific configuration
+// RedisConfig holds Redis cache configuration.
+// Implementation-specific struct name, used as purpose-generic field "Cache" in main Config.
+type RedisConfig struct {
+	Host     string
+	Port     string
+	Password string
+	DB       int
+}
+
+// Config holds all application configuration.
+//
+// Naming Convention:
+//   - Nested config structs use implementation-specific names (PostgresConfig, RedisConfig)
+//   - Config fields use purpose-generic names (Database, Cache)
+//   - This pattern allows flexibility: implementation can change without affecting field names
+//   - Environment variables map to nested paths: POSTGRES_HOST → cfg.Database.Host via Viper
+type Config struct {
+	Database          PostgresConfig
+	Port              string
+	Environment       string
+	CorsOrigins       string
+	WikiPricesBaseURL string
+	Cache             RedisConfig
+	SSE               SSEConfig
+}
+
+// SSEConfig contains SSE-specific configuration.
 type SSEConfig struct {
 	Enabled           bool
 	ConnectionTimeout time.Duration
@@ -52,13 +64,16 @@ func LoadConfig() (*Config, error) {
 
 	// Allow reading from environment variables
 	viper.AutomaticEnv()
+	// Map environment variables like POSTGRES_HOST to nested config paths like "database.host"
+	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 
 	// Set defaults
 	setDefaults()
 
 	// Read config file (optional)
 	if err := viper.ReadInConfig(); err != nil {
-		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
+		var configNotFoundErr viper.ConfigFileNotFoundError
+		if !errors.As(err, &configNotFoundErr) {
 			return nil, fmt.Errorf("error reading config file: %w", err)
 		}
 		// Config file not found; using defaults and env vars
@@ -69,17 +84,21 @@ func LoadConfig() (*Config, error) {
 		Environment: viper.GetString("ENVIRONMENT"),
 		CorsOrigins: viper.GetString("CORS_ORIGINS"),
 
-		PostgresHost:     viper.GetString("POSTGRES_HOST"),
-		PostgresPort:     viper.GetString("POSTGRES_PORT"),
-		PostgresUser:     viper.GetString("POSTGRES_USER"),
-		PostgresPassword: viper.GetString("POSTGRES_PASSWORD"),
-		PostgresDB:       viper.GetString("POSTGRES_DB"),
-		PostgresSSLMode:  viper.GetString("POSTGRES_SSL_MODE"),
+		Database: PostgresConfig{
+			Host:     viper.GetString("database.host"),
+			Port:     viper.GetString("database.port"),
+			User:     viper.GetString("database.user"),
+			Password: viper.GetString("database.password"),
+			DB:       viper.GetString("database.db"),
+			SSLMode:  viper.GetString("database.sslmode"),
+		},
 
-		RedisHost:     viper.GetString("REDIS_HOST"),
-		RedisPort:     viper.GetString("REDIS_PORT"),
-		RedisPassword: viper.GetString("REDIS_PASSWORD"),
-		RedisDB:       viper.GetInt("REDIS_DB"),
+		Cache: RedisConfig{
+			Host:     viper.GetString("cache.host"),
+			Port:     viper.GetString("cache.port"),
+			Password: viper.GetString("cache.password"),
+			DB:       viper.GetInt("cache.db"),
+		},
 
 		WikiPricesBaseURL: viper.GetString("WIKI_PRICES_BASE_URL"),
 
@@ -100,19 +119,19 @@ func setDefaults() {
 	viper.SetDefault("ENVIRONMENT", "development")
 	viper.SetDefault("CORS_ORIGINS", "*")
 
-	// Database defaults
-	viper.SetDefault("POSTGRES_HOST", "localhost")
-	viper.SetDefault("POSTGRES_PORT", "5432")
-	viper.SetDefault("POSTGRES_USER", "osrs_tracker")
-	viper.SetDefault("POSTGRES_PASSWORD", "password")
-	viper.SetDefault("POSTGRES_DB", "osrs_ge_tracker")
-	viper.SetDefault("POSTGRES_SSL_MODE", "disable")
+	// Database defaults (maps to PostgresConfig via "database.*")
+	viper.SetDefault("database.host", "localhost")
+	viper.SetDefault("database.port", "5432")
+	viper.SetDefault("database.user", "osrs_tracker")
+	viper.SetDefault("database.password", "password")
+	viper.SetDefault("database.db", "osrs_ge_tracker")
+	viper.SetDefault("database.sslmode", "disable")
 
-	// Redis defaults
-	viper.SetDefault("REDIS_HOST", "localhost")
-	viper.SetDefault("REDIS_PORT", "6379")
-	viper.SetDefault("REDIS_PASSWORD", "")
-	viper.SetDefault("REDIS_DB", 0)
+	// Cache defaults (maps to RedisConfig via "cache.*")
+	viper.SetDefault("cache.host", "localhost")
+	viper.SetDefault("cache.port", "6379")
+	viper.SetDefault("cache.password", "")
+	viper.SetDefault("cache.db", 0)
 
 	// OSRS Wiki prices API defaults
 	viper.SetDefault("WIKI_PRICES_BASE_URL", "https://prices.runescape.wiki/api/v1/osrs")

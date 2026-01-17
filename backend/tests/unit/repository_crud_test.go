@@ -19,9 +19,9 @@ import (
 // ========== ItemRepository CRUD Tests ==========
 
 func TestItemRepository_Update_Success(t *testing.T) {
-	db := setupTestDB(t)
+	dbClient := setupTestDB(t)
 	logger, _ := zap.NewDevelopment()
-	repo := repository.NewItemRepository(db, logger.Sugar())
+	repo := repository.NewItemRepository(dbClient, logger.Sugar())
 
 	ctx := context.Background()
 
@@ -52,9 +52,9 @@ func TestItemRepository_Update_Success(t *testing.T) {
 }
 
 func TestItemRepository_Update_NonExistent(t *testing.T) {
-	db := setupTestDB(t)
+	dbClient := setupTestDB(t)
 	logger, _ := zap.NewDevelopment()
-	repo := repository.NewItemRepository(db, logger.Sugar())
+	repo := repository.NewItemRepository(dbClient, logger.Sugar())
 
 	ctx := context.Background()
 
@@ -73,9 +73,9 @@ func TestItemRepository_Update_NonExistent(t *testing.T) {
 }
 
 func TestItemRepository_Delete_Success(t *testing.T) {
-	db := setupTestDB(t)
+	dbClient := setupTestDB(t)
 	logger, _ := zap.NewDevelopment()
-	repo := repository.NewItemRepository(db, logger.Sugar())
+	repo := repository.NewItemRepository(dbClient, logger.Sugar())
 
 	ctx := context.Background()
 
@@ -99,9 +99,9 @@ func TestItemRepository_Delete_Success(t *testing.T) {
 }
 
 func TestItemRepository_Delete_NonExistent(t *testing.T) {
-	db := setupTestDB(t)
+	dbClient := setupTestDB(t)
 	logger, _ := zap.NewDevelopment()
-	repo := repository.NewItemRepository(db, logger.Sugar())
+	repo := repository.NewItemRepository(dbClient, logger.Sugar())
 
 	ctx := context.Background()
 
@@ -111,9 +111,9 @@ func TestItemRepository_Delete_NonExistent(t *testing.T) {
 }
 
 func TestItemRepository_Count_Success(t *testing.T) {
-	db := setupTestDB(t)
+	dbClient := setupTestDB(t)
 	logger, _ := zap.NewDevelopment()
-	repo := repository.NewItemRepository(db, logger.Sugar())
+	repo := repository.NewItemRepository(dbClient, logger.Sugar())
 
 	ctx := context.Background()
 
@@ -136,9 +136,9 @@ func TestItemRepository_Count_Success(t *testing.T) {
 }
 
 func TestItemRepository_Count_EmptyDatabase(t *testing.T) {
-	db := setupTestDB(t)
+	dbClient := setupTestDB(t)
 	logger, _ := zap.NewDevelopment()
-	repo := repository.NewItemRepository(db, logger.Sugar())
+	repo := repository.NewItemRepository(dbClient, logger.Sugar())
 
 	ctx := context.Background()
 
@@ -149,9 +149,9 @@ func TestItemRepository_Count_EmptyDatabase(t *testing.T) {
 }
 
 func TestItemRepository_BulkUpsert_Success(t *testing.T) {
-	db := setupTestDB(t)
+	dbClient := setupTestDB(t)
 	logger, _ := zap.NewDevelopment()
-	repo := repository.NewItemRepository(db, logger.Sugar())
+	repo := repository.NewItemRepository(dbClient, logger.Sugar())
 
 	ctx := context.Background()
 
@@ -184,9 +184,9 @@ func TestItemRepository_BulkUpsert_Success(t *testing.T) {
 }
 
 func TestItemRepository_BulkUpsert_EmptySlice(t *testing.T) {
-	db := setupTestDB(t)
+	dbClient := setupTestDB(t)
 	logger, _ := zap.NewDevelopment()
-	repo := repository.NewItemRepository(db, logger.Sugar())
+	repo := repository.NewItemRepository(dbClient, logger.Sugar())
 
 	ctx := context.Background()
 
@@ -196,9 +196,9 @@ func TestItemRepository_BulkUpsert_EmptySlice(t *testing.T) {
 }
 
 func TestItemRepository_BulkUpsert_LargeDataset(t *testing.T) {
-	db := setupTestDB(t)
+	dbClient := setupTestDB(t)
 	logger, _ := zap.NewDevelopment()
-	repo := repository.NewItemRepository(db, logger.Sugar())
+	repo := repository.NewItemRepository(dbClient, logger.Sugar())
 
 	ctx := context.Background()
 
@@ -226,9 +226,9 @@ func TestItemRepository_BulkUpsert_LargeDataset(t *testing.T) {
 }
 
 func TestItemRepository_GetByID_Success(t *testing.T) {
-	db := setupTestDB(t)
+	dbClient := setupTestDB(t)
 	logger, _ := zap.NewDevelopment()
-	repo := repository.NewItemRepository(db, logger.Sugar())
+	repo := repository.NewItemRepository(dbClient, logger.Sugar())
 
 	ctx := context.Background()
 
@@ -250,9 +250,9 @@ func TestItemRepository_GetByID_Success(t *testing.T) {
 }
 
 func TestItemRepository_GetByID_NotFound(t *testing.T) {
-	db := setupTestDB(t)
+	dbClient := setupTestDB(t)
 	logger, _ := zap.NewDevelopment()
-	repo := repository.NewItemRepository(db, logger.Sugar())
+	repo := repository.NewItemRepository(dbClient, logger.Sugar())
 
 	ctx := context.Background()
 
@@ -265,10 +265,10 @@ func TestItemRepository_GetByID_NotFound(t *testing.T) {
 // ========== PriceRepository CRUD Tests ==========
 
 func TestPriceRepository_GetCurrentPrices_MultipleItems(t *testing.T) {
-	db := setupTestDB(t)
+	dbClient := setupTestDB(t)
 	logger, _ := zap.NewDevelopment()
-	priceRepo := repository.NewPriceRepository(db, logger.Sugar())
-	itemRepo := repository.NewItemRepository(db, logger.Sugar())
+	priceRepo := repository.NewPriceRepository(dbClient, logger.Sugar())
+	itemRepo := repository.NewItemRepository(dbClient, logger.Sugar())
 
 	ctx := context.Background()
 
@@ -316,9 +316,9 @@ func TestPriceRepository_GetCurrentPrices_MultipleItems(t *testing.T) {
 }
 
 func TestPriceRepository_GetCurrentPrices_EmptyInput(t *testing.T) {
-	db := setupTestDB(t)
+	dbClient := setupTestDB(t)
 	logger, _ := zap.NewDevelopment()
-	priceRepo := repository.NewPriceRepository(db, logger.Sugar())
+	priceRepo := repository.NewPriceRepository(dbClient, logger.Sugar())
 
 	ctx := context.Background()
 
@@ -329,9 +329,9 @@ func TestPriceRepository_GetCurrentPrices_EmptyInput(t *testing.T) {
 }
 
 func TestPriceRepository_GetCurrentPrice_NotFound(t *testing.T) {
-	db := setupTestDB(t)
+	dbClient := setupTestDB(t)
 	logger, _ := zap.NewDevelopment()
-	priceRepo := repository.NewPriceRepository(db, logger.Sugar())
+	priceRepo := repository.NewPriceRepository(dbClient, logger.Sugar())
 
 	ctx := context.Background()
 
@@ -342,10 +342,10 @@ func TestPriceRepository_GetCurrentPrice_NotFound(t *testing.T) {
 }
 
 func TestPriceRepository_BulkUpsertCurrentPrices_Success(t *testing.T) {
-	db := setupTestDB(t)
+	dbClient := setupTestDB(t)
 	logger, _ := zap.NewDevelopment()
-	priceRepo := repository.NewPriceRepository(db, logger.Sugar())
-	itemRepo := repository.NewItemRepository(db, logger.Sugar())
+	priceRepo := repository.NewPriceRepository(dbClient, logger.Sugar())
+	itemRepo := repository.NewItemRepository(dbClient, logger.Sugar())
 
 	ctx := context.Background()
 
@@ -385,9 +385,9 @@ func TestPriceRepository_BulkUpsertCurrentPrices_Success(t *testing.T) {
 }
 
 func TestPriceRepository_BulkUpsertCurrentPrices_EmptySlice(t *testing.T) {
-	db := setupTestDB(t)
+	dbClient := setupTestDB(t)
 	logger, _ := zap.NewDevelopment()
-	priceRepo := repository.NewPriceRepository(db, logger.Sugar())
+	priceRepo := repository.NewPriceRepository(dbClient, logger.Sugar())
 
 	ctx := context.Background()
 
@@ -397,10 +397,10 @@ func TestPriceRepository_BulkUpsertCurrentPrices_EmptySlice(t *testing.T) {
 }
 
 func TestPriceRepository_BulkUpsertCurrentPrices_LargeDataset(t *testing.T) {
-	db := setupTestDB(t)
+	dbClient := setupTestDB(t)
 	logger, _ := zap.NewDevelopment()
-	priceRepo := repository.NewPriceRepository(db, logger.Sugar())
-	itemRepo := repository.NewItemRepository(db, logger.Sugar())
+	priceRepo := repository.NewPriceRepository(dbClient, logger.Sugar())
+	itemRepo := repository.NewItemRepository(dbClient, logger.Sugar())
 
 	ctx := context.Background()
 

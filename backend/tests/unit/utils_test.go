@@ -11,7 +11,7 @@ import (
 	"github.com/guavi/osrs-ge-tracker/internal/utils"
 )
 
-// TestNewLogger_InfoLevel tests logger creation with info level
+// TestNewLogger_InfoLevel tests logger creation with info level.
 func TestNewLogger_InfoLevel(t *testing.T) {
 	logger, err := utils.NewLogger(utils.LogConfig{
 		Level:       "info",
@@ -27,7 +27,7 @@ func TestNewLogger_InfoLevel(t *testing.T) {
 	assert.True(t, logger.Core().Enabled(zapcore.ErrorLevel))
 }
 
-// TestNewLogger_DebugLevel tests logger creation with debug level
+// TestNewLogger_DebugLevel tests logger creation with debug level.
 func TestNewLogger_DebugLevel(t *testing.T) {
 	logger, err := utils.NewLogger(utils.LogConfig{
 		Level:       "debug",
@@ -42,7 +42,7 @@ func TestNewLogger_DebugLevel(t *testing.T) {
 	assert.True(t, logger.Core().Enabled(zapcore.InfoLevel))
 }
 
-// TestNewLogger_WarnLevel tests logger creation with warn level
+// TestNewLogger_WarnLevel tests logger creation with warn level.
 func TestNewLogger_WarnLevel(t *testing.T) {
 	logger, err := utils.NewLogger(utils.LogConfig{
 		Level:       "warn",
@@ -59,7 +59,7 @@ func TestNewLogger_WarnLevel(t *testing.T) {
 	assert.True(t, logger.Core().Enabled(zapcore.ErrorLevel))
 }
 
-// TestNewLogger_ErrorLevel tests logger creation with error level
+// TestNewLogger_ErrorLevel tests logger creation with error level.
 func TestNewLogger_ErrorLevel(t *testing.T) {
 	logger, err := utils.NewLogger(utils.LogConfig{
 		Level:       "error",
@@ -75,7 +75,7 @@ func TestNewLogger_ErrorLevel(t *testing.T) {
 	assert.True(t, logger.Core().Enabled(zapcore.ErrorLevel))
 }
 
-// TestNewLogger_InvalidLevel tests logger with invalid level defaults to info
+// TestNewLogger_InvalidLevel tests logger with invalid level defaults to info.
 func TestNewLogger_InvalidLevel(t *testing.T) {
 	logger, err := utils.NewLogger(utils.LogConfig{
 		Level:       "invalid-level",
@@ -91,7 +91,7 @@ func TestNewLogger_InvalidLevel(t *testing.T) {
 	assert.False(t, logger.Core().Enabled(zapcore.DebugLevel))
 }
 
-// TestNewLogger_ProductionEnvironment tests production logger configuration
+// TestNewLogger_ProductionEnvironment tests production logger configuration.
 func TestNewLogger_ProductionEnvironment(t *testing.T) {
 	logger, err := utils.NewLogger(utils.LogConfig{
 		Level:       "info",
@@ -105,7 +105,7 @@ func TestNewLogger_ProductionEnvironment(t *testing.T) {
 	assert.True(t, logger.Core().Enabled(zapcore.InfoLevel))
 }
 
-// TestNewLogger_DevelopmentEnvironment tests development logger configuration
+// TestNewLogger_DevelopmentEnvironment tests development logger configuration.
 func TestNewLogger_DevelopmentEnvironment(t *testing.T) {
 	logger, err := utils.NewLogger(utils.LogConfig{
 		Level:       "info",
@@ -119,7 +119,7 @@ func TestNewLogger_DevelopmentEnvironment(t *testing.T) {
 	assert.True(t, logger.Core().Enabled(zapcore.InfoLevel))
 }
 
-// TestNewLogger_CustomOutputPaths tests logger with custom output paths
+// TestNewLogger_CustomOutputPaths tests logger with custom output paths.
 func TestNewLogger_CustomOutputPaths(t *testing.T) {
 	logger, err := utils.NewLogger(utils.LogConfig{
 		Level:       "info",
@@ -133,7 +133,7 @@ func TestNewLogger_CustomOutputPaths(t *testing.T) {
 	assert.True(t, logger.Core().Enabled(zapcore.InfoLevel))
 }
 
-// TestNewLogger_EmptyOutputPaths tests logger with empty output paths uses defaults
+// TestNewLogger_EmptyOutputPaths tests logger with empty output paths uses defaults.
 func TestNewLogger_EmptyOutputPaths(t *testing.T) {
 	logger, err := utils.NewLogger(utils.LogConfig{
 		Level:       "info",
@@ -142,10 +142,11 @@ func TestNewLogger_EmptyOutputPaths(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.NotNil(t, logger)
-	defer logger.Sync()
+
+	_ = logger.Sync()
 }
 
-// TestNewDefaultLogger tests default logger creation
+// TestNewDefaultLogger tests default logger creation.
 func TestNewDefaultLogger(t *testing.T) {
 	logger, err := utils.NewDefaultLogger()
 	require.NoError(t, err)
@@ -156,7 +157,7 @@ func TestNewDefaultLogger(t *testing.T) {
 	assert.False(t, logger.Core().Enabled(zapcore.DebugLevel))
 }
 
-// TestNewProductionLogger tests production logger creation
+// TestNewProductionLogger tests production logger creation.
 func TestNewProductionLogger(t *testing.T) {
 	logger, err := utils.NewProductionLogger()
 	require.NoError(t, err)
@@ -166,7 +167,7 @@ func TestNewProductionLogger(t *testing.T) {
 	assert.True(t, logger.Core().Enabled(zapcore.InfoLevel))
 }
 
-// TestWithRequestID tests adding request ID to logger context
+// TestWithRequestID tests adding request ID to logger context.
 func TestWithRequestID(t *testing.T) {
 	logger, err := utils.NewDefaultLogger()
 	require.NoError(t, err)
@@ -179,7 +180,7 @@ func TestWithRequestID(t *testing.T) {
 	assert.NotEqual(t, logger, contextLogger) // Should be a new logger instance
 }
 
-// TestWithItemID tests adding item ID to logger context
+// TestWithItemID tests adding item ID to logger context.
 func TestWithItemID(t *testing.T) {
 	logger, err := utils.NewDefaultLogger()
 	require.NoError(t, err)
@@ -192,7 +193,7 @@ func TestWithItemID(t *testing.T) {
 	assert.NotEqual(t, logger, contextLogger)
 }
 
-// TestWithError tests adding error to logger context
+// TestWithError tests adding error to logger context.
 func TestWithError(t *testing.T) {
 	logger, err := utils.NewDefaultLogger()
 	require.NoError(t, err)
@@ -205,7 +206,7 @@ func TestWithError(t *testing.T) {
 	assert.NotEqual(t, logger, contextLogger)
 }
 
-// TestWithMultipleContexts tests chaining multiple context additions
+// TestWithMultipleContexts tests chaining multiple context additions.
 func TestWithMultipleContexts(t *testing.T) {
 	logger, err := utils.NewDefaultLogger()
 	require.NoError(t, err)
@@ -218,7 +219,7 @@ func TestWithMultipleContexts(t *testing.T) {
 	require.NotNil(t, contextLogger)
 }
 
-// TestLoggerMiddlewareFields tests HTTP middleware field creation
+// TestLoggerMiddlewareFields tests HTTP middleware field creation.
 func TestLoggerMiddlewareFields(t *testing.T) {
 	fields := utils.LoggerMiddlewareFields("GET", "/api/items", 200, 150)
 
@@ -238,7 +239,7 @@ func TestLoggerMiddlewareFields(t *testing.T) {
 	assert.Equal(t, int64(150), fields[3].Integer)
 }
 
-// TestLoggerMiddlewareFields_DifferentMethods tests various HTTP methods
+// TestLoggerMiddlewareFields_DifferentMethods tests various HTTP methods.
 func TestLoggerMiddlewareFields_DifferentMethods(t *testing.T) {
 	methods := []string{"GET", "POST", "PUT", "DELETE", "PATCH"}
 
@@ -248,7 +249,7 @@ func TestLoggerMiddlewareFields_DifferentMethods(t *testing.T) {
 	}
 }
 
-// TestLoggerMiddlewareFields_DifferentStatusCodes tests various HTTP status codes
+// TestLoggerMiddlewareFields_DifferentStatusCodes tests various HTTP status codes.
 func TestLoggerMiddlewareFields_DifferentStatusCodes(t *testing.T) {
 	statusCodes := []int{200, 201, 400, 404, 500}
 
@@ -258,7 +259,7 @@ func TestLoggerMiddlewareFields_DifferentStatusCodes(t *testing.T) {
 	}
 }
 
-// TestGenerateRequestID tests request ID generation
+// TestGenerateRequestID tests request ID generation.
 func TestGenerateRequestID(t *testing.T) {
 	requestID := utils.GenerateRequestID()
 
@@ -266,7 +267,7 @@ func TestGenerateRequestID(t *testing.T) {
 	assert.Len(t, requestID, 36) // UUID v4 format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
 }
 
-// TestGenerateRequestID_Uniqueness tests that generated IDs are unique
+// TestGenerateRequestID_Uniqueness tests that generated IDs are unique.
 func TestGenerateRequestID_Uniqueness(t *testing.T) {
 	id1 := utils.GenerateRequestID()
 	id2 := utils.GenerateRequestID()
@@ -277,7 +278,7 @@ func TestGenerateRequestID_Uniqueness(t *testing.T) {
 	assert.NotEqual(t, id1, id3)
 }
 
-// TestFormatDuration tests duration formatting
+// TestFormatDuration tests duration formatting.
 func TestFormatDuration(t *testing.T) {
 	start := time.Now().Add(-150 * time.Millisecond)
 	duration := utils.FormatDuration(start)
@@ -287,7 +288,7 @@ func TestFormatDuration(t *testing.T) {
 	assert.LessOrEqual(t, duration, int64(200))
 }
 
-// TestFormatDuration_Immediate tests duration for immediate call
+// TestFormatDuration_Immediate tests duration for immediate call.
 func TestFormatDuration_Immediate(t *testing.T) {
 	start := time.Now()
 	duration := utils.FormatDuration(start)
@@ -297,7 +298,7 @@ func TestFormatDuration_Immediate(t *testing.T) {
 	assert.LessOrEqual(t, duration, int64(10))
 }
 
-// TestFormatDuration_LongDuration tests duration for longer periods
+// TestFormatDuration_LongDuration tests duration for longer periods.
 func TestFormatDuration_LongDuration(t *testing.T) {
 	start := time.Now().Add(-2 * time.Second)
 	duration := utils.FormatDuration(start)
@@ -307,8 +308,8 @@ func TestFormatDuration_LongDuration(t *testing.T) {
 	assert.LessOrEqual(t, duration, int64(2100))
 }
 
-// TestMeasureTime tests time measurement function
-func TestMeasureTime(t *testing.T) {
+// TestMeasureTime tests time measurement function.
+func TestMeasureTime(_ *testing.T) {
 	done := utils.MeasureTime("test-operation")
 
 	// Do some work
@@ -320,13 +321,13 @@ func TestMeasureTime(t *testing.T) {
 	// Function should not panic or error
 }
 
-// TestParseNullableBool_EmptyString tests parsing empty string
+// TestParseNullableBool_EmptyString tests parsing empty string.
 func TestParseNullableBool_EmptyString(t *testing.T) {
 	result := utils.ParseNullableBool("")
 	assert.Nil(t, result)
 }
 
-// TestParseNullableBool_True tests parsing true values
+// TestParseNullableBool_True tests parsing true values.
 func TestParseNullableBool_True(t *testing.T) {
 	testCases := []string{"true", "1"}
 
@@ -337,7 +338,7 @@ func TestParseNullableBool_True(t *testing.T) {
 	}
 }
 
-// TestParseNullableBool_False tests parsing false values
+// TestParseNullableBool_False tests parsing false values.
 func TestParseNullableBool_False(t *testing.T) {
 	testCases := []string{"false", "0"}
 
@@ -348,7 +349,7 @@ func TestParseNullableBool_False(t *testing.T) {
 	}
 }
 
-// TestParseNullableBool_InvalidValues tests parsing invalid values
+// TestParseNullableBool_InvalidValues tests parsing invalid values.
 func TestParseNullableBool_InvalidValues(t *testing.T) {
 	testCases := []string{"yes", "no", "TRUE", "FALSE", "invalid", "2", "-1"}
 
@@ -358,17 +359,17 @@ func TestParseNullableBool_InvalidValues(t *testing.T) {
 	}
 }
 
-// TestFormatGPValue_SmallValues tests formatting small GP values
+// TestFormatGPValue_SmallValues tests formatting small GP values.
 func TestFormatGPValue_SmallValues(t *testing.T) {
 	testCases := []struct {
-		input    int64
 		expected string
+		input    int64
 	}{
-		{0, "0"},
-		{1, "1"},
-		{10, "10"},
-		{100, "100"},
-		{999, "999"},
+		{"0", 0},
+		{"1", 1},
+		{"10", 10},
+		{"100", 100},
+		{"999", 999},
 	}
 
 	for _, tc := range testCases {
@@ -377,18 +378,18 @@ func TestFormatGPValue_SmallValues(t *testing.T) {
 	}
 }
 
-// TestFormatGPValue_Thousands tests formatting thousands (K)
+// TestFormatGPValue_Thousands tests formatting thousands (K).
 func TestFormatGPValue_Thousands(t *testing.T) {
 	testCases := []struct {
-		input    int64
 		expected string
+		input    int64
 	}{
-		{1000, "1.0K"},
-		{1500, "1.5K"},
-		{10000, "10.0K"},
-		{15500, "15.5K"},
-		{100000, "100.0K"},
-		{999999, "1000.0K"},
+		{"1.0K", 1000},
+		{"1.5K", 1500},
+		{"10.0K", 10000},
+		{"15.5K", 15500},
+		{"100.0K", 100000},
+		{"1000.0K", 999999},
 	}
 
 	for _, tc := range testCases {
@@ -397,18 +398,18 @@ func TestFormatGPValue_Thousands(t *testing.T) {
 	}
 }
 
-// TestFormatGPValue_Millions tests formatting millions (M)
+// TestFormatGPValue_Millions tests formatting millions (M).
 func TestFormatGPValue_Millions(t *testing.T) {
 	testCases := []struct {
-		input    int64
 		expected string
+		input    int64
 	}{
-		{1000000, "1.0M"},
-		{1500000, "1.5M"},
-		{10000000, "10.0M"},
-		{15500000, "15.5M"},
-		{100000000, "100.0M"},
-		{1234567890, "1234.6M"},
+		{"1.0M", 1000000},
+		{"1.5M", 1500000},
+		{"10.0M", 10000000},
+		{"15.5M", 15500000},
+		{"100.0M", 100000000},
+		{"1234.6M", 1234567890},
 	}
 
 	for _, tc := range testCases {
@@ -417,16 +418,16 @@ func TestFormatGPValue_Millions(t *testing.T) {
 	}
 }
 
-// TestFormatGPValue_NegativeValues tests formatting negative values
+// TestFormatGPValue_NegativeValues tests formatting negative values.
 func TestFormatGPValue_NegativeValues(t *testing.T) {
 	testCases := []struct {
-		input    int64
 		expected string
+		input    int64
 	}{
-		{-1, "-1"},
-		{-100, "-100"},
-		{-1000, "-1000"},       // Negative values don't get formatted with K/M
-		{-1000000, "-1000000"}, // Negative values don't get formatted with K/M
+		{"-1", -1},
+		{"-100", -100},
+		{"-1000", -1000},       // Negative values don't get formatted with K/M
+		{"-1000000", -1000000}, // Negative values don't get formatted with K/M
 	}
 
 	for _, tc := range testCases {
@@ -435,16 +436,16 @@ func TestFormatGPValue_NegativeValues(t *testing.T) {
 	}
 }
 
-// TestFormatGPValue_BoundaryValues tests boundary values between K and M
+// TestFormatGPValue_BoundaryValues tests boundary values between K and M.
 func TestFormatGPValue_BoundaryValues(t *testing.T) {
 	testCases := []struct {
-		input    int64
 		expected string
+		input    int64
 	}{
-		{999, "999"},        // Just below 1K
-		{1000, "1.0K"},      // Exactly 1K
-		{999999, "1000.0K"}, // Just below 1M
-		{1000000, "1.0M"},   // Exactly 1M
+		{"999", 999},        // Just below 1K
+		{"1.0K", 1000},      // Exactly 1K
+		{"1000.0K", 999999}, // Just below 1M
+		{"1.0M", 1000000},   // Exactly 1M
 	}
 
 	for _, tc := range testCases {
@@ -453,7 +454,7 @@ func TestFormatGPValue_BoundaryValues(t *testing.T) {
 	}
 }
 
-// TestLoggerLevelsHierarchy tests log level hierarchy
+// TestLoggerLevelsHierarchy tests log level hierarchy.
 func TestLoggerLevelsHierarchy(t *testing.T) {
 	// Debug level should enable all levels
 	debugLogger, err := utils.NewLogger(utils.LogConfig{
@@ -484,7 +485,7 @@ func TestLoggerLevelsHierarchy(t *testing.T) {
 	assert.True(t, errorLogger.Core().Enabled(zapcore.ErrorLevel))
 }
 
-// TestGenerateRequestID_Format tests UUID format
+// TestGenerateRequestID_Format tests UUID format.
 func TestGenerateRequestID_Format(t *testing.T) {
 	requestID := utils.GenerateRequestID()
 

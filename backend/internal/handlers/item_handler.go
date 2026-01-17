@@ -11,14 +11,14 @@ import (
 	"github.com/guavi/osrs-ge-tracker/internal/utils"
 )
 
-// ItemHandler handles item-related endpoints
+// ItemHandler handles item-related endpoints.
 type ItemHandler struct {
 	itemService  services.ItemService
 	priceService services.PriceService
 	logger       *zap.SugaredLogger
 }
 
-// NewItemHandler creates a new item handler
+// NewItemHandler creates a new item handler.
 func NewItemHandler(itemService services.ItemService, priceService services.PriceService, logger *zap.SugaredLogger) *ItemHandler {
 	return &ItemHandler{
 		itemService:  itemService,
@@ -27,7 +27,7 @@ func NewItemHandler(itemService services.ItemService, priceService services.Pric
 	}
 }
 
-// ListItems handles GET /api/v1/items
+// ListItems handles GET /api/v1/items.
 func (h *ItemHandler) ListItems(c *fiber.Ctx) error {
 	ctx := c.Context()
 
@@ -75,7 +75,7 @@ func (h *ItemHandler) ListItems(c *fiber.Ctx) error {
 	})
 }
 
-// GetItemByID handles GET /api/v1/items/:id
+// GetItemByID handles GET /api/v1/items/:id.
 func (h *ItemHandler) GetItemByID(c *fiber.Ctx) error {
 	ctx := c.Context()
 
@@ -112,7 +112,7 @@ func (h *ItemHandler) GetItemByID(c *fiber.Ctx) error {
 	})
 }
 
-// SearchItems handles GET /api/v1/items/search
+// SearchItems handles GET /api/v1/items/search.
 func (h *ItemHandler) SearchItems(c *fiber.Ctx) error {
 	ctx := c.Context()
 
@@ -156,7 +156,7 @@ func (h *ItemHandler) SearchItems(c *fiber.Ctx) error {
 	})
 }
 
-// GetItemCount handles GET /api/v1/items/count
+// GetItemCount handles GET /api/v1/items/count.
 func (h *ItemHandler) GetItemCount(c *fiber.Ctx) error {
 	ctx := c.Context()
 

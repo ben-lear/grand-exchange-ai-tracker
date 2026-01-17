@@ -11,13 +11,13 @@ import (
 	"github.com/guavi/osrs-ge-tracker/internal/services"
 )
 
-// PriceHandler handles price-related endpoints
+// PriceHandler handles price-related endpoints.
 type PriceHandler struct {
 	priceService services.PriceService
 	logger       *zap.SugaredLogger
 }
 
-// NewPriceHandler creates a new price handler
+// NewPriceHandler creates a new price handler.
 func NewPriceHandler(priceService services.PriceService, logger *zap.SugaredLogger) *PriceHandler {
 	return &PriceHandler{
 		priceService: priceService,
@@ -25,7 +25,7 @@ func NewPriceHandler(priceService services.PriceService, logger *zap.SugaredLogg
 	}
 }
 
-// GetAllCurrentPrices handles GET /api/v1/prices/current
+// GetAllCurrentPrices handles GET /api/v1/prices/current.
 func (h *PriceHandler) GetAllCurrentPrices(c *fiber.Ctx) error {
 	ctx := c.Context()
 
@@ -45,7 +45,7 @@ func (h *PriceHandler) GetAllCurrentPrices(c *fiber.Ctx) error {
 	})
 }
 
-// GetCurrentPrice handles GET /api/v1/prices/current/:id
+// GetCurrentPrice handles GET /api/v1/prices/current/:id.
 func (h *PriceHandler) GetCurrentPrice(c *fiber.Ctx) error {
 	ctx := c.Context()
 
@@ -77,7 +77,7 @@ func (h *PriceHandler) GetCurrentPrice(c *fiber.Ctx) error {
 	})
 }
 
-// GetBatchCurrentPrices handles GET /api/v1/prices/current/batch?ids=1,2,3
+// GetBatchCurrentPrices handles GET /api/v1/prices/current/batch?ids=1,2,3.
 func (h *PriceHandler) GetBatchCurrentPrices(c *fiber.Ctx) error {
 	ctx := c.Context()
 
@@ -126,7 +126,7 @@ func (h *PriceHandler) GetBatchCurrentPrices(c *fiber.Ctx) error {
 	})
 }
 
-// GetPriceHistory handles GET /api/v1/prices/history/:id
+// GetPriceHistory handles GET /api/v1/prices/history/:id.
 func (h *PriceHandler) GetPriceHistory(c *fiber.Ctx) error {
 	ctx := c.Context()
 
@@ -207,7 +207,7 @@ func (h *PriceHandler) GetPriceHistory(c *fiber.Ctx) error {
 	})
 }
 
-// SyncCurrentPrices handles POST /api/v1/prices/sync (admin endpoint)
+// SyncCurrentPrices handles POST /api/v1/prices/sync (admin endpoint).
 func (h *PriceHandler) SyncCurrentPrices(c *fiber.Ctx) error {
 	ctx := c.Context()
 

@@ -20,7 +20,7 @@ import (
 )
 
 func TestHealthHandler_HealthyWithPostgresAndRedis(t *testing.T) {
-	db, release := testutil.SharedPostgres(t)
+	dbClient, release := testutil.SharedPostgres(t)
 	t.Cleanup(release)
 
 	mr := miniredis.RunT(t)
@@ -28,7 +28,7 @@ func TestHealthHandler_HealthyWithPostgresAndRedis(t *testing.T) {
 	t.Cleanup(func() { _ = redisClient.Close() })
 
 	logger := zap.NewNop().Sugar()
-	h := handlers.NewHealthHandler(db, redisClient, logger)
+	h := handlers.NewHealthHandler(dbClient, redisClient, logger)
 
 	app := fiber.New()
 	app.Get("/health", h.Health)

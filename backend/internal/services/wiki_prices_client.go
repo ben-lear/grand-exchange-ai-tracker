@@ -34,8 +34,8 @@ type WikiPricesClient interface {
 
 type wikiPricesClient struct {
 	client  *resty.Client
-	baseURL string
 	logger  *zap.SugaredLogger
+	baseURL string
 }
 
 func NewWikiPricesClient(logger *zap.SugaredLogger, baseURL string) WikiPricesClient {
@@ -66,15 +66,15 @@ func NewWikiPricesClient(logger *zap.SugaredLogger, baseURL string) WikiPricesCl
 
 // WikiMappingItem is an item entry returned by /mapping.
 type WikiMappingItem struct {
-	ID       int    `json:"id"`
 	Name     string `json:"name"`
 	Examine  string `json:"examine"`
-	Members  bool   `json:"members"`
+	Icon     string `json:"icon"`
+	ID       int    `json:"id"`
 	LowAlch  int64  `json:"lowalch"`
 	HighAlch int64  `json:"highalch"`
 	Limit    int    `json:"limit"`
 	Value    int64  `json:"value"`
-	Icon     string `json:"icon"`
+	Members  bool   `json:"members"`
 }
 
 // WikiLatestItem is a per-item record returned by /latest.
@@ -91,9 +91,9 @@ type wikiLatestResponse struct {
 
 // WikiTimeseriesPoint is a bucket returned by /timeseries.
 type WikiTimeseriesPoint struct {
-	Timestamp       int64  `json:"timestamp"`
 	AvgHighPrice    *int64 `json:"avgHighPrice"`
 	AvgLowPrice     *int64 `json:"avgLowPrice"`
+	Timestamp       int64  `json:"timestamp"`
 	HighPriceVolume int64  `json:"highPriceVolume"`
 	LowPriceVolume  int64  `json:"lowPriceVolume"`
 }

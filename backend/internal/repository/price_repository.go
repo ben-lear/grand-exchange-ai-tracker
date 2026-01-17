@@ -13,21 +13,21 @@ import (
 	"github.com/guavi/osrs-ge-tracker/internal/models"
 )
 
-// priceRepository implements PriceRepository
+// priceRepository implements PriceRepository.
 type priceRepository struct {
-	db     *gorm.DB
-	logger *zap.SugaredLogger
+	dbClient *gorm.DB
+	logger   *zap.SugaredLogger
 }
 
-// NewPriceRepository creates a new price repository
-func NewPriceRepository(db *gorm.DB, logger *zap.SugaredLogger) PriceRepository {
+// dbClient: Database client for executing GORM operations.
+func NewPriceRepository(dbClient *gorm.DB, logger *zap.SugaredLogger) PriceRepository {
 	return &priceRepository{
-		db:     db,
-		logger: logger,
+		dbClient: dbClient,
+		logger:   logger,
 	}
 }
 
-// EnsureFuturePartitions creates partitions for price_latest for the next N days
+// EnsureFuturePartitions creates partitions for price_latest for the next N days.
 func (r *priceRepository) EnsureFuturePartitions(ctx context.Context, daysAhead int) error {
 	now := time.Now().UTC()
 	createdCount := 0
@@ -40,7 +40,7 @@ func (r *priceRepository) EnsureFuturePartitions(ctx context.Context, daysAhead 
 
 		// Check if partition already exists
 		var exists bool
-		err := r.db.WithContext(ctx).Raw(
+		err := r.dbClient.WithContext(ctx).Raw(
 			"SELECT EXISTS (SELECT 1 FROM pg_class WHERE relname = ?)",
 			partitionName,
 		).Scan(&exists).Error
@@ -65,7 +65,7 @@ func (r *priceRepository) EnsureFuturePartitions(ctx context.Context, daysAhead 
 			endTime.Format("2006-01-02 15:04:05-07"),
 		)
 
-		if err := r.db.WithContext(ctx).Exec(sql).Error; err != nil {
+		if err := r.dbClient.WithContext(ctx).Exec(sql).Error; err != nil {
 			return fmt.Errorf("failed to create partition %s: %w", partitionName, err)
 		}
 
@@ -82,10 +82,10 @@ func (r *priceRepository) EnsureFuturePartitions(ctx context.Context, daysAhead 
 	return nil
 }
 
-// GetCurrentPrice returns the current price for an item
+// GetCurrentPrice returns the current price for an item.
 func (r *priceRepository) GetCurrentPrice(ctx context.Context, itemID int) (*models.CurrentPrice, error) {
 	var price models.CurrentPrice
-	tx := r.db.WithContext(ctx).Raw(`
+	tx := r.dbClient.WithContext(ctx).Raw(`
 		SELECT
 			item_id,
 			high_price,
@@ -108,14 +108,14 @@ func (r *priceRepository) GetCurrentPrice(ctx context.Context, itemID int) (*mod
 	return &price, nil
 }
 
-// GetCurrentPrices returns current prices for specified items
+// GetCurrentPrices returns current prices for specified items.
 func (r *priceRepository) GetCurrentPrices(ctx context.Context, itemIDs []int) ([]models.CurrentPrice, error) {
 	if len(itemIDs) == 0 {
 		return []models.CurrentPrice{}, nil
 	}
 
 	var prices []models.CurrentPrice
-	tx := r.db.WithContext(ctx).Raw(`
+	tx := r.dbClient.WithContext(ctx).Raw(`
 		SELECT DISTINCT ON (item_id)
 			item_id,
 			high_price,
@@ -134,10 +134,10 @@ func (r *priceRepository) GetCurrentPrices(ctx context.Context, itemIDs []int) (
 	return prices, nil
 }
 
-// GetAllCurrentPrices returns all current prices
+// GetAllCurrentPrices returns all current prices.
 func (r *priceRepository) GetAllCurrentPrices(ctx context.Context) ([]models.CurrentPrice, error) {
 	var prices []models.CurrentPrice
-	tx := r.db.WithContext(ctx).Raw(`
+	tx := r.dbClient.WithContext(ctx).Raw(`
 		SELECT DISTINCT ON (item_id)
 			item_id,
 			high_price,
@@ -155,7 +155,7 @@ func (r *priceRepository) GetAllCurrentPrices(ctx context.Context) ([]models.Cur
 	return prices, nil
 }
 
-// UpsertCurrentPrice creates or updates a current price
+// UpsertCurrentPrice creates or updates a current price.
 func (r *priceRepository) UpsertCurrentPrice(ctx context.Context, price *models.CurrentPrice) error {
 	if price == nil {
 		return nil
@@ -172,7 +172,7 @@ func (r *priceRepository) UpsertCurrentPrice(ctx context.Context, price *models.
 		UpdatedAt:     time.Now().UTC(),
 	}
 
-	if err := r.db.WithContext(ctx).Clauses(clause.OnConflict{
+	if err := r.dbClient.WithContext(ctx).Clauses(clause.OnConflict{
 		Columns:   []clause.Column{{Name: "item_id"}, {Name: "observed_at"}},
 		DoNothing: true,
 	}).Create(&snapshot).Error; err != nil {
@@ -182,7 +182,7 @@ func (r *priceRepository) UpsertCurrentPrice(ctx context.Context, price *models.
 	return nil
 }
 
-// BulkUpsertCurrentPrices creates or updates multiple current prices
+// BulkUpsertCurrentPrices creates or updates multiple current prices.
 func (r *priceRepository) BulkUpsertCurrentPrices(ctx context.Context, updates []models.BulkPriceUpdate) error {
 	if len(updates) == 0 {
 		return nil
@@ -214,7 +214,7 @@ func (r *priceRepository) BulkUpsertCurrentPrices(ctx context.Context, updates [
 		}
 
 		batch := snapshots[i:end]
-		if err := r.db.WithContext(ctx).Clauses(clause.OnConflict{
+		if err := r.dbClient.WithContext(ctx).Clauses(clause.OnConflict{
 			Columns:   []clause.Column{{Name: "item_id"}, {Name: "observed_at"}},
 			DoNothing: true,
 		}).Create(&batch).Error; err != nil {
@@ -246,6 +246,7 @@ func timeseriesTableForTimestep(timestep string) (string, error) {
 	}
 }
 
+//nolint:dupl // Duplication with sampleDailyPoints is intentional for now; will refactor with generics
 func sampleTimeseriesPoints(points []models.PriceTimeseriesPoint, targetPoints int) []models.PriceTimeseriesPoint {
 	if len(points) <= targetPoints {
 		return points
@@ -298,7 +299,7 @@ func sampleTimeseriesPoints(points []models.PriceTimeseriesPoint, targetPoints i
 	return sampled
 }
 
-// findClosestNeighborWithHigh finds the nearest point with a non-nil AvgHighPrice
+// findClosestNeighborWithHigh finds the nearest point with a non-nil AvgHighPrice.
 func findClosestNeighborWithHigh(points []models.PriceTimeseriesPoint, centerIdx, leftBound, rightBound int) *models.PriceTimeseriesPoint {
 	closestDist := len(points)
 	var closest *models.PriceTimeseriesPoint
@@ -315,7 +316,7 @@ func findClosestNeighborWithHigh(points []models.PriceTimeseriesPoint, centerIdx
 	return closest
 }
 
-// findClosestNeighborWithLow finds the nearest point with a non-nil AvgLowPrice
+// findClosestNeighborWithLow finds the nearest point with a non-nil AvgLowPrice.
 func findClosestNeighborWithLow(points []models.PriceTimeseriesPoint, centerIdx, leftBound, rightBound int) *models.PriceTimeseriesPoint {
 	closestDist := len(points)
 	var closest *models.PriceTimeseriesPoint
@@ -332,7 +333,7 @@ func findClosestNeighborWithLow(points []models.PriceTimeseriesPoint, centerIdx,
 	return closest
 }
 
-// abs returns the absolute value of an integer
+// abs returns the absolute value of an integer.
 func abs(x int) int {
 	if x < 0 {
 		return -x
@@ -340,6 +341,7 @@ func abs(x int) int {
 	return x
 }
 
+//nolint:dupl // Duplication with sampleTimeseriesPoints is intentional for now; will refactor with generics
 func sampleDailyPoints(points []models.PriceTimeseriesDaily, targetPoints int) []models.PriceTimeseriesDaily {
 	if len(points) <= targetPoints {
 		return points
@@ -392,7 +394,7 @@ func sampleDailyPoints(points []models.PriceTimeseriesDaily, targetPoints int) [
 	return sampled
 }
 
-// findClosestDailyNeighborWithHigh finds the nearest daily point with a non-nil AvgHighPrice
+// findClosestDailyNeighborWithHigh finds the nearest daily point with a non-nil AvgHighPrice.
 func findClosestDailyNeighborWithHigh(points []models.PriceTimeseriesDaily, centerIdx, leftBound, rightBound int) *models.PriceTimeseriesDaily {
 	closestDist := len(points)
 	var closest *models.PriceTimeseriesDaily
@@ -409,7 +411,7 @@ func findClosestDailyNeighborWithHigh(points []models.PriceTimeseriesDaily, cent
 	return closest
 }
 
-// findClosestDailyNeighborWithLow finds the nearest daily point with a non-nil AvgLowPrice
+// findClosestDailyNeighborWithLow finds the nearest daily point with a non-nil AvgLowPrice.
 func findClosestDailyNeighborWithLow(points []models.PriceTimeseriesDaily, centerIdx, leftBound, rightBound int) *models.PriceTimeseriesDaily {
 	closestDist := len(points)
 	var closest *models.PriceTimeseriesDaily
@@ -426,6 +428,7 @@ func findClosestDailyNeighborWithLow(points []models.PriceTimeseriesDaily, cente
 	return closest
 }
 
+//nolint:gocyclo,gocognit,dupl // High complexity and duplication due to handling 4 different timeseries tables with batch logic; will refactor with generics
 func (r *priceRepository) InsertTimeseriesPoints(ctx context.Context, timestep string, points []models.PriceTimeseriesPoint) error {
 	if len(points) == 0 {
 		return nil
@@ -449,7 +452,7 @@ func (r *priceRepository) InsertTimeseriesPoints(ctx context.Context, timestep s
 				end = len(rows)
 			}
 			batch := rows[i:end]
-			if err := r.db.WithContext(ctx).Clauses(conflict).Create(&batch).Error; err != nil {
+			if err := r.dbClient.WithContext(ctx).Clauses(conflict).Create(&batch).Error; err != nil {
 				return fmt.Errorf("insert timeseries 5m batch: %w", err)
 			}
 		}
@@ -465,7 +468,7 @@ func (r *priceRepository) InsertTimeseriesPoints(ctx context.Context, timestep s
 				end = len(rows)
 			}
 			batch := rows[i:end]
-			if err := r.db.WithContext(ctx).Clauses(conflict).Create(&batch).Error; err != nil {
+			if err := r.dbClient.WithContext(ctx).Clauses(conflict).Create(&batch).Error; err != nil {
 				return fmt.Errorf("insert timeseries 1h batch: %w", err)
 			}
 		}
@@ -481,7 +484,7 @@ func (r *priceRepository) InsertTimeseriesPoints(ctx context.Context, timestep s
 				end = len(rows)
 			}
 			batch := rows[i:end]
-			if err := r.db.WithContext(ctx).Clauses(conflict).Create(&batch).Error; err != nil {
+			if err := r.dbClient.WithContext(ctx).Clauses(conflict).Create(&batch).Error; err != nil {
 				return fmt.Errorf("insert timeseries 6h batch: %w", err)
 			}
 		}
@@ -497,7 +500,7 @@ func (r *priceRepository) InsertTimeseriesPoints(ctx context.Context, timestep s
 				end = len(rows)
 			}
 			batch := rows[i:end]
-			if err := r.db.WithContext(ctx).Clauses(conflict).Create(&batch).Error; err != nil {
+			if err := r.dbClient.WithContext(ctx).Clauses(conflict).Create(&batch).Error; err != nil {
 				return fmt.Errorf("insert timeseries 24h batch: %w", err)
 			}
 		}
@@ -524,7 +527,7 @@ func (r *priceRepository) InsertDailyPoints(ctx context.Context, points []models
 			end = len(points)
 		}
 		batch := points[i:end]
-		if err := r.db.WithContext(ctx).Clauses(conflict).Create(&batch).Error; err != nil {
+		if err := r.dbClient.WithContext(ctx).Clauses(conflict).Create(&batch).Error; err != nil {
 			return fmt.Errorf("insert daily points batch: %w", err)
 		}
 	}
@@ -537,7 +540,7 @@ func (r *priceRepository) GetTimeseriesPoints(ctx context.Context, itemID int, t
 		return nil, err
 	}
 
-	query := r.db.WithContext(ctx).Table(table).Where("item_id = ?", itemID)
+	query := r.dbClient.WithContext(ctx).Table(table).Where("item_id = ?", itemID)
 
 	if params.StartTime != nil {
 		query = query.Where("timestamp >= ?", params.StartTime.UTC())
@@ -571,7 +574,7 @@ func (r *priceRepository) GetTimeseriesPoints(ctx context.Context, itemID int, t
 }
 
 func (r *priceRepository) GetDailyPoints(ctx context.Context, itemID int, params models.PriceHistoryParams) ([]models.PriceTimeseriesDaily, error) {
-	query := r.db.WithContext(ctx).Table("price_timeseries_daily").Where("item_id = ?", itemID)
+	query := r.dbClient.WithContext(ctx).Table("price_timeseries_daily").Where("item_id = ?", itemID)
 
 	if params.StartTime != nil {
 		start := params.StartTime.UTC().Format("2006-01-02")
@@ -611,7 +614,7 @@ func (r *priceRepository) Rollup24hToDailyBefore(ctx context.Context, cutoff tim
 
 	// The 24h timestep is effectively daily; we store it as day-level rows in the rollup table.
 	// Use ON CONFLICT DO NOTHING to keep append-only behavior.
-	tx := r.db.WithContext(ctx).Exec(`
+	tx := r.dbClient.WithContext(ctx).Exec(`
 		INSERT INTO price_timeseries_daily (item_id, day, avg_high_price, avg_low_price, high_price_volume, low_price_volume)
 		SELECT
 			item_id,
@@ -634,7 +637,7 @@ func (r *priceRepository) Rollup24hToDailyBefore(ctx context.Context, cutoff tim
 
 func (r *priceRepository) PrunePriceLatestBefore(ctx context.Context, cutoff time.Time) (int64, error) {
 	cutoff = cutoff.UTC()
-	tx := r.db.WithContext(ctx).Exec(`DELETE FROM price_latest WHERE observed_at < ?`, cutoff)
+	tx := r.dbClient.WithContext(ctx).Exec(`DELETE FROM price_latest WHERE observed_at < ?`, cutoff)
 	if tx.Error != nil {
 		r.logger.Errorw("Failed to prune price_latest", "cutoff", cutoff, "error", tx.Error)
 		return 0, fmt.Errorf("prune price_latest: %w", tx.Error)
@@ -650,7 +653,7 @@ func (r *priceRepository) PruneTimeseriesBefore(ctx context.Context, timestep st
 	}
 
 	stmt := fmt.Sprintf(`DELETE FROM %s WHERE timestamp < ?`, table)
-	tx := r.db.WithContext(ctx).Exec(stmt, cutoff)
+	tx := r.dbClient.WithContext(ctx).Exec(stmt, cutoff)
 	if tx.Error != nil {
 		r.logger.Errorw("Failed to prune timeseries", "timestep", timestep, "table", table, "cutoff", cutoff, "error", tx.Error)
 		return 0, fmt.Errorf("prune timeseries %s: %w", timestep, tx.Error)
