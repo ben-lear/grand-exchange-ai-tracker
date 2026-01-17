@@ -121,7 +121,17 @@ git diff --staged
 
 ### Step 3: Stage Files
 
-Stage only the files you intend to commit:
+**Standard Practice:** Stage all changes for commits on feature branches or cleanup work:
+
+```powershell
+# Stage all changes (STANDARD - use this most of the time)
+git add -A
+
+# Alternative: Stage all changes in current directory
+git add .
+```
+
+**For atomic commits** (when working on multiple unrelated features):
 
 ```powershell
 # Stage specific files
@@ -130,12 +140,11 @@ git add frontend/src/components/ItemTable.tsx
 
 # Stage all files in a directory
 git add backend/internal/services/
-
-# Stage all changes (use with caution)
-git add .
 ```
 
-**⚠️ Avoid staging unrelated changes in the same commit**
+**When to use each approach:**
+- ✅ **Use `git add -A`**: Feature branches, bug fixes, refactoring, cleanup work
+- ✅ **Use selective staging**: When you have multiple unrelated changes in your working directory that should be separate commits
 
 ### Step 4: Verify Staged Changes
 
@@ -294,20 +303,19 @@ go test ./...
 git status
 git diff
 
-# 4. Stage changes
-git add backend/internal/models/price.go
-git add backend/internal/services/price_service.go
+# 4. Stage all changes (standard practice)
+git add -A
 
 # 5. Check staged changes
-git diff -- (pre-commit hooks run automatically here)
-git commit -m "feat(backend): add volume tracking to price model"
-# Pre-commit hooks will run: linting, formatting, etc.
-# If any issues found, fix them and commit again
+git diff --staged
+
 # 6. WAIT FOR USER APPROVAL
 # User says: "commit and push"
 
-# 7. Commit
+# 7. Commit (pre-commit hooks run automatically here)
 git commit -m "feat(backend): add volume tracking to price model"
+# Pre-commit hooks will run: linting, formatting, etc.
+# If any issues found, fix them and commit again
 
 # 8. Push
 git push origin feature/add-volume-tracking
@@ -323,10 +331,9 @@ git checkout -b fix/cache-expiration
 # ... fix code ...
 go test ./tests/unit/cache_service_test.go
 
-# 3. Review and stage
+# 3. Review and stage all changes
 git diff
-git add backend/internal/services/cache_service.go
-git add backend/tests/unit/cache_service_test.go
+git add -A
 
 # 4. WAIT FOR USER APPROVAL
 
@@ -342,7 +349,7 @@ Fixes #123"
 git push origin fix/cache-expiration
 ```
 
-### Scenario 3: Multiple Related Changes
+### Scenario 3: Multiple Related Changes (Feature Branch)
 
 ```powershell
 # 1. Make all related changes
@@ -352,37 +359,58 @@ git push origin fix/cache-expiration
 git status
 git diff
 
-# 3. Stage files logically (one commit per logical unit)
-git add backend/internal/handlers/sse_handler.go
-git add backend/internal/services/sse_hub.go
+# 3. Stage all changes (standard for feature branches)
+git add -A
 
 # 4. WAIT FOR USER APPROVAL
 
-# 5. First commit (core functionality)
-git commit -m "feat(backend): add SSE hub and handler"
+# 5. Commit all together with descriptive message
+git commit -m "feat(backend): add SSE hub, handler, and configuration"
 
-# 6. Stage next logical group
-git add backend/cmd/api/main.go
-git add backend/internal/config/config.go
-
-# 7. WAIT FOR USER APPROVAL
-
-# 8. Second commit (configuration)
-git commit -m "feat(backend): configure SSE routes and settings"
-
-# 9. WAIT FOR USER APPROVAL
-
-# 10. Push all commits
+# 6. Push
 git push origin feature/add-sse-support
 ```
 
-### Scenario 4: Amending Last Commit
+### Scenario 4: Multiple Unrelated Changes (Atomic Commits on Main)
+
+```powershell
+# When you have multiple UNRELATED changes to commit separately
+
+# 1. Review all changes
+git status
+git diff
+
+# 2. Stage first logical group
+git add backend/internal/handlers/sse_handler.go
+git add backend/internal/services/sse_hub.go
+
+# 3. WAIT FOR USER APPROVAL
+
+# 4. First commit (core functionality)
+git commit -m "feat(backend): add SSE hub and handler"
+
+# 5. Stage next logical group
+git add backend/cmd/api/main.go
+git add backend/internal/config/config.go
+
+# 6. WAIT FOR USER APPROVAL
+
+# 7. Second commit (configuration)
+git commit -m "feat(backend): configure SSE routes and settings"
+
+# 8. WAIT FOR USER APPROVAL
+
+# 9. Push all commits
+git push
+```
+
+### Scenario 5: Amending Last Commit
 
 If you forgot something in your last commit (before pushing):
 
 ```powershell
 # Make additional changes
-git add forgotten-file.go
+git add -A
 
 # WAIT FOR USER APPROVAL
 
@@ -395,7 +423,7 @@ git commit --amend -m "feat(backend): add SSE support with tests"
 
 **⚠️ Never amend commits that have been pushed to shared branches**
 
-### Scenario 5: Unstaging Files
+### Scenario 6: Unstaging Files
 
 If you staged files by mistake:
 
@@ -453,18 +481,20 @@ git commit -m "refactor(backend): rename cfg to dbConfig for clarity"
 git commit -m "feat(frontend): add price chart zoom functionality"
 ```
 
-### 3. Keep Commits Atomic
+### 3. Commit Strategies
 
-Each commit should represent one logical change:
+**Standard Practice (Recommended):** Commit all changes together when working on a feature branch:
 
 ```powershell
-# ❌ BAD - Multiple unrelated changes
-git add backend/internal/services/item_service.go
-git add frontend/src/components/Header.tsx
-git add README.md
-git commit -m "various updates"
+# ✅ GOOD - Feature branch with related changes
+git add -A
+git commit -m "feat(backend): add SSE support with tests and config updates"
+```
 
-# ✅ GOOD - One logical change per commit
+**Atomic Commits:** Use when you have multiple unrelated changes:
+
+```powershell
+# ✅ GOOD - Separate unrelated changes
 git add backend/internal/services/item_service.go
 git commit -m "refactor(backend): optimize item query performance"
 
@@ -474,6 +504,8 @@ git commit -m "style(frontend): update header responsive layout"
 git add README.md
 git commit -m "docs: update API endpoint documentation"
 ```
+
+**When working on feature branches,** related changes (code + tests + config) should go together. **When on main/develop,** separate unrelated changes into atomic commits.
 
 ### 4. Review Before Committing
 
@@ -638,6 +670,13 @@ git checkout -- <file>        # Discard changes in file
 When working as an AI assistant:
 
 1. **Make changes** and verify they work
+2. **Run tests** to ensure nothing breaks
+3. **Stage ALL files** with `git add -A` (standard practice)
+4. **Show summary** with `git status`
+5. **ASK USER**: "All changes are staged. Would you like me to commit and push?"
+6. **WAIT** for explicit permission
+7. **Only then** commit and push with descriptive message
+
 **Note**: Pre-commit hooks will run automatically during the commit step. If they fail:
 - Review the hook output for errors
 - Fix any reported issues
@@ -647,14 +686,14 @@ When working as an AI assistant:
 ### Example Interaction
 
 ```
-AI: I've implemented the SSE feature and all tests are passing. 
-    The following files have been staged:
+AI: I've implemented the SSE feature and all tests are passing.
     
-    - backend/internal/handlers/sse_handler.go
-    - backend/internal/services/sse_hub.go
-    - backend/cmd/api/main.go
+    Changes staged (git add -A):
+    - 3 modified files
+    - 2 new test files
+    - 1 config update
     
-    Would you like me to commit and push these changes?
+    All changes are staged. Would you like me to commit and push?
 
 User: Yes, commit and push
 
