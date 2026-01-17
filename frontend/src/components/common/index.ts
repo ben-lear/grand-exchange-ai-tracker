@@ -2,8 +2,21 @@
  * Common component exports
  */
 
-export { Loading as LoadingSpinner, InlineLoading } from './Loading';
+export { InlineLoading, Loading as LoadingSpinner } from './Loading';
 export type { LoadingProps } from './Loading';
 
-export { ErrorDisplay, EmptyState } from './ErrorDisplay';
-export type { ErrorDisplayProps, EmptyStateProps } from './ErrorDisplay';
+export { EmptyState, ErrorDisplay } from './ErrorDisplay';
+export type { EmptyStateProps, ErrorDisplayProps } from './ErrorDisplay';
+
+export { SearchResult } from './SearchResult';
+export type { SearchResultProps } from './SearchResult';
+
+export { SearchInput } from './SearchInput';
+export type { SearchInputProps } from './SearchInput';
+
+export { Dropdown } from './Dropdown';
+export type { DropdownProps } from './Dropdown';
+
+export { DropdownItem } from './DropdownItem';
+export type { DropdownItemProps } from './DropdownItem';
+

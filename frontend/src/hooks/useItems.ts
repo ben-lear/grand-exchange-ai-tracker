@@ -4,19 +4,18 @@
 
 import { useQuery, useQueryClient, type UseQueryOptions } from '@tanstack/react-query';
 import {
-  fetchItems,
   fetchItemById,
-  searchItems,
   fetchItemCount,
+  fetchItems,
 } from '../api';
 import type {
+  ApiError,
   Item,
-  ItemListResponse,
   ItemCountResponse,
   ItemFilters,
+  ItemListResponse,
   PaginationParams,
   SortParams,
-  ApiError,
 } from '../types';
 
 /**
@@ -25,11 +24,10 @@ import type {
 export const itemKeys = {
   all: ['items'] as const,
   lists: () => [...itemKeys.all, 'list'] as const,
-  list: (params?: PaginationParams & SortParams & ItemFilters) => 
+  list: (params?: PaginationParams & SortParams & ItemFilters) =>
     [...itemKeys.lists(), params] as const,
   details: () => [...itemKeys.all, 'detail'] as const,
   detail: (id: number) => [...itemKeys.details(), id] as const,
-  search: (query: string) => [...itemKeys.all, 'search', query] as const,
   count: (filters?: ItemFilters) => [...itemKeys.all, 'count', filters] as const,
 };
 
@@ -65,22 +63,6 @@ export const useItem = (
 };
 
 /**
- * Hook to search for items by name
- */
-export const useSearchItems = (
-  query: string,
-  options?: Omit<UseQueryOptions<Item[], ApiError>, 'queryKey' | 'queryFn'>
-) => {
-  return useQuery<Item[], ApiError>({
-    queryKey: itemKeys.search(query),
-    queryFn: () => searchItems(query),
-    enabled: query.length >= 2, // Only search if query is at least 2 characters
-    staleTime: 2 * 60 * 1000, // 2 minutes
-    ...options,
-  });
-};
-
-/**
  * Hook to fetch item count with filters
  */
 export const useItemCount = (
@@ -100,7 +82,7 @@ export const useItemCount = (
  */
 export const usePrefetchItem = () => {
   const queryClient = useQueryClient();
-  
+
   return (id: number) => {
     queryClient.prefetchQuery({
       queryKey: itemKeys.detail(id),

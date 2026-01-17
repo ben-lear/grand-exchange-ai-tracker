@@ -2,19 +2,23 @@
  * Tests for PriceChart component
  */
 
-import { describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
 import { PriceChart } from '@/components/charts/PriceChart';
 import type { PricePoint } from '@/types';
+import { render, screen } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
 
 // Mock Recharts components
 vi.mock('recharts', () => ({
+  ComposedChart: ({ children }: any) => <div data-testid="composed-chart">{children}</div>,
   LineChart: ({ children }: any) => <div data-testid="line-chart">{children}</div>,
   Line: () => <div data-testid="line" />,
+  Area: () => <div data-testid="area" />,
+  Bar: () => <div data-testid="bar" />,
   XAxis: () => <div data-testid="x-axis" />,
   YAxis: () => <div data-testid="y-axis" />,
   CartesianGrid: () => <div data-testid="grid" />,
   Tooltip: () => <div data-testid="tooltip" />,
+  Legend: () => <div data-testid="legend" />,
   ResponsiveContainer: ({ children }: any) => <div data-testid="responsive-container">{children}</div>,
   ReferenceLine: () => <div data-testid="reference-line" />,
 }));
@@ -51,36 +55,37 @@ describe('PriceChart', () => {
   it('renders error state', () => {
     const error = new Error('Failed to load chart');
     render(<PriceChart {...defaultProps} data={[]} error={error} />);
-    
+
     expect(screen.getByText('Failed to load chart data')).toBeInTheDocument();
     expect(screen.getByText('Failed to load chart')).toBeInTheDocument();
   });
 
   it('renders empty state', () => {
     render(<PriceChart {...defaultProps} data={[]} />);
-    
+
     expect(screen.getByText('No price data available')).toBeInTheDocument();
     expect(screen.getByText('Try selecting a different time period')).toBeInTheDocument();
   });
 
   it('renders chart with data', () => {
     render(<PriceChart {...defaultProps} />);
-    
+
     expect(screen.getByTestId('responsive-container')).toBeInTheDocument();
-    expect(screen.getByTestId('line-chart')).toBeInTheDocument();
-    expect(screen.getByTestId('line')).toBeInTheDocument();
+    expect(screen.getByTestId('composed-chart')).toBeInTheDocument();
+    // There are multiple line elements (high and low prices)
+    expect(screen.getAllByTestId('line')).toHaveLength(2);
   });
 
   it('displays price statistics', () => {
     render(<PriceChart {...defaultProps} itemName="Test Item" />);
-    
+
     expect(screen.getByText('Test Item Price Chart')).toBeInTheDocument();
     expect(screen.getByText('Current: 980.0K')).toBeInTheDocument(); // Last price
   });
 
   it('shows price change with trend', () => {
     render(<PriceChart {...defaultProps} />);
-    
+
     // Should show negative change (980K - 1M = -20K)
     expect(screen.getByText('-20.0K')).toBeInTheDocument();
     expect(screen.getByText('(-2.00%)')).toBeInTheDocument();
@@ -88,7 +93,7 @@ describe('PriceChart', () => {
 
   it('shows trending down icon for negative change', () => {
     render(<PriceChart {...defaultProps} />);
-    
+
     // Should render TrendingDown icon (we can't easily test the actual icon, but we can check the color class)
     const changeElement = screen.getByText('-20.0K').closest('div');
     expect(changeElement).toHaveClass('text-red-600');
@@ -96,7 +101,7 @@ describe('PriceChart', () => {
 
   it('renders chart axes and grid', () => {
     render(<PriceChart {...defaultProps} />);
-    
+
     expect(screen.getByTestId('x-axis')).toBeInTheDocument();
     expect(screen.getByTestId('y-axis')).toBeInTheDocument();
     expect(screen.getByTestId('grid')).toBeInTheDocument();
@@ -127,10 +132,10 @@ describe('PriceChart', () => {
     ];
 
     render(<PriceChart {...defaultProps} data={positiveData} />);
-    
+
     expect(screen.getByText('+200.0K')).toBeInTheDocument();
     expect(screen.getByText('(+20.00%)')).toBeInTheDocument();
-    
+
     const changeElement = screen.getByText('+200.0K').closest('div');
     expect(changeElement).toHaveClass('text-green-600');
   });

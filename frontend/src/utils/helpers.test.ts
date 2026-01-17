@@ -2,18 +2,18 @@
  * Unit tests for helper utilities
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
+import type { CurrentPrice } from '../types';
 import {
-  calculateTrend,
-  getTrendColor,
-  getTrendBgColor,
-  getTrendIcon,
   calculatePercentageChange,
-  isValidItemId,
+  calculateTrend,
   filterPrices,
+  getTrendBgColor,
+  getTrendColor,
+  getTrendIcon,
+  isValidItemId,
   sortPrices,
 } from './helpers';
-import type { CurrentPrice } from '../types';
 
 describe('calculateTrend', () => {
   it('returns positive for positive changes', () => {
@@ -126,7 +126,9 @@ describe('filterPrices', () => {
 
   it('filters by maximum price', () => {
     const filtered = filterPrices(mockPrices, { maxPrice: 5000 });
-    expect(filtered).toHaveLength(2);
+    // Only item 1 (highPrice: 1100) and item 2 (highPrice: 5200) match, but 5200 > 5000
+    // So only item 1 should pass
+    expect(filtered).toHaveLength(1);
     expect(filtered.every(p => (p.highPrice ?? p.lowPrice ?? 0) <= 5000)).toBe(true);
   });
 

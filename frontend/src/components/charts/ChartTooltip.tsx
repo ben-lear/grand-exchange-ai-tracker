@@ -3,9 +3,9 @@
  * Shows detailed information about price points
  */
 
-import { format } from 'date-fns';
-import { formatGold, formatNumber } from '@/utils/formatters';
 import type { PricePoint } from '@/types';
+import { formatGold, formatNumber } from '@/utils/formatters';
+import { format } from 'date-fns';
 
 export interface ChartTooltipProps {
   active?: boolean;
@@ -34,22 +34,22 @@ export function ChartTooltip({ active, payload, label, coordinate, viewBox }: Ch
   const lowPrice = data.lowPrice ?? data.avgLowPrice ?? 0;
   const highVolume = data.highPriceVolume ?? 0;
   const lowVolume = data.lowPriceVolume ?? 0;
-  
+
   // Show both prices if available, otherwise fallback to single price
   const hasDualPrices = highPrice > 0 && lowPrice > 0;
 
   // Calculate fixed Y position centered between high and low points for this timestamp
   let customStyle: React.CSSProperties = {};
-  
+
   if (hasDualPrices && payload.length >= 2) {
     // Find the Y coordinates for high and low prices from the payload
     const highEntry = payload.find(p => p.dataKey === 'highPrice');
     const lowEntry = payload.find(p => p.dataKey === 'lowPrice');
-    
+
     if (highEntry?.coordinate && lowEntry?.coordinate && viewBox) {
       // Calculate absolute midpoint Y position between the two data points
       const midpointY = (highEntry.coordinate.y + lowEntry.coordinate.y) / 2;
-      
+
       // Position absolutely within the chart, ignoring cursor Y position
       customStyle = {
         position: 'fixed',
@@ -63,7 +63,7 @@ export function ChartTooltip({ active, payload, label, coordinate, viewBox }: Ch
   }
 
   return (
-    <div 
+    <div
       className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-3 min-w-[200px]"
       style={customStyle}
     >
@@ -111,7 +111,7 @@ export function ChartTooltip({ active, payload, label, coordinate, viewBox }: Ch
           <div className="flex items-center justify-between">
             <span className="text-sm text-gray-600 dark:text-gray-400">Price:</span>
             <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-              {formatGold(data.midPrice ?? data.price ?? 0)}
+              {formatGold(data.price ?? 0)}
             </span>
           </div>
         )}

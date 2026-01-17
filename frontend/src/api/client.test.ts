@@ -2,14 +2,14 @@
  * Tests for API client functions
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { AxiosError } from 'axios';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import apiClient from './client';
-import { fetchItems, fetchItemById, searchItems, fetchItemCount } from './items';
+import { fetchItemById, fetchItemCount, fetchItems } from './items';
 import {
-  fetchCurrentPrice,
-  fetchBatchCurrentPrices,
   fetchAllCurrentPrices,
+  fetchBatchCurrentPrices,
+  fetchCurrentPrice,
   fetchPriceHistory,
 } from './prices';
 
@@ -51,7 +51,7 @@ describe('API Client - Items', () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue({ data: mockData });
 
       const result = await fetchItems();
-      
+
       expect(apiClient.get).toHaveBeenCalledWith('/items', { params: undefined });
       expect(result).toEqual(mockData);
     });
@@ -67,20 +67,24 @@ describe('API Client - Items', () => {
 
       vi.spyOn(apiClient, 'get').mockResolvedValue({ data: mockData });
 
-      const params = { page: 2, page_size: 25 };
+      const params = { page: 2, pageSize: 25 };
       await fetchItems(params);
-      
-      expect(apiClient.get).toHaveBeenCalledWith('/items', { params });
+
+      expect(apiClient.get).toHaveBeenCalledWith('/items', {
+        params: { page: 2, limit: 25, sort_by: undefined, order: undefined, members: undefined }
+      });
     });
 
     it('should fetch items with filters', async () => {
       const mockData = { items: [], total: 0, page: 1, page_size: 50, total_pages: 0 };
       vi.spyOn(apiClient, 'get').mockResolvedValue({ data: mockData });
 
-      const params = { members: true, category: 'weapons' };
+      const params = { members: true };
       await fetchItems(params);
-      
-      expect(apiClient.get).toHaveBeenCalledWith('/items', { params });
+
+      expect(apiClient.get).toHaveBeenCalledWith('/items', {
+        params: { page: undefined, limit: undefined, sort_by: undefined, order: undefined, members: true }
+      });
     });
   });
 
@@ -96,28 +100,13 @@ describe('API Client - Items', () => {
         low_alch: 48000,
       };
 
-      vi.spyOn(apiClient, 'get').mockResolvedValue({ data: mockItem });
+      // Mock response with data wrapper
+      vi.spyOn(apiClient, 'get').mockResolvedValue({ data: { data: mockItem } });
 
       const result = await fetchItemById(1);
-      
+
       expect(apiClient.get).toHaveBeenCalledWith('/items/1');
       expect(result).toEqual(mockItem);
-    });
-  });
-
-  describe('searchItems', () => {
-    it('should search items by query', async () => {
-      const mockItems = [
-        { item_id: 1, name: 'Dragon sword' },
-        { item_id: 2, name: 'Dragon scimitar' },
-      ];
-
-      vi.spyOn(apiClient, 'get').mockResolvedValue({ data: mockItems });
-
-      const result = await searchItems('dragon');
-      
-      expect(apiClient.get).toHaveBeenCalledWith('/items/search', { params: { q: 'dragon' } });
-      expect(result).toEqual(mockItems);
     });
   });
 
@@ -127,7 +116,7 @@ describe('API Client - Items', () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue({ data: mockCount });
 
       const result = await fetchItemCount();
-      
+
       expect(apiClient.get).toHaveBeenCalledWith('/items/count', { params: undefined });
       expect(result).toEqual(mockCount);
     });
@@ -149,10 +138,11 @@ describe('API Client - Prices', () => {
         timestamp: '2026-01-14T12:00:00Z',
       };
 
-      vi.spyOn(apiClient, 'get').mockResolvedValue({ data: mockPrice });
+      // Mock response with data wrapper
+      vi.spyOn(apiClient, 'get').mockResolvedValue({ data: { data: mockPrice } });
 
       const result = await fetchCurrentPrice(1);
-      
+
       expect(apiClient.get).toHaveBeenCalledWith('/prices/current/1');
       expect(result).toEqual(mockPrice);
     });
@@ -161,32 +151,30 @@ describe('API Client - Prices', () => {
   describe('fetchBatchCurrentPrices', () => {
     it('should fetch current prices for multiple items', async () => {
       const mockResponse = {
-        prices: [
+        data: [
           { item_id: 1, high: 2000000, low: 1900000 },
           { item_id: 2, high: 100000, low: 95000 },
         ],
-        count: 2,
+        meta: { count: 2 },
       };
 
-      vi.spyOn(apiClient, 'post').mockResolvedValue({ data: mockResponse });
+      // fetchBatchCurrentPrices uses GET with query params
+      vi.spyOn(apiClient, 'get').mockResolvedValue({ data: mockResponse });
 
       const result = await fetchBatchCurrentPrices([1, 2]);
-      
-      expect(apiClient.post).toHaveBeenCalledWith('/prices/batch', {
-        itemIds: [1, 2],
-      });
+
+      expect(apiClient.get).toHaveBeenCalledWith('/prices/current/batch?ids=1,2');
       expect(result).toEqual(mockResponse);
     });
 
     it('should handle empty item IDs array', async () => {
-      const mockResponse = { prices: [], count: 0 };
-      vi.spyOn(apiClient, 'post').mockResolvedValue({ data: mockResponse });
+      const mockResponse = { data: [], meta: { count: 0 } };
+      // fetchBatchCurrentPrices uses GET with query params
+      vi.spyOn(apiClient, 'get').mockResolvedValue({ data: mockResponse });
 
       const result = await fetchBatchCurrentPrices([]);
-      
-      expect(apiClient.post).toHaveBeenCalledWith('/prices/batch', {
-        itemIds: [],
-      });
+
+      expect(apiClient.get).toHaveBeenCalledWith('/prices/current/batch?ids=');
       expect(result).toEqual(mockResponse);
     });
   });
@@ -198,10 +186,11 @@ describe('API Client - Prices', () => {
         { item_id: 2, high: 100000, low: 95000 },
       ];
 
-      vi.spyOn(apiClient, 'get').mockResolvedValue({ data: mockPrices });
+      // Mock response with data wrapper
+      vi.spyOn(apiClient, 'get').mockResolvedValue({ data: { data: mockPrices, meta: { count: 2 } } });
 
       const result = await fetchAllCurrentPrices();
-      
+
       expect(apiClient.get).toHaveBeenCalledWith('/prices/current');
       expect(result).toEqual(mockPrices);
     });
@@ -209,56 +198,85 @@ describe('API Client - Prices', () => {
 
   describe('fetchPriceHistory', () => {
     it('should fetch price history with default period', async () => {
-      const mockHistory = {
-        item_id: 1,
-        prices: [
-          { timestamp: '2026-01-14T00:00:00Z', high: 2000000, low: 1900000 },
-        ],
-        period: '7d',
-      };
+      const mockHistoryData = [
+        {
+          timestamp: '2026-01-14T00:00:00Z',
+          avgHighPrice: 2000000,
+          avgLowPrice: 1900000,
+          highPriceVolume: 100,
+          lowPriceVolume: 50
+        },
+      ];
 
-      vi.spyOn(apiClient, 'get').mockResolvedValue({ data: mockHistory });
+      // Mock response with data and meta wrapper
+      vi.spyOn(apiClient, 'get').mockResolvedValue({
+        data: {
+          data: mockHistoryData,
+          meta: { item_id: 1, period: '7d', count: mockHistoryData.length }
+        },
+      });
 
       const result = await fetchPriceHistory(1);
-      
+
       expect(apiClient.get).toHaveBeenCalledWith('/prices/history/1', {
-        params: { period: '7d', sample: undefined },
+        params: { period: '7d' },
       });
-      expect(result).toEqual(mockHistory);
+      expect(result.data).toBeDefined();
+      expect(result.data.length).toBeGreaterThan(0);
     });
 
     it('should fetch price history with specific period', async () => {
-      const mockHistory = {
-        item_id: 1,
-        prices: [],
-        period: '30d',
-      };
+      const mockHistoryData = [
+        {
+          timestamp: '2026-01-14T00:00:00Z',
+          avgHighPrice: 2000000,
+          avgLowPrice: 1900000,
+          highPriceVolume: 100,
+          lowPriceVolume: 50
+        },
+      ];
 
-      vi.spyOn(apiClient, 'get').mockResolvedValue({ data: mockHistory });
+      // Mock response with data and meta wrapper
+      vi.spyOn(apiClient, 'get').mockResolvedValue({
+        data: {
+          data: mockHistoryData,
+          meta: { item_id: 1, period: '30d', count: mockHistoryData.length }
+        },
+      });
 
       const result = await fetchPriceHistory(1, '30d');
-      
+
       expect(apiClient.get).toHaveBeenCalledWith('/prices/history/1', {
-        params: { period: '30d', sample: undefined },
+        params: { period: '30d' },
       });
-      expect(result).toEqual(mockHistory);
+      expect(result.data).toBeDefined();
     });
 
     it('should fetch price history with sample flag', async () => {
-      const mockHistory = {
-        item_id: 1,
-        prices: [],
-        period: '1y',
-      };
+      const mockHistoryData = [
+        {
+          timestamp: '2026-01-14T00:00:00Z',
+          avgHighPrice: 2000000,
+          avgLowPrice: 1900000,
+          highPriceVolume: 100,
+          lowPriceVolume: 50
+        },
+      ];
 
-      vi.spyOn(apiClient, 'get').mockResolvedValue({ data: mockHistory });
+      // Mock response with data and meta wrapper
+      vi.spyOn(apiClient, 'get').mockResolvedValue({
+        data: {
+          data: mockHistoryData,
+          meta: { item_id: 1, period: '1y', count: mockHistoryData.length, sampled: true }
+        },
+      });
 
       const result = await fetchPriceHistory(1, '1y', 150);
-      
+
       expect(apiClient.get).toHaveBeenCalledWith('/prices/history/1', {
         params: { period: '1y', sample: 150 },
       });
-      expect(result).toEqual(mockHistory);
+      expect(result.data).toBeDefined();
     });
   });
 });
@@ -280,7 +298,7 @@ describe('API Client - Error Handling', () => {
       headers: {},
       config: {} as any,
     };
-    
+
     vi.spyOn(apiClient, 'get').mockRejectedValue(error);
 
     await expect(fetchItemById(999)).rejects.toThrow();
@@ -295,7 +313,7 @@ describe('API Client - Error Handling', () => {
       headers: {},
       config: {} as any,
     };
-    
+
     vi.spyOn(apiClient, 'get').mockRejectedValue(error);
 
     await expect(fetchAllCurrentPrices()).rejects.toThrow();

@@ -2,15 +2,15 @@
  * API functions for item-related endpoints
  */
 
-import apiClient from './client';
 import type {
   Item,
-  ItemListResponse,
   ItemCountResponse,
   ItemFilters,
+  ItemListResponse,
   PaginationParams,
   SortParams,
 } from '../types';
+import apiClient from './client';
 
 /**
  * Fetch a paginated list of items with optional filters
@@ -18,7 +18,16 @@ import type {
 export const fetchItems = async (
   params?: PaginationParams & SortParams & ItemFilters
 ): Promise<ItemListResponse> => {
-  const response = await apiClient.get<ItemListResponse>('/items', { params });
+  // Map frontend param names to backend expected names
+  const apiParams = params ? {
+    page: params.page,
+    limit: params.pageSize, // Backend uses 'limit' not 'pageSize'
+    sort_by: params.sortBy,
+    order: params.sortOrder,
+    members: params.members,
+  } : undefined;
+
+  const response = await apiClient.get<ItemListResponse>('/items', { params: apiParams });
   return response.data;
 };
 
@@ -29,16 +38,6 @@ export const fetchItems = async (
 export const fetchItemById = async (id: number): Promise<Item> => {
   const response = await apiClient.get<{ data: Item }>(`/items/${id}`);
   return response.data.data;
-};
-
-/**
- * Search for items by name
- */
-export const searchItems = async (query: string): Promise<Item[]> => {
-  const response = await apiClient.get<Item[]>('/items/search', {
-    params: { q: query },
-  });
-  return response.data;
 };
 
 /**

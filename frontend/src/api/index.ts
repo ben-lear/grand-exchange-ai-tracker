@@ -3,22 +3,17 @@
  */
 
 // API client
-export { default as apiClient, checkHealth, API_BASE_URL } from './client';
+export { API_BASE_URL, default as apiClient, checkHealth } from './client';
 
 // Item API
 export {
-  fetchItems,
   fetchItemById,
-  searchItems,
-  fetchItemCount,
-  fetchItemsByIds,
+  fetchItemCount, fetchItems, fetchItemsByIds
 } from './items';
 
 // Price API
 export {
-  fetchAllCurrentPrices,
-  fetchCurrentPrice,
-  fetchBatchCurrentPrices,
-  fetchPriceHistory,
-  syncCurrentPrices,
+  fetchAllCurrentPrices, fetchBatchCurrentPrices, fetchCurrentPrice, fetchPriceHistory,
+  syncCurrentPrices
 } from './prices';
+

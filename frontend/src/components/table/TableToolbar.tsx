@@ -1,14 +1,14 @@
 /**
  * TableToolbar - Search bar and table controls
  * Features:
- * - Search input with debounce
+ * - Search input with clear button
  * - Column visibility toggle
  * - Refresh button
  * - View density selector
  */
 
-import { useState, useEffect } from 'react';
-import { Search, RefreshCw, Columns, Download } from 'lucide-react';
+import { Columns, Download, RefreshCw } from 'lucide-react';
+import { SearchInput } from '../common/SearchInput';
 
 export interface TableToolbarProps {
   searchValue: string;
@@ -31,44 +31,18 @@ export function TableToolbar({
   totalCount = 0,
   visibleCount = 0,
 }: TableToolbarProps) {
-  const [localSearch, setLocalSearch] = useState(searchValue);
-
-  // Debounce search input
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      onSearchChange(localSearch);
-    }, 300);
-
-    return () => clearTimeout(timer);
-  }, [localSearch, onSearchChange]);
-
   return (
     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
       {/* Left side - Search */}
       <div className="flex-1 w-full sm:max-w-md">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-          <input
-            type="text"
-            placeholder="Search items..."
-            value={localSearch}
-            onChange={(e) => setLocalSearch(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
-          />
-          {localSearch && (
-            <button
-              onClick={() => {
-                setLocalSearch('');
-                onSearchChange('');
-              }}
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          )}
-        </div>
+        <SearchInput
+          id="table-search"
+          name="search"
+          value={searchValue}
+          onChange={onSearchChange}
+          placeholder="Filter items..."
+          inputClassName="bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100"
+        />
       </div>
 
       {/* Right side - Actions */}

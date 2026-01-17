@@ -1,28 +1,34 @@
 /**
  * Dashboard page - Main page with items table
+ * 
+ * Uses client-side pagination and filtering with data from itemDataStore.
+ * Items are prefetched on app mount; prices are synced from MainLayout.
  */
 
-import React, { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { LoadingSpinner } from '@/components/common';
 import {
-  ItemsTable,
-  TableToolbar,
-  FilterPanel,
-  TablePagination,
   ExportButton,
-  type ItemWithPrice,
+  FilterPanel,
+  ItemsTable,
+  TablePagination,
+  TableToolbar,
   type FilterState,
+  type ItemWithPrice,
 } from '@/components/table';
-import { useItems, useAllCurrentPrices } from '@/hooks';
-import type { PaginationParams, SortParams, ItemFilters } from '@/types';
+import { useDebouncedValue } from '@/hooks/useDebouncedValue';
+import { useItemDataStore } from '@/stores/itemDataStore';
+import { createItemSearchIndex, filterItemIdsByRelevance } from '@/utils/itemSearch';
+import React, { useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 /**
  * Dashboard page component
  * Displays the main items table with prices and filtering
+ * All data comes from itemDataStore (prefetched on app mount)
  */
 export const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
-  
+
   // State management
   const [searchQuery, setSearchQuery] = useState('');
   const [filters, setFilters] = useState<FilterState>({ members: 'all' });
@@ -30,68 +36,88 @@ export const DashboardPage: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(100);
 
-  // Pagination and sorting params
-  const queryParams: PaginationParams & SortParams & ItemFilters = useMemo(() => ({
-    page: currentPage,
-    limit: pageSize,
-    search: searchQuery || undefined,
-    members: filters.members !== 'all' ? filters.members === 'members' : undefined,
-    minPrice: filters.priceMin,
-    maxPrice: filters.priceMax,
-    // Note: Volume filters removed - volume not available in current prices
-  }), [currentPage, pageSize, searchQuery, filters]);
+  // Debounce search query for filtering
+  const debouncedSearchQuery = useDebouncedValue(searchQuery, 150);
 
-  // Data fetching
-  const {
-    data: itemsResponse,
-    isLoading: itemsLoading,
-    error: itemsError,
-    refetch: refetchItems,
-  } = useItems(queryParams);
+  // Get data from stores - items are prefetched in MainLayout
+  // Subscribe to items and currentPrices Maps directly to get re-renders when they change
+  const items = useItemDataStore((state) => state.items);
+  const currentPrices = useItemDataStore((state) => state.currentPrices);
+  const pricesLoaded = useItemDataStore((state) => state.pricesLoaded);
+  const isFullyLoaded = useItemDataStore((state) => state.isFullyLoaded);
 
-  const {
-    data: pricesData,
-    isLoading: pricesLoading,
-    error: pricesError,
-    refetch: refetchPrices,
-  } = useAllCurrentPrices();
+  const allItems = useMemo(() => Array.from(items.values()), [items]);
+  const hasItems = items.size > 0;
+  const isDataReady = hasItems && pricesLoaded;
 
-  // Combine items with prices
-  const itemsWithPrices: ItemWithPrice[] = useMemo(() => {
-    if (!itemsResponse?.data || !pricesData) return [];
+  // Build fuse.js search index when items change
+  const fuseIndex = useMemo(() => {
+    if (allItems.length === 0) return null;
+    return createItemSearchIndex(allItems);
+  }, [allItems]);
 
-    return itemsResponse.data.map(item => ({
-      ...item,
-      currentPrice: pricesData.find(price => price.itemId === item.itemId),
-    }));
-  }, [itemsResponse?.data, pricesData]);
+  // Get matching item IDs from search query (sorted by relevance)
+  const searchMatchIds = useMemo(() => {
+    if (!fuseIndex || !debouncedSearchQuery.trim()) return null;
+    return filterItemIdsByRelevance(fuseIndex, debouncedSearchQuery);
+  }, [fuseIndex, debouncedSearchQuery]);
 
-  // Filter data based on price filters (client-side filtering)
+  // Filter items based on search and filters
   const filteredItems = useMemo(() => {
-    return itemsWithPrices.filter(item => {
-      const price = item.currentPrice;
-      
-      // Price filters - use high price as reference
-      if (filters.priceMin && (!price?.highPrice || price.highPrice < filters.priceMin)) {
-        return false;
-      }
-      if (filters.priceMax && (!price?.highPrice || price.highPrice > filters.priceMax)) {
-        return false;
-      }
-      
-      // Note: Volume filters removed - volume not available in current price snapshots
-      // Volume is only available in timeseries data
-      
+    let results = allItems;
+
+    // Apply non-search filters first
+    results = results.filter(item => {
+      // Members filter
+      if (filters.members === 'members' && !item.members) return false;
+      if (filters.members === 'f2p' && item.members) return false;
+
+      // Price filters
+      const price = currentPrices.get(item.itemId);
+      const highPrice = price?.highPrice;
+      if (filters.priceMin && (!highPrice || highPrice < filters.priceMin)) return false;
+      if (filters.priceMax && (!highPrice || highPrice > filters.priceMax)) return false;
+
       return true;
     });
-  }, [itemsWithPrices, filters]);
 
-  const isLoading = itemsLoading || pricesLoading;
-  const error = itemsError || pricesError;
+    // Apply search filter with relevance ordering
+    if (searchMatchIds !== null && searchMatchIds.length > 0) {
+      // Create a map for O(1) lookup and preserve relevance order
+      const idToIndex = new Map(searchMatchIds.map((id, index) => [id, index]));
+
+      // Filter and sort by relevance
+      results = results
+        .filter(item => idToIndex.has(item.itemId))
+        .sort((a, b) => {
+          const indexA = idToIndex.get(a.itemId) ?? Infinity;
+          const indexB = idToIndex.get(b.itemId) ?? Infinity;
+          return indexA - indexB;
+        });
+    }
+
+    return results;
+  }, [allItems, searchMatchIds, filters, currentPrices]);
+
+  // Map filtered items to ItemWithPrice for the table
+  const itemsWithPrices: ItemWithPrice[] = useMemo(() => {
+    return filteredItems.map(item => ({
+      ...item,
+      currentPrice: currentPrices.get(item.itemId),
+    }));
+  }, [filteredItems, currentPrices]);
+
+  // Client-side pagination
+  const paginatedItems = useMemo(() => {
+    const startIndex = (currentPage - 1) * pageSize;
+    return itemsWithPrices.slice(startIndex, startIndex + pageSize);
+  }, [itemsWithPrices, currentPage, pageSize]);
+
+  const totalItems = itemsWithPrices.length;
 
   const handleRefresh = () => {
-    refetchItems();
-    refetchPrices();
+    // No-op for now since data auto-refreshes via price sync
+    // Could add a manual refetch trigger if needed
   };
 
   const handleRowClick = (item: ItemWithPrice) => {
@@ -111,6 +137,23 @@ export const DashboardPage: React.FC = () => {
     setFilters(newFilters);
     setCurrentPage(1); // Reset to first page when changing filters
   };
+
+  const handleSearchChange = (query: string) => {
+    setSearchQuery(query);
+    setCurrentPage(1); // Reset to first page when searching
+  };
+
+  // Show loading spinner until both items and prices are loaded
+  if (!isDataReady) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <LoadingSpinner />
+        <span className="ml-3 text-gray-600 dark:text-gray-400">
+          {!hasItems ? 'Loading items...' : 'Loading prices...'}
+        </span>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -145,29 +188,29 @@ export const DashboardPage: React.FC = () => {
             {/* Table Toolbar */}
             <TableToolbar
               searchValue={searchQuery}
-              onSearchChange={setSearchQuery}
+              onSearchChange={handleSearchChange}
               onRefresh={handleRefresh}
               onColumnsToggle={() => setShowFilters(!showFilters)}
-              isRefreshing={isLoading}
-              totalCount={itemsResponse?.meta?.total || 0}
-              visibleCount={filteredItems.length}
+              isRefreshing={!isFullyLoaded}
+              totalCount={allItems.length}
+              visibleCount={totalItems}
             />
 
             {/* Items Table */}
             <ItemsTable
-              data={filteredItems}
-              isLoading={isLoading}
-              error={error}
+              data={paginatedItems}
+              isLoading={!hasItems}
+              error={null}
               onRowClick={handleRowClick}
-              enableVirtualization={filteredItems.length > 200}
+              enableVirtualization={paginatedItems.length > 200}
             />
 
             {/* Pagination */}
-            {itemsResponse?.meta && (
+            {totalItems > 0 && (
               <TablePagination
                 currentPage={currentPage}
                 pageSize={pageSize}
-                totalItems={itemsResponse.meta.total}
+                totalItems={totalItems}
                 onPageChange={handlePageChange}
                 onPageSizeChange={handlePageSizeChange}
               />
@@ -175,10 +218,10 @@ export const DashboardPage: React.FC = () => {
           </div>
 
           {/* Export Button */}
-          {filteredItems.length > 0 && (
+          {itemsWithPrices.length > 0 && (
             <div className="mt-4 flex justify-end">
               <ExportButton
-                data={filteredItems}
+                data={itemsWithPrices}
                 filename="osrs-ge-items"
               />
             </div>
