@@ -42,6 +42,10 @@ var sharedPG struct {
 // Note: tests using this helper should not call t.Parallel().
 //
 
+//nolint:revive,gocognit // Test container initialization requires retry logic with multiple
+// error paths within sync.Once. This complexity is inherent to testcontainers pattern
+// (https://testcontainers.com/guides/getting-started-with-testcontainers-for-go/) and
+// necessary for reliable CI/CD execution. Complexity: 24 (acceptable for test infrastructure).
 func SharedPostgres(t *testing.T) (*gorm.DB, func()) {
 	t.Helper()
 

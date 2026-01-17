@@ -88,7 +88,179 @@ func (s *priceService) GetAllCurrentPrices(ctx context.Context) ([]models.Curren
 	return dbPrices, nil
 }
 
-// GetPriceHistory returns historical price data for an item.
+// transformDailyPoints converts daily aggregate points to response format,
+// filtering out entries where both prices are NULL and defaulting NULLs to 0.
+func (s *priceService) transformDailyPoints(points []models.PriceTimeseriesDaily) []models.PricePoint {
+	result := make([]models.PricePoint, 0, len(points))
+
+	for _, p := range points {
+		// Skip if both prices are NULL (no trading data)
+		if p.AvgHighPrice == nil && p.AvgLowPrice == nil {
+			continue
+		}
+
+		high := int64(0)
+		if p.AvgHighPrice != nil {
+			high = *p.AvgHighPrice
+		}
+
+		low := int64(0)
+		if p.AvgLowPrice != nil {
+			low = *p.AvgLowPrice
+		}
+
+		// Convert day (date) to timestamp at midnight UTC
+		ts := time.Date(p.Day.Year(), p.Day.Month(), p.Day.Day(), 0, 0, 0, 0, time.UTC)
+
+		result = append(result, models.PricePoint{
+			Timestamp: ts,
+			HighPrice: high,
+			LowPrice:  low,
+		})
+	}
+
+	return result
+}
+
+// transformTimeseriesPoints converts timeseries points to response format,
+// filtering out entries where both prices are NULL and defaulting NULLs to 0.
+func (s *priceService) transformTimeseriesPoints(points []models.PriceTimeseriesPoint) []models.PricePoint {
+	result := make([]models.PricePoint, 0, len(points))
+
+	for _, p := range points {
+		// Skip if both prices are NULL (no trading data)
+		if p.AvgHighPrice == nil && p.AvgLowPrice == nil {
+			continue
+		}
+
+		high := int64(0)
+		if p.AvgHighPrice != nil {
+			high = *p.AvgHighPrice
+		}
+
+		low := int64(0)
+		if p.AvgLowPrice != nil {
+			low = *p.AvgLowPrice
+		}
+
+		result = append(result, models.PricePoint{
+			Timestamp: p.Timestamp.UTC(),
+			HighPrice: high,
+			LowPrice:  low,
+		})
+	}
+
+	return result
+}
+
+// calculateDateRange determines the first and last dates in a dataset.
+// Returns nil pointers if data is empty.
+func (s *priceService) calculateDateRange(data []models.PricePoint) (*time.Time, *time.Time) {
+	if len(data) == 0 {
+		return nil, nil
+	}
+
+	var firstDate, lastDate *time.Time
+
+	for i := range data {
+		ts := data[i].Timestamp
+
+		if firstDate == nil || ts.Before(*firstDate) {
+			t := ts
+			firstDate = &t
+		}
+
+		if lastDate == nil || ts.After(*lastDate) {
+			t := ts
+			lastDate = &t
+		}
+	}
+
+	return firstDate, lastDate
+}
+
+// fetchDailyPoints retrieves daily aggregates from repository, attempting to seed
+// data from Wiki API if the repository returns empty results.
+func (s *priceService) fetchDailyPoints(
+	ctx context.Context,
+	itemID int,
+	params models.PriceHistoryParams,
+) ([]models.PriceTimeseriesDaily, error) {
+	// Fetch from repository
+	points, err := s.priceRepo.GetDailyPoints(ctx, itemID, params)
+	if err != nil {
+		return nil, fmt.Errorf("fetch daily aggregates: %w", err)
+	}
+
+	// If empty, try seeding from Wiki API
+	if len(points) == 0 {
+		s.logger.Infow("no daily data found, attempting to seed from Wiki API",
+			"itemId", itemID,
+		)
+
+		if err := s.seedDailyFromWikiTimeseries(ctx, itemID); err != nil {
+			s.logger.Warnw("failed to seed daily data",
+				"itemId", itemID,
+				"error", err,
+			)
+			// Don't return error - proceed with empty data
+			return points, nil
+		}
+
+		// Retry fetch after seeding
+		points, err = s.priceRepo.GetDailyPoints(ctx, itemID, params)
+		if err != nil {
+			return nil, fmt.Errorf("fetch after seed: %w", err)
+		}
+	}
+
+	return points, nil
+}
+
+// fetchTimeseriesPoints retrieves timeseries data from repository, attempting to seed
+// data from Wiki API if the repository returns empty results.
+func (s *priceService) fetchTimeseriesPoints(
+	ctx context.Context,
+	itemID int,
+	timestep string,
+	params models.PriceHistoryParams,
+) ([]models.PriceTimeseriesPoint, error) {
+	// Fetch from repository
+	points, err := s.priceRepo.GetTimeseriesPoints(ctx, itemID, timestep, params)
+	if err != nil {
+		return nil, fmt.Errorf("fetch timeseries: %w", err)
+	}
+
+	// If empty, try seeding from Wiki API
+	if len(points) == 0 {
+		s.logger.Infow("no timeseries data found, attempting to seed from Wiki API",
+			"itemId", itemID,
+			"timestep", timestep,
+		)
+
+		if err := s.seedTimeseriesFromWiki(ctx, itemID, timestep); err != nil {
+			s.logger.Warnw("failed to seed timeseries data",
+				"itemId", itemID,
+				"timestep", timestep,
+				"error", err,
+			)
+			// Don't return error - proceed with empty data
+			return points, nil
+		}
+
+		// Retry fetch after seeding
+		points, err = s.priceRepo.GetTimeseriesPoints(ctx, itemID, timestep, params)
+		if err != nil {
+			return nil, fmt.Errorf("fetch after seed: %w", err)
+		}
+	}
+
+	return points, nil
+}
+
+// GetPriceHistory retrieves historical price data for an item based on the given parameters.
+// It attempts to serve from cache first, falls back to database, and can seed data from
+// Wiki API if the database is empty.
 func (s *priceService) GetPriceHistory(ctx context.Context, params models.PriceHistoryParams) (*models.PriceHistoryResponse, error) {
 	// Apply default MaxPoints if not specified
 	if params.MaxPoints == nil {
@@ -96,117 +268,43 @@ func (s *priceService) GetPriceHistory(ctx context.Context, params models.PriceH
 		params.MaxPoints = &defaultMaxPoints
 	}
 
-	// Try cache first (only if period-based query and not forcing refresh)
-	var cacheKey string
+	// 1. Try cache if period-based and not forcing refresh
 	if params.Period != "" && !params.Refresh {
-		cacheKey = fmt.Sprintf("price:history:%d:%s", params.ItemID, params.Period)
-		var response models.PriceHistoryResponse
-		err := s.cache.GetJSON(ctx, cacheKey, &response)
+		cacheKey := fmt.Sprintf("price:history:%d:%s", params.ItemID, params.Period)
+		var cached models.PriceHistoryResponse
+		err := s.cache.GetJSON(ctx, cacheKey, &cached)
 		if err == nil {
-			s.logger.Debugw("Returning price history from cache", "itemID", params.ItemID, "period", params.Period)
-			return &response, nil
+			s.logger.Debugw("Returning price history from cache",
+				"itemID", params.ItemID,
+				"period", params.Period)
+			return &cached, nil
 		}
-	} else if params.Period != "" && params.Refresh {
-		// Force cache refresh by setting the cache key for later update
-		cacheKey = fmt.Sprintf("price:history:%d:%s", params.ItemID, params.Period)
-		s.logger.Debugw("Bypassing cache due to refresh=true", "itemID", params.ItemID, "period", params.Period)
 	}
 
+	// 2. Determine data source (daily vs timeseries)
 	source := periodToTimeseriesSource(params.Period)
 
+	// 3. Fetch data points (with automatic seeding if empty)
 	var dataPoints []models.PricePoint
-	var firstDate, lastDate *time.Time
-
+	
 	if source.useDaily {
-		points, err := s.priceRepo.GetDailyPoints(ctx, params.ItemID, params)
+		points, err := s.fetchDailyPoints(ctx, params.ItemID, params)
 		if err != nil {
 			return nil, err
 		}
-
-		if len(points) == 0 {
-			if err := s.seedDailyFromWikiTimeseries(ctx, params.ItemID); err != nil {
-				s.logger.Warnw("Failed to seed daily timeseries", "itemID", params.ItemID, "error", err)
-			}
-			points, err = s.priceRepo.GetDailyPoints(ctx, params.ItemID, params)
-			if err != nil {
-				return nil, err
-			}
-		}
-
-		dataPoints = make([]models.PricePoint, 0, len(points))
-		for _, p := range points {
-			// Skip points where both prices are NULL (no trading data)
-			if p.AvgHighPrice == nil && p.AvgLowPrice == nil {
-				continue
-			}
-
-			high := int64(0)
-			low := int64(0)
-			if p.AvgHighPrice != nil {
-				high = *p.AvgHighPrice
-			}
-			if p.AvgLowPrice != nil {
-				low = *p.AvgLowPrice
-			}
-
-			ts := time.Date(p.Day.Year(), p.Day.Month(), p.Day.Day(), 0, 0, 0, 0, time.UTC)
-			dataPoints = append(dataPoints, models.PricePoint{Timestamp: ts, HighPrice: high, LowPrice: low})
-
-			if firstDate == nil || ts.Before(*firstDate) {
-				t := ts
-				firstDate = &t
-			}
-			if lastDate == nil || ts.After(*lastDate) {
-				t := ts
-				lastDate = &t
-			}
-		}
+		dataPoints = s.transformDailyPoints(points)
 	} else {
-		points, err := s.priceRepo.GetTimeseriesPoints(ctx, params.ItemID, source.timestep, params)
+		points, err := s.fetchTimeseriesPoints(ctx, params.ItemID, source.timestep, params)
 		if err != nil {
 			return nil, err
 		}
-
-		if len(points) == 0 {
-			if err := s.seedTimeseriesFromWiki(ctx, params.ItemID, source.timestep); err != nil {
-				s.logger.Warnw("Failed to seed timeseries", "itemID", params.ItemID, "timestep", source.timestep, "error", err)
-			}
-			points, err = s.priceRepo.GetTimeseriesPoints(ctx, params.ItemID, source.timestep, params)
-			if err != nil {
-				return nil, err
-			}
-		}
-
-		dataPoints = make([]models.PricePoint, 0, len(points))
-		for _, p := range points {
-			// Skip points where both prices are NULL (no trading data)
-			if p.AvgHighPrice == nil && p.AvgLowPrice == nil {
-				continue
-			}
-
-			high := int64(0)
-			low := int64(0)
-			if p.AvgHighPrice != nil {
-				high = *p.AvgHighPrice
-			}
-			if p.AvgLowPrice != nil {
-				low = *p.AvgLowPrice
-			}
-
-			ts := p.Timestamp.UTC()
-			dataPoints = append(dataPoints, models.PricePoint{Timestamp: ts, HighPrice: high, LowPrice: low})
-
-			if firstDate == nil || ts.Before(*firstDate) {
-				t := ts
-				firstDate = &t
-			}
-			if lastDate == nil || ts.After(*lastDate) {
-				t := ts
-				lastDate = &t
-			}
-		}
+		dataPoints = s.transformTimeseriesPoints(points)
 	}
 
+	// 4. Calculate date range
+	firstDate, lastDate := s.calculateDateRange(dataPoints)
+
+	// 5. Build response
 	response := &models.PriceHistoryResponse{
 		ItemID:    params.ItemID,
 		Period:    string(params.Period),
@@ -215,8 +313,8 @@ func (s *priceService) GetPriceHistory(ctx context.Context, params models.PriceH
 		FirstDate: firstDate,
 		LastDate:  lastDate,
 	}
-	// Note: Intentionally not caching to ensure fresh data
 
+	// Note: Intentionally not caching to ensure fresh data
 	return response, nil
 }
 
