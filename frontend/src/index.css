@@ -59,19 +59,20 @@ body {
 
 /* Common animation classes to reduce bundle size */
 @layer components {
+
   /* Loading animations - extracted from Loading component */
   .loading-spinner {
     @apply animate-spin rounded-full border-blue-600 border-t-transparent;
   }
-  
+
   .loading-dots {
     @apply flex items-center gap-1;
   }
-  
+
   .loading-dot {
     @apply animate-bounce bg-blue-600 rounded-full;
   }
-  
+
   .loading-pulse {
     @apply animate-pulse bg-blue-600 rounded-full;
   }
@@ -80,15 +81,15 @@ body {
   .status-info {
     @apply bg-blue-50 border-blue-200 text-blue-800 dark:bg-blue-950 dark:border-blue-900 dark:text-blue-200;
   }
-  
+
   .status-success {
     @apply bg-green-50 border-green-200 text-green-800 dark:bg-green-950 dark:border-green-900 dark:text-green-200;
   }
-  
+
   .status-warning {
     @apply bg-amber-50 border-amber-200 text-amber-800 dark:bg-amber-950 dark:border-amber-900 dark:text-amber-200;
   }
-  
+
   .status-error {
     @apply bg-red-50 border-red-200 text-red-800 dark:bg-red-950 dark:border-red-900 dark:text-red-200;
   }
@@ -97,15 +98,15 @@ body {
   .icon-info {
     @apply text-blue-600 dark:text-blue-400;
   }
-  
+
   .icon-success {
     @apply text-green-600 dark:text-green-400;
   }
-  
+
   .icon-warning {
     @apply text-amber-600 dark:text-amber-400;
   }
-  
+
   .icon-error {
     @apply text-red-600 dark:text-red-400;
   }
@@ -114,11 +115,11 @@ body {
   .card-base {
     @apply bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg;
   }
-  
+
   .card-elevated {
     @apply card-base shadow-lg;
   }
-  
+
   .card-outlined {
     @apply bg-white dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 rounded-lg;
   }
@@ -127,19 +128,19 @@ body {
   .modal-backdrop {
     @apply fixed inset-0 z-50 flex items-center justify-center;
   }
-  
+
   .modal-backdrop-blur {
     @apply bg-black/50 backdrop-blur-sm;
   }
-  
+
   .modal-backdrop-solid {
     @apply bg-black/60;
   }
-  
+
   .modal-backdrop-light {
     @apply bg-black/30;
   }
-  
+
   .modal-container {
     @apply relative bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 max-h-[90vh] overflow-hidden flex flex-col;
   }
@@ -148,17 +149,17 @@ body {
   .skeleton-base {
     @apply animate-pulse bg-gray-200 dark:bg-gray-700;
   }
-  
+
   /* Border and divider utilities */
   .border-divider {
     @apply border-gray-200 dark:border-gray-700;
   }
-  
+
   /* Focus states for interactive elements */
   .focus-ring {
     @apply focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-gray-800;
   }
-  
+
   .focus-ring-inset {
     @apply focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500;
   }

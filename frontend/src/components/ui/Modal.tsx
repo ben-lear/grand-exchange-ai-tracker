@@ -256,3 +256,4 @@ ModalBody.displayName = 'ModalBody';
 ModalFooter.displayName = 'ModalFooter';
 
 export { backdropVariants, modalBodyVariants, modalFooterVariants, modalHeaderVariants, modalVariants };
+

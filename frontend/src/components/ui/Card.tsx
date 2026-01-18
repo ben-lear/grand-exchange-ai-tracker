@@ -212,3 +212,4 @@ CardContent.displayName = 'CardContent';
 CardFooter.displayName = 'CardFooter';
 
 export { cardContentVariants, cardFooterVariants, cardHeaderVariants, cardVariants };
+
