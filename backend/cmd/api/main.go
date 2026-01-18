@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 
 	"github.com/gofiber/fiber/v2"
@@ -101,8 +102,27 @@ func main() {
 	app.Use(middleware.NewRequestLogger(middleware.RequestLoggerConfig{
 		Logger: logger,
 	}))
+
+	// Parse CORS origins - split comma-separated string into slice
+	// Supports both single origin ("*") and multiple ("http://localhost:3000,http://localhost:3001")
+	var corsOrigins []string
+	if cfg.CorsOrigins != "" {
+		if cfg.CorsOrigins == "*" {
+			corsOrigins = []string{"*"}
+		} else {
+			// Split by comma and trim whitespace from each origin
+			origins := strings.Split(cfg.CorsOrigins, ",")
+			for _, origin := range origins {
+				trimmed := strings.TrimSpace(origin)
+				if trimmed != "" {
+					corsOrigins = append(corsOrigins, trimmed)
+				}
+			}
+		}
+	}
+
 	app.Use(middleware.NewCORSMiddleware(middleware.CORSConfig{
-		AllowedOrigins: []string{cfg.CorsOrigins},
+		AllowedOrigins: corsOrigins,
 	}))
 
 	// Health check endpoints (no rate limiting)

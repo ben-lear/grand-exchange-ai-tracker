@@ -1,120 +1,125 @@
 # Implementation Plan 006: Fix CORS and Backend Connection
 
-**Status**: 📋 Planning  
+**Status**: ✅ Completed  
 **Priority**: High  
 **Estimated Effort**: 30 minutes  
 **Category**: Backend Infrastructure  
 
 ## Problem Statement
 
-Frontend development server (port 3001) cannot connect to backend API (port 8080) due to:
-1. Backend server not running
-2. CORS configuration issues
+Frontend development server (port 3000) can experience CORS issues when the `CORS_ORIGINS` environment variable contains multiple comma-separated origins. The backend was wrapping the entire string as a single array element instead of splitting it into multiple origins.
 
-Console shows 13+ instances of:
-```
-Access to XMLHttpRequest at 'http://localhost:8080/api/v1/...' from origin 'http://localhost:3001' 
-has been blocked by CORS policy: Response to preflight request doesn't pass access control check: 
-The 'Access-Control-Allow-Origin' header contains the invalid value ''.
+## Root Cause
+
+In `backend/cmd/api/main.go`, the CORS middleware was receiving:
+```go
+AllowedOrigins: []string{cfg.CorsOrigins}  // ❌ Wrong - wraps "origin1,origin2" as single element
 ```
 
-## Root Causes
-
-1. **Backend Not Running**: Go backend API server needs to be started
-2. **CORS Misconfiguration**: Backend CORS middleware may have empty `Access-Control-Allow-Origin` header
-3. **Port Mismatch**: Frontend on 3001, backend expected on 8080
-
-## Solution
-
-### Step 1: Start Backend Server
-
-```bash
-cd backend
-go run cmd/api/main.go
+When `cfg.CorsOrigins = "http://localhost:3000,http://localhost:3001"`, this created:
+```go
+[]string{"http://localhost:3000,http://localhost:3001"}  // Invalid - single malformed origin
 ```
 
-**Expected output:**
-```
-INFO: Starting server on :8080
-INFO: Database connected
-INFO: Redis connected
+Instead of:
+```go
+[]string{"http://localhost:3000", "http://localhost:3001"}  // ✅ Correct - two separate origins
 ```
 
-### Step 2: Verify CORS Middleware
+## Solution Implemented
 
-Check `backend/internal/middleware/cors.go`:
+### Fixed CORS Origin Parsing
+
+Updated `backend/cmd/api/main.go` to properly split comma-separated CORS origins:
 
 ```go
-// Should allow frontend origin
-AllowOrigins: []string{"http://localhost:3000", "http://localhost:3001"},
-AllowMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-AllowHeaders: []string{"Origin", "Content-Type", "Accept"},
-AllowCredentials: true,
-```
-
-**If missing port 3001**, add it to `AllowOrigins`.
-
-### Step 3: Verify Backend Config
-
-Check `backend/internal/config/config.go` for CORS settings:
-
-```go
-type Config struct {
-    // ...
-    CORSOrigins []string `mapstructure:"CORS_ORIGINS"`
+// Parse CORS origins - split comma-separated string into slice
+// Supports both single origin ("*") and multiple ("http://localhost:3000,http://localhost:3001")
+var corsOrigins []string
+if cfg.CorsOrigins != "" {
+    if cfg.CorsOrigins == "*" {
+        corsOrigins = []string{"*"}
+    } else {
+        // Split by comma and trim whitespace from each origin
+        origins := strings.Split(cfg.CorsOrigins, ",")
+        for _, origin := range origins {
+            trimmed := strings.TrimSpace(origin)
+            if trimmed != "" {
+                corsOrigins = append(corsOrigins, trimmed)
+            }
+        }
+    }
 }
+
+app.Use(middleware.NewCORSMiddleware(middleware.CORSConfig{
+    AllowedOrigins: corsOrigins,
+}))
 ```
 
-Check `.env` or environment variables:
-```bash
-CORS_ORIGINS=http://localhost:3000,http://localhost:3001
-```
+### Configuration Support
 
-### Step 4: Test Connection
-
-1. Start backend: `cd backend && go run cmd/api/main.go`
-2. In browser console, verify no more CORS errors
-3. Check `/health` endpoint: `http://localhost:8080/health`
-4. Verify data loads in frontend
+The fix supports multiple configuration formats:
+- Single origin: `CORS_ORIGINS=*` → `[]string{"*"}`
+- Single specific origin: `CORS_ORIGINS=http://localhost:3000` → `[]string{"http://localhost:3000"}`
+- Multiple origins: `CORS_ORIGINS=http://localhost:3000,http://localhost:3001` → `[]string{"http://localhost:3000", "http://localhost:3001"}`
+- With whitespace: `CORS_ORIGINS=http://localhost:3000, http://localhost:3001` → whitespace trimmed automatically
 
 ## Acceptance Criteria
 
-- [ ] Backend server starts without errors
-- [ ] No CORS errors in browser console
-- [ ] Frontend successfully fetches from `/api/v1/items`
-- [ ] Frontend successfully fetches from `/api/v1/prices/current`
-- [ ] Health endpoint returns 200 OK
+- [x] Backend properly parses comma-separated CORS origins
+- [x] No CORS errors when `CORS_ORIGINS` contains multiple origins
+- [x] Supports wildcard (`*`) for development
+- [x] Supports single and multiple origins with proper whitespace handling
+- [x] Frontend successfully fetches from all API endpoints
 
-## Testing
+## Testing Results
 
-1. **Health Check**: Navigate to `http://localhost:8080/health` - should return JSON
-2. **API Call**: Open Network tab, refresh frontend, verify API calls return 200
-3. **Console**: No CORS errors in console
-4. **Data Display**: Items and prices display in frontend table
-
-## Dependencies
-
-- PostgreSQL running (for backend database)
-- Redis running (for backend cache)
-- Go 1.24.0+ installed
-- Backend dependencies installed (`go mod tidy`)
+Tested with Vite dev server (port 3000):
+- ✅ Dashboard loads all items and prices
+- ✅ Item detail pages load with price history charts
+- ✅ SSE connections work for real-time updates
+- ✅ No CORS errors in browser console
+- ✅ All API endpoints return proper CORS headers
 
 ## Notes
 
-- If PostgreSQL/Redis not running, use Docker: `docker-compose up -d postgres redis`
-- Backend may need migrations: `cd backend && go run cmd/api/main.go migrate`
-- Check backend README for detailed setup instructions
+### Vite Proxy Configuration
+
+Frontend has a Vite proxy configured in `vite.config.ts`:
+```typescript
+server: {
+  port: 3000,
+  proxy: {
+    '/api': {
+      target: 'http://localhost:8080',
+      changeOrigin: true,
+    },
+  },
+}
+```
+
+However, the frontend is configured to make requests directly to `http://localhost:8080/api/v1` via `VITE_API_BASE_URL`. For CORS-free development, you could:
+- Use the proxy by setting `VITE_API_BASE_URL=/api/v1` (requests go through Vite proxy)
+- Continue direct requests with proper CORS configuration (current approach)
+
+### Environment Variables
+
+Default backend CORS setting is `CORS_ORIGINS=*` (allows all origins). For production, set specific origins:
+```bash
+CORS_ORIGINS=https://yourdomain.com,https://www.yourdomain.com
+```
 
 ## Related Files
 
-- `backend/internal/middleware/cors.go` - CORS middleware
-- `backend/internal/config/config.go` - Configuration
-- `backend/cmd/api/main.go` - Entry point
-- `backend/.env` - Environment variables
+- ✅ `backend/cmd/api/main.go` - CORS origin parsing
+- ✅ `backend/internal/middleware/cors.go` - CORS middleware
+- ✅ `backend/internal/config/config.go` - Configuration
+- ✅ `frontend/vite.config.ts` - Vite proxy config
+- ✅ `frontend/src/api/client.ts` - API client base URL
 
 ## Follow-up Tasks
 
-- Document backend startup in root README
-- Add healthcheck UI component to frontend
-- Create docker-compose dev profile for easier startup
-- Consider using Vite proxy in development to avoid CORS
+- ✅ Fixed CORS origin parsing
+- 📋 Document CORS configuration in backend README
+- 📋 Add example `.env` file with CORS examples
+- 📋 Consider adding CORS origin validation at startup
