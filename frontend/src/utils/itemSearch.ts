@@ -40,19 +40,35 @@ export function createItemSearchIndex(items: Item[]): Fuse<Item> {
  * Search items using a Fuse index with a result limit
  * Best for dropdown previews where we want top N results
  * 
+ * Supports both text search (fuzzy matching) and numeric search (exact ID match).
+ * 
  * @param fuse - Fuse instance created with createItemSearchIndex
- * @param query - Search query string
+ * @param query - Search query string (can be item name or numeric item ID)
  * @param limit - Maximum number of results (default: 12)
  * @returns Array of matching items sorted by relevance
  * 
  * @example
+ * // Text search with fuzzy matching
  * const results = searchItems(fuseIndex, 'dargon', 10);
  * // Finds "Dragon scimitar", "Dragon bones", etc. despite typo
+ * 
+ * // Numeric ID search
+ * const results = searchItems(fuseIndex, '4151', 10);
+ * // Finds "Abyssal whip" (item ID 4151)
  */
 export function searchItems(fuse: Fuse<Item>, query: string, limit = 12): Item[] {
     const trimmedQuery = query.trim();
     if (!trimmedQuery) return [];
 
+    // Check if query is a numeric item ID
+    const numericQuery = parseInt(trimmedQuery, 10);
+    if (!isNaN(numericQuery) && trimmedQuery === numericQuery.toString()) {
+        // Direct ID lookup from the fuse index
+        const allItems = fuse.getIndex().docs as Item[];
+        return allItems.filter(item => item.itemId === numericQuery).slice(0, limit);
+    }
+
+    // Otherwise, perform fuzzy search by name
     const results = fuse.search(trimmedQuery, { limit });
     return results.map((result) => result.item);
 }
@@ -101,18 +117,35 @@ export function filterItemIds(fuse: Fuse<Item>, query: string): Set<number> {
  * Get an array of item IDs sorted by relevance score
  * Best for table filtering where you want relevance-based ordering
  * 
+ * Supports both text search (fuzzy matching) and numeric search (exact ID match).
+ * 
  * @param fuse - Fuse instance created with createItemSearchIndex
- * @param query - Search query string
+ * @param query - Search query string (can be item name or numeric item ID)
  * @returns Array of OSRS item IDs sorted by search relevance (best matches first)
  * 
  * @example
+ * // Text search
  * const sortedIds = filterItemIdsByRelevance(fuseIndex, 'rune arrow');
  * // Returns IDs sorted by relevance: [892, 891, 890, ...] (exact matches first)
+ * 
+ * // Numeric ID search
+ * const sortedIds = filterItemIdsByRelevance(fuseIndex, '4151');
+ * // Returns [4151] if item exists, [] otherwise
  */
 export function filterItemIdsByRelevance(fuse: Fuse<Item>, query: string): number[] {
     const trimmedQuery = query.trim();
     if (!trimmedQuery) return [];
 
+    // Check if query is a numeric item ID
+    const numericQuery = parseInt(trimmedQuery, 10);
+    if (!isNaN(numericQuery) && trimmedQuery === numericQuery.toString()) {
+        // Direct ID lookup from the fuse index
+        const allItems = fuse.getIndex().docs as Item[];
+        const matchingItem = allItems.find(item => item.itemId === numericQuery);
+        return matchingItem ? [matchingItem.itemId] : [];
+    }
+
+    // Otherwise, perform fuzzy search by name
     const results = fuse.search(trimmedQuery);
     // Results are already sorted by score (best match = lowest score)
     return results.map((result) => result.item.itemId);

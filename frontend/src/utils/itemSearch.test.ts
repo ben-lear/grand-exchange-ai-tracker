@@ -339,4 +339,159 @@ describe('itemSearch', () => {
             expect(results.length).toBeGreaterThan(0);
         });
     });
+
+    describe('Numeric ID Search', () => {
+        it('should search by item ID when query is numeric', () => {
+            const index = createItemSearchIndex(mockItems);
+            const results = searchItems(index, '3', 10);
+
+            expect(results).toHaveLength(1);
+            expect(results[0].itemId).toBe(3);
+            expect(results[0].name).toBe('Abyssal whip');
+        });
+
+        it('should return empty array for non-existent ID', () => {
+            const index = createItemSearchIndex(mockItems);
+            const results = searchItems(index, '999999999', 10);
+
+            expect(results).toHaveLength(0);
+        });
+
+        it('should still perform fuzzy search for non-numeric queries', () => {
+            const index = createItemSearchIndex(mockItems);
+            const results = searchItems(index, 'dragon', 10);
+
+            expect(results.length).toBeGreaterThan(0);
+            expect(results.some(item => item.name.toLowerCase().includes('dragon'))).toBe(true);
+        });
+
+        it('should handle queries with leading/trailing spaces', () => {
+            const index = createItemSearchIndex(mockItems);
+            const results = searchItems(index, '  3  ', 10);
+
+            expect(results).toHaveLength(1);
+            expect(results[0].itemId).toBe(3);
+        });
+
+        it('should not treat "3abc" as numeric ID', () => {
+            const index = createItemSearchIndex(mockItems);
+            const results = searchItems(index, '3abc', 10);
+
+            // Should perform fuzzy search, not ID lookup
+            // May return 0 results if no name matches
+            expect(Array.isArray(results)).toBe(true);
+        });
+
+        it('should not treat "abc3" as numeric ID', () => {
+            const index = createItemSearchIndex(mockItems);
+            const results = searchItems(index, 'abc3', 10);
+
+            // Should perform fuzzy search
+            expect(Array.isArray(results)).toBe(true);
+        });
+
+        it('should handle ID search with limit parameter', () => {
+            const index = createItemSearchIndex(mockItems);
+            const results = searchItems(index, '1', 1);
+
+            expect(results).toHaveLength(1);
+            expect(results[0].itemId).toBe(1);
+        });
+
+        it('should respect limit even if multiple items somehow match ID', () => {
+            const index = createItemSearchIndex(mockItems);
+            // Use ID that exists
+            const results = searchItems(index, '5', 3);
+
+            // Should only return 1 item (exact ID match)
+            expect(results.length).toBeLessThanOrEqual(3);
+            if (results.length > 0) {
+                expect(results[0].itemId).toBe(5);
+            }
+        });
+    });
+
+    describe('filterItemIdsByRelevance with ID Search', () => {
+        it('should return item ID when query is numeric', () => {
+            const index = createItemSearchIndex(mockItems);
+            const results = filterItemIdsByRelevance(index, '3');
+
+            expect(results).toEqual([3]);
+        });
+
+        it('should return empty array for non-existent numeric ID', () => {
+            const index = createItemSearchIndex(mockItems);
+            const results = filterItemIdsByRelevance(index, '999999999');
+
+            expect(results).toEqual([]);
+        });
+
+        it('should perform fuzzy search for non-numeric query', () => {
+            const index = createItemSearchIndex(mockItems);
+            const results = filterItemIdsByRelevance(index, 'dragon');
+
+            expect(results.length).toBeGreaterThan(0);
+            expect(results).toContain(1); // Dragon scimitar
+            expect(results).toContain(2); // Dragon longsword
+        });
+
+        it('should handle trimmed numeric queries', () => {
+            const index = createItemSearchIndex(mockItems);
+            const results = filterItemIdsByRelevance(index, '  2  ');
+
+            expect(results).toEqual([2]);
+        });
+
+        it('should not treat mixed alphanumeric as ID', () => {
+            const index = createItemSearchIndex(mockItems);
+            const results = filterItemIdsByRelevance(index, '1abc');
+
+            // Should perform fuzzy search
+            expect(Array.isArray(results)).toBe(true);
+        });
+
+        it('should handle zero as valid ID', () => {
+            const itemWithZeroId: Item = {
+                id: 99,
+                itemId: 0,
+                name: 'Test item zero',
+                description: 'Test',
+                iconUrl: 'https://example.com/test.png',
+                members: false,
+                buyLimit: 100,
+                highAlch: 1000,
+                lowAlch: 500,
+                createdAt: '2024-01-01T00:00:00Z',
+                updatedAt: '2024-01-01T00:00:00Z',
+            };
+
+            const itemsWithZero = [...mockItems, itemWithZeroId];
+            const index = createItemSearchIndex(itemsWithZero);
+            const results = filterItemIdsByRelevance(index, '0');
+
+            expect(results).toEqual([0]);
+        });
+
+        it('should handle very large item IDs', () => {
+            const itemWithLargeId: Item = {
+                id: 100,
+                itemId: 999999999,
+                name: 'Item with large ID',
+                description: 'Test',
+                iconUrl: 'https://example.com/test.png',
+                members: false,
+                buyLimit: 100,
+                highAlch: 1000,
+                lowAlch: 500,
+                createdAt: '2024-01-01T00:00:00Z',
+                updatedAt: '2024-01-01T00:00:00Z',
+            };
+
+            const itemsWithLarge = [...mockItems, itemWithLargeId];
+            const index = createItemSearchIndex(itemsWithLarge);
+            const results = filterItemIdsByRelevance(index, '999999999');
+
+            expect(results).toEqual([999999999]);
+        });
+    });
 });

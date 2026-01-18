@@ -32,6 +32,8 @@ export interface GlobalSearchHandle {
 interface GlobalSearchProps {
     /** Additional classes for the container */
     className?: string;
+    /** Optional ID for the input (useful when rendering multiple instances) */
+    id?: string;
 }
 
 /**
@@ -55,7 +57,7 @@ interface GlobalSearchProps {
  * ```
  */
 export const GlobalSearch = forwardRef<GlobalSearchHandle, GlobalSearchProps>(
-    ({ className = '' }, ref) => {
+    ({ className = '', id = 'global-search' }, ref) => {
         const navigate = useNavigate();
         const inputRef = useRef<HTMLInputElement>(null);
         const containerRef = useRef<HTMLDivElement>(null);
@@ -78,7 +80,7 @@ export const GlobalSearch = forwardRef<GlobalSearchHandle, GlobalSearchProps>(
             return createItemSearchIndex(items);
         }, [items]);
 
-        // Search results
+        // Search results - supports both name search and ID search
         const searchResults = useMemo(() => {
             if (!fuseIndex || !debouncedQuery.trim()) return [];
             return searchItems(fuseIndex, debouncedQuery, 12);
@@ -183,6 +185,8 @@ export const GlobalSearch = forwardRef<GlobalSearchHandle, GlobalSearchProps>(
             <div ref={containerRef} className={`relative ${className}`}>
                 <SearchInput
                     ref={inputRef}
+                    id={id}
+                    name="search"
                     value={query}
                     onChange={setQuery}
                     onFocus={() => setIsOpen(true)}

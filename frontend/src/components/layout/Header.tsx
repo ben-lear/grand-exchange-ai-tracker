@@ -67,7 +67,7 @@ export const Header = forwardRef<HeaderHandle, HeaderProps>(
 
             {/* Center: Global Search (Desktop) */}
             <div className="hidden md:flex flex-1 max-w-xl mx-8">
-              <GlobalSearch ref={searchRef} className="w-full" />
+              <GlobalSearch ref={searchRef} id="global-search-desktop" className="w-full" />
             </div>
 
             {/* Right: Actions */}
@@ -102,7 +102,7 @@ export const Header = forwardRef<HeaderHandle, HeaderProps>(
 
         {/* Mobile: Global Search - shown below header on mobile */}
         <div className="md:hidden px-4 pb-3">
-          <GlobalSearch className="w-full" />
+          <GlobalSearch id="global-search-mobile" className="w-full" />
         </div>
       </header>
     );

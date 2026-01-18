@@ -3,6 +3,7 @@
  */
 
 import { Download } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 import { ItemWithPrice } from './columns';
 
 export interface ExportButtonProps {
@@ -63,10 +64,10 @@ function convertToJSON(data: ItemWithPrice[]): string {
     lowAlch: item.lowAlch,
     currentPrice: item.currentPrice
       ? {
-          highPrice: item.currentPrice.highPrice,
-          lowPrice: item.currentPrice.lowPrice,
-          updatedAt: item.currentPrice.updatedAt,
-        }
+        highPrice: item.currentPrice.highPrice,
+        lowPrice: item.currentPrice.lowPrice,
+        updatedAt: item.currentPrice.updatedAt,
+      }
       : null,
   }));
 
@@ -89,21 +90,58 @@ function downloadFile(content: string, filename: string, mimeType: string) {
 }
 
 export function ExportButton({ data, filename = 'osrs-items', className = '' }: ExportButtonProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
   const handleExportCSV = () => {
     const csv = convertToCSV(data);
     const timestamp = new Date().toISOString().split('T')[0];
     downloadFile(csv, `${filename}-${timestamp}.csv`, 'text/csv;charset=utf-8;');
+    setIsOpen(false);
   };
 
   const handleExportJSON = () => {
     const json = convertToJSON(data);
     const timestamp = new Date().toISOString().split('T')[0];
     downloadFile(json, `${filename}-${timestamp}.json`, 'application/json;charset=utf-8;');
+    setIsOpen(false);
   };
 
+  // Handle Escape key to close dropdown
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isOpen) {
+        setIsOpen(false);
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('keydown', handleEscape);
+      return () => document.removeEventListener('keydown', handleEscape);
+    }
+  }, [isOpen]);
+
+  // Handle click outside to close dropdown
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [isOpen]);
+
   return (
-    <div className={`relative group ${className}`}>
+    <div ref={dropdownRef} className={`relative ${className}`}>
       <button
+        onClick={() => setIsOpen(!isOpen)}
+        aria-label="Export data"
+        aria-expanded={isOpen}
+        aria-haspopup="true"
         className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 border border-gray-300 dark:border-gray-600 rounded-lg transition-colors"
       >
         <Download className="w-4 h-4" />
@@ -111,22 +149,26 @@ export function ExportButton({ data, filename = 'osrs-items', className = '' }: 
       </button>
 
       {/* Dropdown menu */}
-      <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
-        <div className="py-1">
-          <button
-            onClick={handleExportCSV}
-            className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-          >
-            Export as CSV
-          </button>
-          <button
-            onClick={handleExportJSON}
-            className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-          >
-            Export as JSON
-          </button>
+      {isOpen && (
+        <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-10">
+          <div className="py-1" role="menu">
+            <button
+              onClick={handleExportCSV}
+              role="menuitem"
+              className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+            >
+              Export as CSV
+            </button>
+            <button
+              onClick={handleExportJSON}
+              role="menuitem"
+              className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+            >
+              Export as JSON
+            </button>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

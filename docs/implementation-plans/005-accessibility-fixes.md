@@ -1,12 +1,14 @@
 # 005: Accessibility Fixes
 
 **Priority:** High  
-**Effort:** S (1-4 hours)  
+**Effort:** S (2-4 hours)  
 **Status:** Not Started
+
+> **Note:** Task 5.1 (TableToolbar search input) was completed by Plan 012 (Search System Refactor). The SearchInput component now has proper id/name attributes and aria-label for the clear button.
 
 ## Overview
 
-Fix accessibility issues identified in console warnings and inspection. This implementation plan addresses all 6 form field warnings, keyboard navigation issues, and WCAG 2.1 compliance gaps.
+Fix accessibility issues identified in console warnings and inspection, plus add item ID search capability. This implementation plan addresses 5 remaining form field warnings (down from 6), keyboard navigation issues, WCAG 2.1 compliance gaps, and enhanced search functionality.
 
 ## Pre-Implementation Checklist
 
@@ -20,7 +22,26 @@ Fix accessibility issues identified in console warnings and inspection. This imp
 
 ## Tasks
 
-### 5.1 Add IDs to Form Fields (TableToolbar)
+### 5.1 ~~Add IDs to Form Fields (TableToolbar)~~ ✅ COMPLETE
+
+**Status:** ✅ **Already implemented via Plan 012 (Search System Refactor)**
+
+**File:** `frontend/src/components/table/TableToolbar.tsx` (uses SearchInput component)
+
+**Completed Features:**
+- ✅ Search input has `id="table-search"` and `name="search"`
+- ✅ Clear button has `aria-label="Clear search"`
+- ✅ Proper label association via `htmlFor`
+- ✅ Comprehensive test coverage in `SearchInput.test.tsx`
+
+**No action needed** - skip to Task 5.2
+
+---
+
+### ~~5.1 (ORIGINAL - SKIP THIS)~~
+
+<details>
+<summary>Original Task 5.1 (obsolete - already complete)</summary>
 
 **File:** `frontend/src/components/table/TableToolbar.tsx`
 
@@ -478,6 +499,158 @@ describe('MainLayout Accessibility', () => {
 
 ---
 
+### 5.6 Add Item ID Search Support
+
+**Files:** 
+- `frontend/src/utils/itemSearch.ts`
+- `frontend/src/components/search/GlobalSearch.tsx`  
+- `frontend/src/pages/DashboardPage.tsx`
+
+**Current Issue:**
+- Search only works by item name (fuzzy matching)
+- Cannot search by item ID (e.g., typing "4151" doesn't find Abyssal whip)
+
+**Implementation Steps:**
+
+1. **Update `searchItems()` function in itemSearch.ts:**
+   ```tsx
+   export function searchItems(fuse: Fuse<Item>, query: string, limit = 12): Item[] {
+       const trimmedQuery = query.trim();
+       if (!trimmedQuery) return [];
+
+       // Check if query is a numeric item ID
+       const numericQuery = parseInt(trimmedQuery, 10);
+       if (!isNaN(numericQuery) && trimmedQuery === numericQuery.toString()) {
+           // Direct ID lookup from the fuse index
+           const allItems = fuse.getIndex().docs as Item[];
+           return allItems.filter(item => item.itemId === numericQuery).slice(0, limit);
+       }
+
+       // Otherwise, perform fuzzy search by name
+       const results = fuse.search(trimmedQuery, { limit });
+       return results.map((result) => result.item);
+   }
+   ```
+
+2. **Update JSDoc comment for searchItems():**
+   ```tsx
+   /**
+    * Search items using a Fuse index with a result limit
+    * Best for dropdown previews where we want top N results
+    * 
+    * Supports both text search (fuzzy matching) and numeric search (exact ID match).
+    * 
+    * @param fuse - Fuse instance created with createItemSearchIndex
+    * @param query - Search query string (can be item name or numeric item ID)
+    * @param limit - Maximum number of results (default: 12)
+    * @returns Array of matching items sorted by relevance
+    * 
+    * @example
+    * // Text search with fuzzy matching
+    * const results = searchItems(fuseIndex, 'dargon', 10);
+    * // Finds "Dragon scimitar", "Dragon bones", etc. despite typo
+    * 
+    * // Numeric ID search
+    * const results = searchItems(fuseIndex, '4151', 10);
+    * // Finds "Abyssal whip" (item ID 4151)
+    */
+   ```
+
+3. **Update DashboardPage filtering logic:**
+   ```tsx
+   // In DashboardPage.tsx - update searchMatchIds useMemo
+   const searchMatchIds = useMemo(() => {
+       if (!fuseIndex || !debouncedSearchQuery.trim()) return null;
+
+       // Check if query is a numeric item ID
+       const numericQuery = parseInt(debouncedSearchQuery.trim(), 10);
+       if (!isNaN(numericQuery) && debouncedSearchQuery.trim() === numericQuery.toString()) {
+           // Direct ID match - return single item if found
+           const matchingItem = allItems.find(item => item.itemId === numericQuery);
+           return matchingItem ? [matchingItem.itemId] : [];
+       }
+
+       // Otherwise, perform fuzzy search by name
+       return filterItemIdsByRelevance(fuseIndex, debouncedSearchQuery);
+   }, [fuseIndex, debouncedSearchQuery, allItems]);
+   ```
+
+4. **Update comment in GlobalSearch.tsx:**
+   ```tsx
+   // Change comment from:
+   // Search results
+   
+   // To:
+   // Search results - supports both name search and ID search
+   ```
+
+**Unit Tests to Add:**
+
+Create/update `frontend/src/utils/__tests__/itemSearch.test.ts`:
+
+```typescript
+describe('searchItems with ID support', () => {
+  it('should search by item ID when query is numeric', () => {
+    const fuse = createItemSearchIndex(mockItems);
+    const results = searchItems(fuse, '4151', 10);
+    
+    expect(results).toHaveLength(1);
+    expect(results[0].itemId).toBe(4151);
+    expect(results[0].name).toBe('Abyssal whip');
+  });
+
+  it('should return empty array for non-existent ID', () => {
+    const fuse = createItemSearchIndex(mockItems);
+    const results = searchItems(fuse, '999999999', 10);
+    
+    expect(results).toHaveLength(0);
+  });
+
+  it('should still perform fuzzy search for non-numeric queries', () => {
+    const fuse = createItemSearchIndex(mockItems);
+    const results = searchItems(fuse, 'dragon', 10);
+    
+    expect(results.length).toBeGreaterThan(0);
+    expect(results.every(item => item.name.toLowerCase().includes('dragon'))).toBe(true);
+  });
+
+  it('should handle queries with leading/trailing spaces', () => {
+    const fuse = createItemSearchIndex(mockItems);
+    const results = searchItems(fuse, '  4151  ', 10);
+    
+    expect(results).toHaveLength(1);
+    expect(results[0].itemId).toBe(4151);
+  });
+
+  it('should not treat "4151abc" as numeric ID', () => {
+    const fuse = createItemSearchIndex(mockItems);
+    const results = searchItems(fuse, '4151abc', 10);
+    
+    // Should perform fuzzy search, not ID lookup
+    expect(results.length).toBeGreaterThanOrEqual(0);
+  });
+});
+```
+
+**Manual Testing:**
+
+1. **Header search (GlobalSearch):**
+   - Type "4151" → Should show "Abyssal whip"
+   - Type "dragon" → Should show dragon items
+   - Type "999999999" → Should show "No results"
+
+2. **Table search (DashboardPage):**
+   - Type "4151" in search box → Table should filter to show only Abyssal whip
+   - Type "dragon" → Should show all dragon items
+   - Type "2" → Should show all items with ID = 2 (not items with "2" in name)
+
+3. **Edge cases:**
+   - Leading/trailing spaces: "  4151  " should work
+   - Mixed alphanumeric: "4151abc" should do name search
+   - Very large ID: "999999999" should show no results
+
+---
+
 ## Build & Testing Procedures
 
 ### Local Development Setup
@@ -652,6 +825,8 @@ describe('MainLayout Accessibility', () => {
 - [ ] TypeScript compiles without errors (`npm run type-check`)
 - [ ] Production build succeeds (`npm run build`)
 - [ ] Lighthouse accessibility score 95+ (was ~85)
+- [ ] ID search works for both header and table search
+- [ ] Name search still works with fuzzy matching
 
 ### Manual QA
 
@@ -659,6 +834,8 @@ describe('MainLayout Accessibility', () => {
 - [ ] Tab order is logical throughout the app
 - [ ] Escape key closes all dropdowns
 - [ ] Skip link works and is visible on focus
+- [ ] Search by item ID works (e.g., "4151" finds Abyssal whip)
+- [ ] Search by name still works (e.g., "dragon" finds dragon items)
 - [ ] No regressions in existing functionality
 - [ ] Search, filters, pagination still work correctly
 
@@ -686,7 +863,7 @@ None - All changes are isolated to frontend components
 ## Success Criteria
 
 1. **Console warnings eliminated:**
-   - Form field warnings: 6 → 0
+   - Form field warnings: 6 → 0 (Task 5.1 already complete, Tasks 5.2-5.3 will fix remaining 5)
 
 2. **WCAG 2.1 Level AA compliance:**
    - All form inputs have accessible names (1.3.1, 4.1.2)
@@ -694,13 +871,21 @@ None - All changes are isolated to frontend components
    - Focus indicators visible (2.4.7)
    - Skip links implemented (2.4.1)
 
-3. **Test coverage:**
+3. **Enhanced search functionality:**
+   - Both header and table search support item ID queries
+   - Numeric queries (e.g., "4151") return exact ID matches
+   - Non-numeric queries maintain fuzzy search behavior
+   - No performance degradation
+
+4. **Test coverage:**
    - All modified components have 85%+ coverage
    - New accessibility features have unit tests
+   - ID search has comprehensive test coverage
 
-4. **User experience:**
+5. **User experience:**
    - Keyboard users can navigate efficiently
    - Screen reader users can understand all form fields
+   - Users can search by item ID or name
    - No functionality regressions
 
 ---

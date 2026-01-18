@@ -60,10 +60,12 @@ export function TablePagination({
     <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-4 py-3 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
       {/* Left side - Page size selector */}
       <div className="flex items-center gap-2">
-        <span className="text-sm text-gray-700 dark:text-gray-300">
+        <label htmlFor="page-size-select" className="text-sm text-gray-700 dark:text-gray-300">
           Items per page:
-        </span>
+        </label>
         <select
+          id="page-size-select"
+          name="pageSize"
           value={pageSize}
           onChange={(e) => onPageSizeChange(Number(e.target.value))}
           className="px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"

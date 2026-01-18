@@ -7,8 +7,8 @@
  * - Clear all filters
  */
 
-import { useState, useEffect } from 'react';
-import { X, SlidersHorizontal } from 'lucide-react';
+import { SlidersHorizontal, X } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 export interface FilterState {
   priceMin?: number;
@@ -109,18 +109,19 @@ export function FilterPanel({
       {/* Filter Content */}
       <div className="p-4 space-y-6">
         {/* Members Filter */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+        <fieldset>
+          <legend className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             Membership
-          </label>
+          </legend>
           <div className="space-y-2">
             {[
-              { value: 'all', label: 'All Items' },
-              { value: 'members', label: 'Members Only (P2P)' },
-              { value: 'f2p', label: 'Free-to-Play' },
+              { value: 'all', label: 'All Items', id: 'membership-all' },
+              { value: 'members', label: 'Members Only (P2P)', id: 'membership-members' },
+              { value: 'f2p', label: 'Free-to-Play', id: 'membership-f2p' },
             ].map((option) => (
-              <label key={option.value} className="flex items-center">
+              <label key={option.value} htmlFor={option.id} className="flex items-center">
                 <input
+                  id={option.id}
                   type="radio"
                   name="members"
                   value={option.value}
@@ -139,7 +140,7 @@ export function FilterPanel({
               </label>
             ))}
           </div>
-        </div>
+        </fieldset>
 
         {/* Price Range Filter */}
         <div>
@@ -148,7 +149,12 @@ export function FilterPanel({
           </label>
           <div className="grid grid-cols-2 gap-2">
             <div>
+              <label htmlFor="filter-price-min" className="sr-only">
+                Minimum Price
+              </label>
               <input
+                id="filter-price-min"
+                name="priceMin"
                 type="number"
                 placeholder="Min"
                 value={localFilters.priceMin ?? ''}
@@ -157,7 +163,12 @@ export function FilterPanel({
               />
             </div>
             <div>
+              <label htmlFor="filter-price-max" className="sr-only">
+                Maximum Price
+              </label>
               <input
+                id="filter-price-max"
+                name="priceMax"
                 type="number"
                 placeholder="Max"
                 value={localFilters.priceMax ?? ''}
@@ -175,7 +186,12 @@ export function FilterPanel({
           </label>
           <div className="grid grid-cols-2 gap-2">
             <div>
+              <label htmlFor="filter-volume-min" className="sr-only">
+                Minimum Volume
+              </label>
               <input
+                id="filter-volume-min"
+                name="volumeMin"
                 type="number"
                 placeholder="Min"
                 value={localFilters.volumeMin ?? ''}
@@ -184,7 +200,12 @@ export function FilterPanel({
               />
             </div>
             <div>
+              <label htmlFor="filter-volume-max" className="sr-only">
+                Maximum Volume
+              </label>
               <input
+                id="filter-volume-max"
+                name="volumeMax"
                 type="number"
                 placeholder="Max"
                 value={localFilters.volumeMax ?? ''}

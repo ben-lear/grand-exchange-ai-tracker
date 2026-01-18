@@ -57,6 +57,7 @@ export const DashboardPage: React.FC = () => {
   }, [allItems]);
 
   // Get matching item IDs from search query (sorted by relevance)
+  // Supports both name search (fuzzy matching) and ID search (exact match)
   const searchMatchIds = useMemo(() => {
     if (!fuseIndex || !debouncedSearchQuery.trim()) return null;
     return filterItemIdsByRelevance(fuseIndex, debouncedSearchQuery);

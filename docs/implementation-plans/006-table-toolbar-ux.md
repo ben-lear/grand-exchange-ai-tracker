@@ -274,6 +274,118 @@ const columns = useMemo(() => {
 - **File:** `frontend/src/components/table/ColumnToggle.tsx`
 - **Action:** Add Escape key handler to close dropdown
 
+#### 6.B.7 Reduce Table Row Spacing
+
+**Files:**
+- `frontend/src/components/table/columns.tsx`
+- `frontend/src/components/table/ItemsTable.tsx`
+
+**Current Issue:**
+- Table rows are too tall (~60px) for the information they contain
+- Item ID displayed on separate line below item name creates vertical waste
+- Excessive vertical padding increases scrolling requirements
+
+**Implementation Steps:**
+
+1. **Update item column to display ID inline in columns.tsx:**
+   ```tsx
+   columnHelper.accessor('name', {
+     id: 'name',
+     header: 'Item',
+     cell: (info) => {
+       const item = info.row.original;
+       return (
+         <div className="flex items-center gap-3 min-w-[200px]">
+           {item.iconUrl && (
+             <img src={item.iconUrl} alt={item.name} className="w-8 h-8 flex-shrink-0" />
+           )}
+           <div className="flex flex-col">
+             <div className="flex items-center gap-2">
+               <Link to={itemUrl} className="font-medium text-blue-600...">
+                 {item.name}
+               </Link>
+               <span className="text-xs text-gray-500 dark:text-gray-400">
+                 (ID: {item.itemId})
+               </span>
+             </div>
+           </div>
+         </div>
+       );
+     },
+     size: 250,
+   });
+   ```
+
+2. **Reduce row padding in ItemsTable.tsx:**
+   ```tsx
+   // Change from:
+   <td className="px-4 py-3 text-sm..." style={{ width: cell.column.getSize() }}>
+   
+   // To:
+   <td className="px-4 py-2 text-sm..." style={{ width: cell.column.getSize() }}>
+   ```
+
+3. **Update estimated row height:**
+   ```tsx
+   // Change from:
+   estimateSize: () => 60,
+   
+   // To:
+   estimateSize: () => 48,
+   ```
+
+**Expected Results:**
+- Item ID appears inline: "Abyssal whip (ID: 4151)" on one line
+- Row height reduced from ~60px to ~48px
+- More items visible without scrolling
+- Cleaner, more compact table appearance
+- Item ID still easily readable
+
+**Unit Tests to Update:**
+
+Update `frontend/src/components/table/__tests__/ItemsTable.test.tsx`:
+
+```typescript
+describe('ItemsTable row spacing', () => {
+  it('should display item ID inline with item name', () => {
+    render(<ItemsTable items={mockItems} />);
+    
+    const firstRow = screen.getByText('Abyssal whip').closest('tr');
+    expect(firstRow).toContainHTML('(ID: 4151)');
+    
+    // Verify ID is on same line (no line break)
+    const nameCell = screen.getByText('Abyssal whip').closest('td');
+    const idText = nameCell?.textContent;
+    expect(idText).toMatch(/Abyssal whip.*\(ID: 4151\)/);
+  });
+
+  it('should use reduced vertical padding', () => {
+    render(<ItemsTable items={mockItems} />);
+    
+    const cell = screen.getByText('Abyssal whip').closest('td');
+    expect(cell).toHaveClass('py-2'); // Not py-3
+  });
+});
+```
+
+**Manual Testing:**
+
+1. **Visual inspection:**
+   - Open dashboard page
+   - Verify item names have ID inline: "Item Name (ID: 12345)"
+   - Verify rows appear more compact
+   - Verify no text overflow or truncation
+
+2. **Measure row height:**
+   - Open DevTools Elements panel
+   - Inspect a table row
+   - Verify height is ~48px (was ~60px)
+
+3. **Readability check:**
+   - Verify text is still comfortable to read
+   - Verify icons align properly with text
+   - Verify no visual regression on hover states
+
 ### Build & Test
 
 #### Local Development
@@ -558,6 +670,9 @@ npm run dev
 - [ ] All unit tests pass
 - [ ] TypeScript build completes without errors
 - [ ] Responsive design works on mobile/tablet
+- [ ] Table rows reduced from ~60px to ~48px height
+- [ ] Item ID displays inline with item name (not on separate line)
+- [ ] Table remains readable and scannable with reduced spacing
 
 ---
 
