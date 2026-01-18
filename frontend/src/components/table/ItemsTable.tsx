@@ -31,7 +31,6 @@ export interface ItemsTableProps {
   error?: Error | null;
   enableVirtualization?: boolean;
   pageSize?: number;
-  onRowClick?: (item: ItemWithPrice) => void;
 }
 
 export function ItemsTable({
@@ -40,7 +39,6 @@ export function ItemsTable({
   error = null,
   enableVirtualization = true,
   pageSize = 100,
-  onRowClick,
 }: ItemsTableProps) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -240,9 +238,7 @@ export function ItemsTable({
               return (
                 <tr
                   key={row.id}
-                  className={`hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors ${onRowClick ? 'cursor-pointer' : ''
-                    }`}
-                  onClick={() => onRowClick?.(row.original)}
+                  className="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                 >
                   {row.getVisibleCells().map((cell) => (
                     <td

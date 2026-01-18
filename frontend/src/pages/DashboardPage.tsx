@@ -121,10 +121,6 @@ export const DashboardPage: React.FC = () => {
     // Could add a manual refetch trigger if needed
   };
 
-  const handleRowClick = (item: ItemWithPrice) => {
-    navigate(`/items/${item.itemId}`);
-  };
-
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
   };
@@ -207,7 +203,6 @@ export const DashboardPage: React.FC = () => {
               data={paginatedItems}
               isLoading={!hasItems}
               error={null}
-              onRowClick={handleRowClick}
               enableVirtualization={paginatedItems.length > 200}
             />
 

@@ -6,7 +6,7 @@ import { ItemsTable } from '@/components/table/ItemsTable';
 import type { ItemWithPrice } from '@/components/table/columns';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
 // Mock data
 const mockItem: ItemWithPrice = {
@@ -98,22 +98,36 @@ describe('ItemsTable', () => {
     expect(nameHeader.querySelector('.lucide-arrow-up')).toBeInTheDocument();
   });
 
-  it('calls onRowClick when row is clicked', () => {
-    const onRowClick = vi.fn();
+  it('renders item name as a clickable link', () => {
     render(
       <MemoryRouter>
-        <ItemsTable data={mockData} onRowClick={onRowClick} enableVirtualization={false} />
+        <ItemsTable data={mockData} enableVirtualization={false} />
       </MemoryRouter>
     );
 
-    // Click on the item name link which should trigger row click
-    const itemLink = screen.getByText('Abyssal whip');
-    const tableRow = itemLink.closest('tr');
-    if (tableRow) {
-      fireEvent.click(tableRow);
-    }
+    // Check that the item name is a link
+    const itemLink = screen.getByRole('link', { name: 'Abyssal whip' });
+    expect(itemLink).toBeInTheDocument();
+    expect(itemLink).toHaveAttribute('href', '/items/1/abyssal-whip');
+  });
 
-    expect(onRowClick).toHaveBeenCalledWith(mockItem);
+  it('does not trigger navigation when clicking on table row', () => {
+    render(
+      <MemoryRouter>
+        <ItemsTable data={mockData} enableVirtualization={false} />
+      </MemoryRouter>
+    );
+
+    // Find the table row
+    const itemName = screen.getByText('Abyssal whip');
+    const tableRow = itemName.closest('tr');
+
+    // Verify row doesn't have cursor-pointer class
+    expect(tableRow).not.toHaveClass('cursor-pointer');
+
+    // Verify row doesn't have onClick handler by checking it doesn't have cursor-pointer
+    // The row should only have hover styling, not clickable styling
+    expect(tableRow?.className).toContain('hover:bg-gray-50');
   });
 
   it('shows item count information', () => {
