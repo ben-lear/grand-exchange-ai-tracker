@@ -6,6 +6,7 @@ import { TrendingDown, TrendingUp } from 'lucide-react';
 import React from 'react';
 import type { CurrentPrice, Item } from '../../types';
 import { cn } from '../../utils';
+import { Button } from '../ui';
 
 /**
  * Item with optional price data for search results
@@ -49,16 +50,16 @@ export const SearchResult: React.FC<SearchResultProps> = ({
     const priceChange = itemWithPrice.currentPrice?.change24h;
 
     return (
-        <button
+        <Button
+            variant="ghost"
+            width="full"
             role="option"
             aria-selected={isSelected}
             onClick={onClick}
             onMouseEnter={onMouseEnter}
             className={cn(
-                'w-full flex items-center gap-3 px-4 py-3 text-left transition-colors',
-                'hover:bg-gray-100 dark:hover:bg-gray-800',
-                isSelected && 'bg-gray-100 dark:bg-gray-800',
-                'focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500'
+                'justify-start gap-3 px-4 py-3 text-left h-auto',
+                isSelected && 'bg-gray-100 dark:bg-gray-800'
             )}
         >
             {/* Item Icon */}
@@ -117,6 +118,6 @@ export const SearchResult: React.FC<SearchResultProps> = ({
                     </div>
                 )}
             </div>
-        </button>
+        </Button>
     );
 };

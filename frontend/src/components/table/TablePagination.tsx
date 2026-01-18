@@ -7,6 +7,7 @@
  */
 
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
+import { Button } from '../ui';
 
 export interface TablePaginationProps {
   currentPage: number;
@@ -95,22 +96,24 @@ export function TablePagination({
 
       {/* Right side - Navigation buttons */}
       <div className="flex items-center gap-1">
-        <button
+        <Button
+          variant="toolbar"
+          size="icon"
           onClick={handleFirstPage}
           disabled={!canGoPrevious}
-          className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           title="First page"
         >
           <ChevronsLeft className="w-5 h-5" />
-        </button>
-        <button
+        </Button>
+        <Button
+          variant="toolbar"
+          size="icon"
           onClick={handlePreviousPage}
           disabled={!canGoPrevious}
-          className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           title="Previous page"
         >
           <ChevronLeft className="w-5 h-5" />
-        </button>
+        </Button>
 
         {/* Page number display */}
         <div className="px-4 py-2 text-sm font-medium text-gray-900 dark:text-gray-100">
@@ -120,22 +123,24 @@ export function TablePagination({
           <span className="font-semibold">{totalPages}</span>
         </div>
 
-        <button
+        <Button
+          variant="toolbar"
+          size="icon"
           onClick={handleNextPage}
           disabled={!canGoNext}
-          className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           title="Next page"
         >
           <ChevronRight className="w-5 h-5" />
-        </button>
-        <button
+        </Button>
+        <Button
+          variant="toolbar"
+          size="icon"
           onClick={handleLastPage}
           disabled={!canGoNext}
-          className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           title="Last page"
         >
           <ChevronsRight className="w-5 h-5" />
-        </button>
+        </Button>
       </div>
     </div>
   );

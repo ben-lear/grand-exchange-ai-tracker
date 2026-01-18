@@ -5,6 +5,7 @@
 import { Download } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { ItemWithPrice } from './columns';
+import { Button } from '../ui';
 
 export interface ExportButtonProps {
   data: ItemWithPrice[];
@@ -137,35 +138,38 @@ export function ExportButton({ data, filename = 'osrs-items', className = '' }: 
 
   return (
     <div ref={dropdownRef} className={`relative ${className}`}>
-      <button
+      <Button
+        variant="secondary"
+        size="default"
         onClick={() => setIsOpen(!isOpen)}
         aria-label="Export data"
         aria-expanded={isOpen}
         aria-haspopup="true"
-        className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 border border-gray-300 dark:border-gray-600 rounded-lg transition-colors"
+        leftIcon={<Download className="w-4 h-4" />}
       >
-        <Download className="w-4 h-4" />
-        <span>Export</span>
-      </button>
+        Export
+      </Button>
 
       {/* Dropdown menu */}
       {isOpen && (
         <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-10">
           <div className="py-1" role="menu">
-            <button
+            <Button
+              variant="menu"
+              size="sm"
               onClick={handleExportCSV}
               role="menuitem"
-              className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
             >
               Export as CSV
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="menu"
+              size="sm"
               onClick={handleExportJSON}
               role="menuitem"
-              className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
             >
               Export as JSON
-            </button>
+            </Button>
           </div>
         </div>
       )}

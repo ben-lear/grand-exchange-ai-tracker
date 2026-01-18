@@ -8,6 +8,7 @@ import { Link } from 'react-router-dom';
 import { useUIStore } from '../../stores';
 import { cn } from '../../utils';
 import { GlobalSearch, type GlobalSearchHandle } from '../search';
+import { Button } from '../ui';
 
 export interface HeaderProps {
   className?: string;
@@ -73,21 +74,25 @@ export const Header = forwardRef<HeaderHandle, HeaderProps>(
             {/* Right: Actions */}
             <div className="flex items-center gap-2">
               {/* Mobile search button - focuses the search on click */}
-              <button
+              <Button
+                variant="ghost"
+                size="icon"
                 onClick={() => searchRef.current?.focus()}
-                className="md:hidden p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800"
+                className="md:hidden"
                 aria-label="Search"
               >
                 <Search className="w-5 h-5" />
-              </button>
+              </Button>
 
-              <button
-                className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 relative"
+              <Button
+                variant="ghost"
+                size="icon"
+                className="relative"
                 aria-label="Notifications"
               >
                 <Bell className="w-5 h-5" />
                 <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
-              </button>
+              </Button>
 
               <Link
                 to="/settings"

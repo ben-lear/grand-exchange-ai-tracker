@@ -9,6 +9,7 @@
 
 import { SlidersHorizontal, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { Button } from '../ui';
 
 export interface FilterState {
   priceMin?: number;
@@ -96,13 +97,14 @@ export function FilterPanel({
           )}
         </div>
         {onClose && (
-          <button
+          <Button
+            variant="close"
+            size="icon-sm"
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
             aria-label="Close filters"
           >
             <X className="w-5 h-5" />
-          </button>
+          </Button>
         )}
       </div>
 
@@ -219,19 +221,21 @@ export function FilterPanel({
 
       {/* Footer Actions */}
       <div className="p-4 border-t border-gray-200 dark:border-gray-700 space-y-2">
-        <button
+        <Button
+          variant="primary"
+          width="full"
           onClick={handleApply}
-          className="w-full px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
         >
           Apply Filters
-        </button>
+        </Button>
         {hasActiveFilters() && (
-          <button
+          <Button
+            variant="secondary"
+            width="full"
             onClick={handleClear}
-            className="w-full px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 border border-gray-300 dark:border-gray-600 rounded-lg transition-colors"
           >
             Clear All Filters
-          </button>
+          </Button>
         )}
       </div>
     </div>

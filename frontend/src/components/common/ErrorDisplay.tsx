@@ -6,6 +6,7 @@ import React from 'react';
 import { AlertCircle, RefreshCw } from 'lucide-react';
 import { cn } from '../../utils';
 import type { ApiError } from '../../types';
+import { Button } from '../ui';
 
 export interface ErrorDisplayProps {
   /** Error object or message */
@@ -51,13 +52,14 @@ export const ErrorDisplay: React.FC<ErrorDisplayProps> = ({
         <AlertCircle className="w-4 h-4" />
         <span>{errorMessage}</span>
         {onRetry && (
-          <button
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={onRetry}
             className="underline hover:no-underline"
-            type="button"
           >
             Retry
-          </button>
+          </Button>
         )}
       </div>
     );
@@ -83,14 +85,14 @@ export const ErrorDisplay: React.FC<ErrorDisplayProps> = ({
           </p>
         </div>
         {onRetry && (
-          <button
+          <Button
+            variant="error"
+            size="sm"
             onClick={onRetry}
-            className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-red-700 dark:text-red-300 bg-red-100 dark:bg-red-900 hover:bg-red-200 dark:hover:bg-red-800 rounded-md transition-colors"
-            type="button"
+            leftIcon={<RefreshCw className="w-4 h-4" />}
           >
-            <RefreshCw className="w-4 h-4" />
             Retry
-          </button>
+          </Button>
         )}
       </div>
     </div>

@@ -5,6 +5,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Home } from 'lucide-react';
+import { Button } from '../components/ui';
 
 /**
  * NotFoundPage component - Displays 404 error
@@ -33,12 +34,14 @@ export const NotFoundPage: React.FC = () => {
           Go Home
         </Link>
         
-        <button
+        <Button
+          variant="secondary"
+          size="lg"
           onClick={() => window.history.back()}
-          className="inline-flex items-center gap-2 px-6 py-3 bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 text-gray-900 dark:text-white font-medium rounded-lg transition-colors"
+          className="text-gray-900 dark:text-white"
         >
           Go Back
-        </button>
+        </Button>
       </div>
     </div>
   );

@@ -7,6 +7,7 @@
  */
 
 import { TimePeriod } from '@/types';
+import { Button } from '../ui';
 
 export interface TimePeriodSelectorProps {
   activePeriod: TimePeriod;
@@ -44,27 +45,17 @@ export function TimePeriodSelector({
         const available = isAvailable(option.value);
 
         return (
-          <button
+          <Button
             key={option.value}
+            variant={isActive ? 'active' : 'inactive'}
+            size="sm"
+            radius="md"
             onClick={() => !disabled && available && onPeriodChange(option.value)}
             disabled={disabled || !available}
             title={option.description}
-            className={`
-              px-3 py-1.5 text-sm font-medium rounded-md transition-all duration-200
-              ${
-                isActive
-                  ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm'
-                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
-              }
-              ${
-                !available || disabled
-                  ? 'opacity-50 cursor-not-allowed'
-                  : 'hover:bg-white/50 dark:hover:bg-gray-700/50 cursor-pointer'
-              }
-            `}
           >
             {option.label}
-          </button>
+          </Button>
         );
       })}
     </div>

@@ -6,6 +6,7 @@
 import { Search, X } from 'lucide-react';
 import React, { forwardRef, useCallback } from 'react';
 import { cn } from '../../utils';
+import { Button } from '../ui';
 
 export interface SearchInputProps {
     /** Current input value */
@@ -104,15 +105,17 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
                     role={ariaHaspopup === 'listbox' ? 'combobox' : undefined}
                 />
                 {value && (
-                    <button
+                    <Button
+                        variant="close"
+                        size="icon-sm"
                         type="button"
                         onClick={handleClear}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 dark:hover:text-white rounded-sm"
                         aria-label="Clear search"
+                        className="absolute right-2 top-1/2 -translate-y-1/2"
                         tabIndex={-1}
                     >
                         <X className="w-4 h-4" />
-                    </button>
+                    </Button>
                 )}
             </div>
         );

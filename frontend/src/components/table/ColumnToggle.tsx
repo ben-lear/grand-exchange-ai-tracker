@@ -2,6 +2,7 @@ import { useOnClickOutside } from '@/hooks/useOnClickOutside';
 import { ALL_COLUMNS, useColumnVisibilityStore } from '@/stores/useColumnVisibilityStore';
 import { Check, Columns } from 'lucide-react';
 import { useRef, useState } from 'react';
+import { Button } from '../ui';
 
 interface ColumnInfo {
     id: string;
@@ -35,15 +36,16 @@ export function ColumnToggle() {
 
     return (
         <div className="relative" ref={ref}>
-            <button
+            <Button
+                variant="secondary"
+                size="default"
                 onClick={() => setIsOpen(!isOpen)}
-                className="flex items-center gap-2 px-3 py-2 text-sm border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
                 aria-label="Toggle column visibility"
                 title="Toggle visible columns"
+                leftIcon={<Columns className="w-4 h-4" />}
             >
-                <Columns className="w-4 h-4" />
                 <span className="hidden sm:inline">Columns</span>
-            </button>
+            </Button>
 
             {isOpen && (
                 <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-lg shadow-lg z-50">
@@ -72,18 +74,22 @@ export function ColumnToggle() {
                         </div>
 
                         <div className="border-t dark:border-gray-700 mt-2 pt-2 flex gap-2">
-                            <button
+                            <Button
+                                variant="secondary"
+                                size="sm"
                                 onClick={showAll}
-                                className="flex-1 text-xs px-2 py-1 border dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
+                                className="flex-1 text-xs"
                             >
                                 Show All
-                            </button>
-                            <button
+                            </Button>
+                            <Button
+                                variant="secondary"
+                                size="sm"
                                 onClick={resetToDefaults}
-                                className="flex-1 text-xs px-2 py-1 border dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
+                                className="flex-1 text-xs"
                             >
                                 Reset
-                            </button>
+                            </Button>
                         </div>
                     </div>
                 </div>
