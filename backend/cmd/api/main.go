@@ -60,6 +60,7 @@ func main() {
 	cacheService := services.NewCacheService(redisClient, logger)
 	itemService := services.NewItemService(itemRepo, cacheService, cfg.WikiPricesBaseURL, logger)
 	priceService := services.NewPriceService(priceRepo, itemRepo, cacheService, cfg.WikiPricesBaseURL, logger)
+	watchlistService := services.NewWatchlistService(dbClient, logger)
 
 	// Initialize SSE Hub if enabled
 	var sseHub *services.SSEHub
@@ -73,6 +74,7 @@ func main() {
 	healthHandler := handlers.NewHealthHandler(dbClient, redisClient, logger)
 	itemHandler := handlers.NewItemHandler(itemService, priceService, logger)
 	priceHandler := handlers.NewPriceHandler(priceService, logger)
+	watchlistHandler := handlers.NewWatchlistHandler(watchlistService, logger)
 
 	// Initialize SSE handler if enabled
 	var sseHandler *handlers.SSEHandler
@@ -158,6 +160,11 @@ func main() {
 	prices.Get("/current/:id", priceHandler.GetCurrentPrice)         // GET /api/v1/prices/current/:id
 	prices.Get("/history/:id", priceHandler.GetPriceHistory)         // GET /api/v1/prices/history/:id?period=7d&sample=150
 
+	// Watchlist routes
+	watchlists := api.Group("/watchlists")
+	watchlists.Post("/share", watchlistHandler.CreateShare)      // POST /api/v1/watchlists/share
+	watchlists.Get("/share/:token", watchlistHandler.GetShare)   // GET /api/v1/watchlists/share/:token
+
 	// SSE route (if enabled) - avoid rate limiting to prevent disconnect loops
 	if cfg.SSE.Enabled && sseHandler != nil {
 		pricesNoLimit := apiNoLimit.Group("/prices")
@@ -169,7 +176,7 @@ func main() {
 	sync.Post("/prices", priceHandler.SyncCurrentPrices) // POST /api/v1/sync/prices
 
 	// Initialize and start scheduler (pass SSE hub if enabled)
-	sched := scheduler.NewScheduler(priceService, itemService, sseHub, logger)
+	sched := scheduler.NewScheduler(priceService, itemService, watchlistService, sseHub, logger)
 	if err := sched.Start(); err != nil {
 		logger.Fatalf("Failed to start scheduler: %v", err)
 	}

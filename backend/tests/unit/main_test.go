@@ -149,6 +149,32 @@ func (m *MockPriceService) EnsureFuturePartitions(ctx context.Context, daysAhead
 	return args.Error(0)
 }
 
+// MockWatchlistService is a mock implementation of WatchlistService.
+type MockWatchlistService struct {
+	mock.Mock
+}
+
+func (m *MockWatchlistService) CreateShare(ctx context.Context, watchlistData interface{}) (*models.WatchlistShareResponse, error) {
+	args := m.Called(ctx, watchlistData)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*models.WatchlistShareResponse), args.Error(1)
+}
+
+func (m *MockWatchlistService) GetShare(ctx context.Context, token string) (*models.WatchlistShareDetailResponse, error) {
+	args := m.Called(ctx, token)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*models.WatchlistShareDetailResponse), args.Error(1)
+}
+
+func (m *MockWatchlistService) CleanupExpiredShares(ctx context.Context) (int64, error) {
+	args := m.Called(ctx)
+	return args.Get(0).(int64), args.Error(1)
+}
+
 func TestMain(m *testing.M) {
 	// This function is intentionally left empty.
 	// Its purpose is to provide a central place for package-level test setup

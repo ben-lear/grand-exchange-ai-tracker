@@ -7,7 +7,7 @@
  * - View density selector
  */
 
-import { Download, RefreshCw, SlidersHorizontal } from 'lucide-react';
+import { Download, ListCheck, RefreshCw, SlidersHorizontal } from 'lucide-react';
 import { SearchInput } from '../common/SearchInput';
 import { Button } from '../ui';
 import { ColumnToggle } from './ColumnToggle';
@@ -18,6 +18,7 @@ export interface TableToolbarProps {
   onRefresh?: () => void;
   onExport?: () => void;
   onFilterClick?: () => void;
+  onManageWatchlists?: () => void;
   isRefreshing?: boolean;
   totalCount?: number;
   visibleCount?: number;
@@ -29,6 +30,7 @@ export function TableToolbar({
   onRefresh,
   onExport,
   onFilterClick,
+  onManageWatchlists,
   isRefreshing = false,
   totalCount = 0,
   visibleCount = 0,
@@ -80,6 +82,20 @@ export function TableToolbar({
 
         {/* Column toggle */}
         <ColumnToggle />
+
+        {/* Manage Watchlists button */}
+        {onManageWatchlists && (
+          <Button
+            variant="secondary"
+            size="default"
+            onClick={onManageWatchlists}
+            title="Manage watchlists"
+            aria-label="Manage watchlists"
+            leftIcon={<ListCheck className="w-4 h-4" />}
+          >
+            <span className="hidden sm:inline">Watchlists</span>
+          </Button>
+        )}
 
         {/* Filter button */}
         {onFilterClick && (

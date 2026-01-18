@@ -129,6 +129,15 @@ export const DashboardPage: React.FC = () => {
     setCurrentPage(page);
   };
 
+  const handleManageWatchlists = () => {
+    navigate('/watchlists');
+  };
+
+  const handleSearchChange = (value: string) => {
+    setSearchQuery(value);
+    setCurrentPage(1); // Reset to first page when searching
+  };
+
   const handlePageSizeChange = (size: number) => {
     setPageSize(size);
     setCurrentPage(1); // Reset to first page when changing page size
@@ -137,11 +146,6 @@ export const DashboardPage: React.FC = () => {
   const handleFiltersChange = (newFilters: FilterState) => {
     setFilters(newFilters);
     setCurrentPage(1); // Reset to first page when changing filters
-  };
-
-  const handleSearchChange = (query: string) => {
-    setSearchQuery(query);
-    setCurrentPage(1); // Reset to first page when searching
   };
 
   // Show loading spinner until both items and prices are loaded
@@ -192,6 +196,7 @@ export const DashboardPage: React.FC = () => {
               onSearchChange={handleSearchChange}
               onRefresh={handleRefresh}
               onFilterClick={() => setShowFilters(!showFilters)}
+              onManageWatchlists={handleManageWatchlists}
               isRefreshing={!isFullyLoaded}
               totalCount={allItems.length}
               visibleCount={totalItems}

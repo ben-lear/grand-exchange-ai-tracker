@@ -14,18 +14,20 @@ import (
 
 // Scheduler manages scheduled jobs.
 type Scheduler struct {
-	cron         *cron.Cron
-	priceService services.PriceService
-	itemService  services.ItemService
-	sseHub       *services.SSEHub
-	logger       *zap.SugaredLogger
-	itemsSynced  atomic.Bool
+	cron             *cron.Cron
+	priceService     services.PriceService
+	itemService      services.ItemService
+	watchlistService services.WatchlistService
+	sseHub           *services.SSEHub
+	logger           *zap.SugaredLogger
+	itemsSynced      atomic.Bool
 }
 
 // NewScheduler creates a new scheduler.
 func NewScheduler(
 	priceService services.PriceService,
 	itemService services.ItemService,
+	watchlistService services.WatchlistService,
 	sseHub *services.SSEHub,
 	logger *zap.SugaredLogger,
 ) *Scheduler {
@@ -33,11 +35,12 @@ func NewScheduler(
 	c := cron.New(cron.WithSeconds())
 
 	return &Scheduler{
-		cron:         c,
-		priceService: priceService,
-		itemService:  itemService,
-		sseHub:       sseHub,
-		logger:       logger,
+		cron:             c,
+		priceService:     priceService,
+		itemService:      itemService,
+		watchlistService: watchlistService,
+		sseHub:           sseHub,
+		logger:           logger,
 	}
 }
 
@@ -77,6 +80,13 @@ func (s *Scheduler) Start() error {
 		return err
 	}
 	s.logger.Info("Scheduled: Price maintenance (daily at 00:05)")
+
+	// Job 4: Cleanup expired watchlist shares daily at 02:00
+	_, err = s.cron.AddFunc("0 0 2 * * *", s.cleanupWatchlistSharesJob)
+	if err != nil {
+		return err
+	}
+	s.logger.Info("Scheduled: Watchlist shares cleanup (daily at 02:00)")
 
 	// Start the cron scheduler
 	s.cron.Start()
@@ -240,5 +250,31 @@ func (s *Scheduler) maintenanceJob() {
 	duration := time.Since(start)
 	s.logger.Infow("Price maintenance completed",
 		"duration_ms", duration.Milliseconds(),
+	)
+}
+
+// cleanupWatchlistSharesJob removes expired watchlist shares from the database.
+func (s *Scheduler) cleanupWatchlistSharesJob() {
+	if s.watchlistService == nil {
+		s.logger.Debug("Watchlist service not available, skipping cleanup")
+		return
+	}
+
+	s.logger.Info("Starting watchlist shares cleanup job")
+	start := time.Now()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+	defer cancel()
+
+	count, err := s.watchlistService.CleanupExpiredShares(ctx)
+	if err != nil {
+		s.logger.Errorf("Watchlist shares cleanup failed: %v", err)
+		return
+	}
+
+	duration := time.Since(start)
+	s.logger.Infow("Watchlist shares cleanup completed",
+		"duration_ms", duration.Milliseconds(),
+		"deleted_count", count,
 	)
 }

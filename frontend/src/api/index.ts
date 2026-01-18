@@ -17,3 +17,10 @@ export {
   syncCurrentPrices
 } from './prices';
 
+// Watchlist API
+export {
+  createWatchlistShare,
+  isValidShareToken,
+  retrieveWatchlistShare
+} from './watchlist';
+

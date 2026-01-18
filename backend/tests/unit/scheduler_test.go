@@ -19,9 +19,10 @@ import (
 func TestNewScheduler(t *testing.T) {
 	mockPriceService := new(MockPriceService)
 	mockItemService := new(MockItemService)
+	mockWatchlistService := new(MockWatchlistService)
 	logger := zap.NewNop().Sugar()
 
-	sched := scheduler.NewScheduler(mockPriceService, mockItemService, nil, logger)
+	sched := scheduler.NewScheduler(mockPriceService, mockItemService, mockWatchlistService, nil, logger)
 
 	// Mock the async sync job that runs on Start
 
@@ -37,6 +38,7 @@ func TestNewScheduler(t *testing.T) {
 func TestScheduler_Start_Success(t *testing.T) {
 	mockPriceService := new(MockPriceService)
 	mockItemService := new(MockItemService)
+	mockWatchlistService := new(MockWatchlistService)
 	logger := zap.NewNop().Sugar()
 
 	// Mock the initial sync items call that happens on Start
@@ -44,7 +46,7 @@ func TestScheduler_Start_Success(t *testing.T) {
 	mockPriceService.On("EnsureFuturePartitions", mock.AnythingOfType("*context.timerCtx"), mock.AnythingOfType("int")).Return(nil).Maybe()
 	mockPriceService.On("SyncCurrentPrices", mock.AnythingOfType("*context.timerCtx")).Return([]models.BulkPriceUpdate{}, nil)
 
-	sched := scheduler.NewScheduler(mockPriceService, mockItemService, nil, logger)
+	sched := scheduler.NewScheduler(mockPriceService, mockItemService, mockWatchlistService, nil, logger)
 
 	// Mock the async sync job that runs on Start
 
@@ -66,6 +68,7 @@ func TestScheduler_Start_Success(t *testing.T) {
 func TestScheduler_Stop(t *testing.T) {
 	mockPriceService := new(MockPriceService)
 	mockItemService := new(MockItemService)
+	mockWatchlistService := new(MockWatchlistService)
 	logger := zap.NewNop().Sugar()
 
 	// Mock the initial sync items call that happens on Start
@@ -73,7 +76,7 @@ func TestScheduler_Stop(t *testing.T) {
 	mockPriceService.On("EnsureFuturePartitions", mock.AnythingOfType("*context.timerCtx"), mock.AnythingOfType("int")).Return(nil).Maybe()
 	mockPriceService.On("SyncCurrentPrices", mock.AnythingOfType("*context.timerCtx")).Return([]models.BulkPriceUpdate{}, nil)
 
-	sched := scheduler.NewScheduler(mockPriceService, mockItemService, nil, logger)
+	sched := scheduler.NewScheduler(mockPriceService, mockItemService, mockWatchlistService, nil, logger)
 
 	// Mock the async sync job that runs on Start
 
@@ -103,13 +106,14 @@ func TestScheduler_Stop(t *testing.T) {
 func TestScheduler_SyncCurrentPricesJob_Success(t *testing.T) {
 	mockPriceService := new(MockPriceService)
 	mockItemService := new(MockItemService)
+	mockWatchlistService := new(MockWatchlistService)
 	logger := zap.NewNop().Sugar()
 
 	// Mock successful sync
 	mockPriceService.On("EnsureFuturePartitions", mock.AnythingOfType("*context.timerCtx"), mock.AnythingOfType("int")).Return(nil).Maybe()
 	mockPriceService.On("SyncCurrentPrices", mock.AnythingOfType("*context.timerCtx")).Return([]models.BulkPriceUpdate{}, nil)
 
-	sched := scheduler.NewScheduler(mockPriceService, mockItemService, nil, logger)
+	sched := scheduler.NewScheduler(mockPriceService, mockItemService, mockWatchlistService, nil, logger)
 
 	// Mock the async sync job that runs on Start
 
@@ -137,6 +141,7 @@ func TestScheduler_SyncCurrentPricesJob_Success(t *testing.T) {
 func TestScheduler_SyncCurrentPricesJob_WithError(t *testing.T) {
 	mockPriceService := new(MockPriceService)
 	mockItemService := new(MockItemService)
+	mockWatchlistService := new(MockWatchlistService)
 	logger := zap.NewNop().Sugar()
 
 	// Mock failed sync - return nil slice and error
@@ -144,7 +149,7 @@ func TestScheduler_SyncCurrentPricesJob_WithError(t *testing.T) {
 	mockPriceService.On("SyncCurrentPrices", mock.AnythingOfType("*context.timerCtx")).
 		Return(nil, errors.New("sync failed"))
 
-	sched := scheduler.NewScheduler(mockPriceService, mockItemService, nil, logger)
+	sched := scheduler.NewScheduler(mockPriceService, mockItemService, mockWatchlistService, nil, logger)
 
 	// Mock the async sync job that runs on Start
 
@@ -163,6 +168,7 @@ func TestScheduler_SyncCurrentPricesJob_WithError(t *testing.T) {
 func TestScheduler_SyncTopItemsHistoryJob_Success(t *testing.T) {
 	mockPriceService := new(MockPriceService)
 	mockItemService := new(MockItemService)
+	mockWatchlistService := new(MockWatchlistService)
 	logger := zap.NewNop().Sugar()
 
 	// Mock successful historical sync for each item
@@ -171,7 +177,7 @@ func TestScheduler_SyncTopItemsHistoryJob_Success(t *testing.T) {
 		mock.AnythingOfType("int"),
 		false).Return(nil)
 
-	sched := scheduler.NewScheduler(mockPriceService, mockItemService, nil, logger)
+	sched := scheduler.NewScheduler(mockPriceService, mockItemService, mockWatchlistService, nil, logger)
 
 	// Mock the async sync job that runs on Start
 
@@ -190,6 +196,7 @@ func TestScheduler_SyncTopItemsHistoryJob_Success(t *testing.T) {
 func TestScheduler_SyncTopItemsHistoryJob_PartialFailure(t *testing.T) {
 	mockPriceService := new(MockPriceService)
 	mockItemService := new(MockItemService)
+	mockWatchlistService := new(MockWatchlistService)
 	logger := zap.NewNop().Sugar()
 
 	// Mock some failures and some successes
@@ -198,7 +205,7 @@ func TestScheduler_SyncTopItemsHistoryJob_PartialFailure(t *testing.T) {
 		mock.AnythingOfType("int"),
 		false).Return(errors.New("sync failed")).Maybe()
 
-	sched := scheduler.NewScheduler(mockPriceService, mockItemService, nil, logger)
+	sched := scheduler.NewScheduler(mockPriceService, mockItemService, mockWatchlistService, nil, logger)
 
 	// Mock the async sync job that runs on Start
 
@@ -217,6 +224,7 @@ func TestScheduler_SyncTopItemsHistoryJob_PartialFailure(t *testing.T) {
 func TestScheduler_SyncAllItemsHistoryJob_Success(t *testing.T) {
 	mockPriceService := new(MockPriceService)
 	mockItemService := new(MockItemService)
+	mockWatchlistService := new(MockWatchlistService)
 	logger := zap.NewNop().Sugar()
 
 	// Mock ListItems to return a few test items
@@ -238,7 +246,7 @@ func TestScheduler_SyncAllItemsHistoryJob_Success(t *testing.T) {
 		mock.AnythingOfType("int"),
 		true).Return(nil)
 
-	sched := scheduler.NewScheduler(mockPriceService, mockItemService, nil, logger)
+	sched := scheduler.NewScheduler(mockPriceService, mockItemService, mockWatchlistService, nil, logger)
 
 	// Mock the async sync job that runs on Start
 
@@ -257,6 +265,7 @@ func TestScheduler_SyncAllItemsHistoryJob_Success(t *testing.T) {
 func TestScheduler_SyncAllItemsHistoryJob_ListItemsError(t *testing.T) {
 	mockPriceService := new(MockPriceService)
 	mockItemService := new(MockItemService)
+	mockWatchlistService := new(MockWatchlistService)
 	logger := zap.NewNop().Sugar()
 
 	// Mock ListItems to return an error
@@ -265,7 +274,7 @@ func TestScheduler_SyncAllItemsHistoryJob_ListItemsError(t *testing.T) {
 		mock.AnythingOfType("models.ItemListParams")).
 		Return([]models.Item{}, int64(0), errors.New("database error"))
 
-	sched := scheduler.NewScheduler(mockPriceService, mockItemService, nil, logger)
+	sched := scheduler.NewScheduler(mockPriceService, mockItemService, mockWatchlistService, nil, logger)
 
 	// Mock the async sync job that runs on Start
 
@@ -284,6 +293,7 @@ func TestScheduler_SyncAllItemsHistoryJob_ListItemsError(t *testing.T) {
 func TestScheduler_SyncAllItemsHistoryJob_SomeItemsFail(t *testing.T) {
 	mockPriceService := new(MockPriceService)
 	mockItemService := new(MockItemService)
+	mockWatchlistService := new(MockWatchlistService)
 	logger := zap.NewNop().Sugar()
 
 	// Mock ListItems to return test items
@@ -317,7 +327,7 @@ func TestScheduler_SyncAllItemsHistoryJob_SomeItemsFail(t *testing.T) {
 		4,
 		true).Return(errors.New("not found"))
 
-	sched := scheduler.NewScheduler(mockPriceService, mockItemService, nil, logger)
+	sched := scheduler.NewScheduler(mockPriceService, mockItemService, mockWatchlistService, nil, logger)
 
 	// Mock the async sync job that runs on Start
 
@@ -337,9 +347,10 @@ func TestScheduler_CronSchedules_AreValid(t *testing.T) {
 	// Test that cron schedules are valid by starting and stopping
 	mockPriceService := new(MockPriceService)
 	mockItemService := new(MockItemService)
+	mockWatchlistService := new(MockWatchlistService)
 	logger := zap.NewNop().Sugar()
 
-	sched := scheduler.NewScheduler(mockPriceService, mockItemService, nil, logger)
+	sched := scheduler.NewScheduler(mockPriceService, mockItemService, mockWatchlistService, nil, logger)
 
 	// Mock the async sync job that runs on Start
 
@@ -358,9 +369,10 @@ func TestScheduler_CronSchedules_AreValid(t *testing.T) {
 func TestScheduler_MultipleStartStop_Cycles(t *testing.T) {
 	mockPriceService := new(MockPriceService)
 	mockItemService := new(MockItemService)
+	mockWatchlistService := new(MockWatchlistService)
 	logger := zap.NewNop().Sugar()
 
-	sched := scheduler.NewScheduler(mockPriceService, mockItemService, nil, logger)
+	sched := scheduler.NewScheduler(mockPriceService, mockItemService, mockWatchlistService, nil, logger)
 
 	// Mock the async sync job that runs on Start
 
@@ -385,6 +397,7 @@ func TestScheduler_MultipleStartStop_Cycles(t *testing.T) {
 func TestScheduler_ContextTimeout_HandledGracefully(t *testing.T) {
 	mockPriceService := new(MockPriceService)
 	mockItemService := new(MockItemService)
+	mockWatchlistService := new(MockWatchlistService)
 	logger := zap.NewNop().Sugar()
 
 	// Mock a slow sync that should timeout
@@ -395,7 +408,7 @@ func TestScheduler_ContextTimeout_HandledGracefully(t *testing.T) {
 			<-ctx.Done() // Wait for context cancellation
 		}).Return(context.DeadlineExceeded)
 
-	sched := scheduler.NewScheduler(mockPriceService, mockItemService, nil, logger)
+	sched := scheduler.NewScheduler(mockPriceService, mockItemService, mockWatchlistService, nil, logger)
 
 	// Mock the async sync job that runs on Start
 

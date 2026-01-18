@@ -7,6 +7,7 @@ import type { CurrentPrice, Item } from '@/types';
 import { formatGold, formatNumber, getItemUrl } from '@/utils';
 import { createColumnHelper } from '@tanstack/react-table';
 import { Link } from 'react-router-dom';
+import { WatchlistDropdown } from '../common/WatchlistDropdown';
 import { Badge } from '../ui';
 
 export interface ItemWithPrice extends Item {
@@ -50,6 +51,27 @@ export const columns = [
     enableSorting: true,
     enableResizing: true,
     size: 250,
+  }),
+
+  // Watchlist column
+  columnHelper.display({
+    id: 'watchlist',
+    header: 'Watchlist',
+    cell: (info) => {
+      const item = info.row.original;
+      return (
+        <div className="flex items-center justify-center">
+          <WatchlistDropdown
+            itemId={item.itemId}
+            itemName={item.name}
+            itemIconUrl={item.iconUrl || ''}
+            buttonClassName="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+          />
+        </div>
+      );
+    },
+    enableSorting: false,
+    size: 80,
   }),
 
   // High Price column

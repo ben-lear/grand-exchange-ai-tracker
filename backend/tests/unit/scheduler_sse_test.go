@@ -89,12 +89,13 @@ func TestScheduler_SyncCurrentPricesJob_BroadcastsUpdates(t *testing.T) {
 	logger := zap.NewNop().Sugar()
 	mockPriceService := new(MockPriceService)
 	mockItemService := new(MockItemService)
+	mockWatchlistService := new(MockWatchlistService)
 	testHub := NewTestSSEHub(logger, 100, 1) // 1 simulated client
 	defer testHub.StopAndWait()
 	defer time.Sleep(500 * time.Millisecond) // Allow cleanup between tests
 
 	// Create scheduler
-	s := scheduler.NewScheduler(mockPriceService, mockItemService, testHub.SSEHub, logger)
+	s := scheduler.NewScheduler(mockPriceService, mockItemService, mockWatchlistService, testHub.SSEHub, logger)
 
 	// Setup mock to return price updates
 	updates := []models.BulkPriceUpdate{
@@ -151,11 +152,12 @@ func TestScheduler_SyncCurrentPricesJob_NoClientsConnected(t *testing.T) {
 	logger := zap.NewNop().Sugar()
 	mockPriceService := new(MockPriceService)
 	mockItemService := new(MockItemService)
+	mockWatchlistService := new(MockWatchlistService)
 	testHub := NewTestSSEHub(logger, 100, 0) // No clients
 	defer testHub.StopAndWait()
 	defer time.Sleep(500 * time.Millisecond)
 
-	s := scheduler.NewScheduler(mockPriceService, mockItemService, testHub.SSEHub, logger)
+	s := scheduler.NewScheduler(mockPriceService, mockItemService, mockWatchlistService, testHub.SSEHub, logger)
 
 	updates := []models.BulkPriceUpdate{
 		{ItemID: 1, HighPrice: int64Ptr(1000), LowPrice: int64Ptr(900)},
@@ -185,9 +187,10 @@ func TestScheduler_SyncCurrentPricesJob_HubNil(t *testing.T) {
 	logger := zap.NewNop().Sugar()
 	mockPriceService := new(MockPriceService)
 	mockItemService := new(MockItemService)
+	mockWatchlistService := new(MockWatchlistService)
 
 	// Pass nil hub
-	s := scheduler.NewScheduler(mockPriceService, mockItemService, nil, logger)
+	s := scheduler.NewScheduler(mockPriceService, mockItemService, mockWatchlistService, nil, logger)
 
 	updates := []models.BulkPriceUpdate{
 		{ItemID: 1, HighPrice: int64Ptr(1000), LowPrice: int64Ptr(900)},
@@ -216,11 +219,12 @@ func TestScheduler_BroadcastPriceUpdates_LargeBatch(t *testing.T) {
 	logger := zap.NewNop().Sugar()
 	mockPriceService := new(MockPriceService)
 	mockItemService := new(MockItemService)
+	mockWatchlistService := new(MockWatchlistService)
 	testHub := NewTestSSEHub(logger, 100, 1)
 	defer testHub.StopAndWait()
 	defer time.Sleep(500 * time.Millisecond)
 
-	s := scheduler.NewScheduler(mockPriceService, mockItemService, testHub.SSEHub, logger)
+	s := scheduler.NewScheduler(mockPriceService, mockItemService, mockWatchlistService, testHub.SSEHub, logger)
 
 	// Create 150 updates to test batching (15K would take too long in tests)
 	updates := make([]models.BulkPriceUpdate, 150)
@@ -267,11 +271,12 @@ func TestScheduler_BroadcastPriceUpdates_ItemIDSet(t *testing.T) {
 	logger := zap.NewNop().Sugar()
 	mockPriceService := new(MockPriceService)
 	mockItemService := new(MockItemService)
+	mockWatchlistService := new(MockWatchlistService)
 	testHub := NewTestSSEHub(logger, 100, 1)
 	defer testHub.StopAndWait()
 	defer time.Sleep(500 * time.Millisecond)
 
-	s := scheduler.NewScheduler(mockPriceService, mockItemService, testHub.SSEHub, logger)
+	s := scheduler.NewScheduler(mockPriceService, mockItemService, mockWatchlistService, testHub.SSEHub, logger)
 
 	updates := []models.BulkPriceUpdate{
 		{ItemID: 123, HighPrice: int64Ptr(5000), LowPrice: int64Ptr(4500)},
@@ -372,11 +377,12 @@ func TestScheduler_SyncCurrentPricesJob_SyncFailure(t *testing.T) {
 	logger := zap.NewNop().Sugar()
 	mockPriceService := new(MockPriceService)
 	mockItemService := new(MockItemService)
+	mockWatchlistService := new(MockWatchlistService)
 	testHub := NewTestSSEHub(logger, 100, 1)
 	defer testHub.StopAndWait()
 	defer time.Sleep(500 * time.Millisecond)
 
-	s := scheduler.NewScheduler(mockPriceService, mockItemService, testHub.SSEHub, logger)
+	s := scheduler.NewScheduler(mockPriceService, mockItemService, mockWatchlistService, testHub.SSEHub, logger)
 
 	// Mock sync failure
 	mockItemService.On("SyncItemsFromMapping", mock.AnythingOfType("*context.timerCtx")).Return(nil).Maybe()
