@@ -1,5 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { TablePagination } from './TablePagination';
 
 const mockOnPageChange = vi.fn();
@@ -7,7 +7,6 @@ const mockOnPageSizeChange = vi.fn();
 
 const defaultProps = {
     currentPage: 1,
-    totalPages: 10,
     totalItems: 500,
     pageSize: 50,
     pageSizeOptions: [50, 100, 200],
@@ -57,7 +56,7 @@ describe('TablePagination', () => {
         });
 
         it('should disable next and last buttons on last page', () => {
-            render(<TablePagination {...defaultProps} currentPage={10} totalPages={10} />);
+            render(<TablePagination {...defaultProps} currentPage={10} />);
 
             const nextButton = screen.getByTitle(/next page/i);
             const lastButton = screen.getByTitle(/last page/i);
@@ -170,7 +169,6 @@ describe('TablePagination', () => {
                 <TablePagination
                     {...defaultProps}
                     currentPage={10}
-                    totalPages={10}
                     totalItems={475}
                     pageSize={50}
                 />
@@ -188,7 +186,6 @@ describe('TablePagination', () => {
                 <TablePagination
                     {...defaultProps}
                     currentPage={1}
-                    totalPages={1}
                     totalItems={25}
                 />
             );
@@ -209,7 +206,6 @@ describe('TablePagination', () => {
                 <TablePagination
                     {...defaultProps}
                     currentPage={1}
-                    totalPages={0}
                     totalItems={0}
                 />
             );
