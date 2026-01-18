@@ -2,11 +2,11 @@
  * Error display component
  */
 
-import { AlertCircle, RefreshCw } from 'lucide-react';
+import { RefreshCw } from 'lucide-react';
 import React from 'react';
 import type { ApiError } from '../../types';
 import { cn } from '../../utils';
-import { Button } from '../ui';
+import { Alert, Button, Card, CardContent } from '../ui';
 
 export interface ErrorDisplayProps {
   /** Error object or message */
@@ -48,54 +48,52 @@ export const ErrorDisplay: React.FC<ErrorDisplayProps> = ({
 
   if (inline) {
     return (
-      <div className={cn('flex items-center gap-2 text-sm text-red-600 dark:text-red-400', className)}>
-        <AlertCircle className="w-4 h-4" />
-        <span>{errorMessage}</span>
+      <Alert
+        variant="error"
+        title={errorMessage}
+        showIcon
+        className={className}
+        onClose={onRetry ? undefined : undefined}
+      >
         {onRetry && (
           <Button
             variant="ghost"
             size="sm"
             onClick={onRetry}
-            className="underline hover:no-underline"
+            className="underline hover:no-underline mt-2"
           >
             Retry
           </Button>
         )}
-      </div>
+      </Alert>
     );
   }
 
   return (
-    <div
-      className={cn(
-        'rounded-lg border border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-950 p-4',
-        className
-      )}
-      role="alert"
-    >
-      <div className="flex items-start gap-3">
-        <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 mt-0.5 flex-shrink-0" />
-        <div className="flex-1 min-w-0">
-          <h3 className="font-semibold text-red-900 dark:text-red-100 mb-1">
-            {title}
-            {statusCode && ` (${statusCode})`}
-          </h3>
-          <p className="text-sm text-red-800 dark:text-red-200">
-            {errorMessage}
-          </p>
-        </div>
-        {onRetry && (
-          <Button
-            variant="error"
-            size="sm"
-            onClick={onRetry}
-            leftIcon={<RefreshCw className="w-4 h-4" />}
-          >
-            Retry
-          </Button>
-        )}
-      </div>
-    </div>
+    <Card variant="error" className={className}>
+      <CardContent>
+        <Alert
+          variant="error"
+          title={`${title}${statusCode ? ` (${statusCode})` : ''}`}
+          description={errorMessage}
+          showIcon
+          onClose={onRetry ? undefined : undefined}
+        >
+          {onRetry && (
+            <div className="mt-3">
+              <Button
+                variant="error"
+                size="sm"
+                onClick={onRetry}
+                leftIcon={<RefreshCw className="w-4 h-4" />}
+              >
+                Retry
+              </Button>
+            </div>
+          )}
+        </Alert>
+      </CardContent>
+    </Card>
   );
 };
 
@@ -146,13 +144,13 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
         </p>
       )}
       {action && (
-        <button
+        <Button
           onClick={action.onClick}
-          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md font-medium transition-colors"
-          type="button"
+          variant="primary"
+          size="default"
         >
           {action.label}
-        </button>
+        </Button>
       )}
     </div>
   );

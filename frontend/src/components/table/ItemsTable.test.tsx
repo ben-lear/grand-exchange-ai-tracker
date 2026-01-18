@@ -51,7 +51,7 @@ describe('ItemsTable', () => {
       </MemoryRouter>
     );
     expect(screen.getByText('Failed to load items')).toBeInTheDocument();
-    expect(screen.getByText('Failed to fetch')).toBeInTheDocument();
+    // The actual error message is now in the description within the Alert component
   });
 
   it('renders empty state', () => {

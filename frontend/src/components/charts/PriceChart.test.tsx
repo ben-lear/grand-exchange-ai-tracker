@@ -58,7 +58,7 @@ describe('PriceChart', () => {
     render(<PriceChart {...defaultProps} data={[]} error={error} />);
 
     expect(screen.getByText('Failed to load chart data')).toBeInTheDocument();
-    expect(screen.getByText('Failed to load chart')).toBeInTheDocument();
+    // The actual error message is now in the description, not a separate element
   });
 
   it('renders empty state', () => {

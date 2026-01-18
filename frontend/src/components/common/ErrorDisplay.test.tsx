@@ -69,8 +69,9 @@ describe('ErrorDisplay', () => {
       const { container } = render(
         <ErrorDisplay error="Inline error" inline />
       );
-      const errorDiv = container.querySelector('.flex.items-center');
-      expect(errorDiv).toBeInTheDocument();
+      const alertElement = container.querySelector('[role="alert"]');
+      expect(alertElement).toBeInTheDocument();
+      expect(screen.getByText('Inline error')).toBeInTheDocument();
     });
 
     it('should not show title in inline mode', () => {
