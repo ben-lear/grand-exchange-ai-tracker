@@ -4,11 +4,20 @@
 
 import { TrendingDown, TrendingUp } from 'lucide-react';
 import React from 'react';
-import type { Item } from '../../types';
+import type { CurrentPrice, Item } from '../../types';
 import { cn } from '../../utils';
 
+/**
+ * Item with optional price data for search results
+ */
+export interface ItemWithPrice extends Item {
+    currentPrice?: CurrentPrice & {
+        change24h?: number;
+    };
+}
+
 export interface SearchResultProps {
-    item: Item;
+    item: Item | ItemWithPrice;
     isSelected?: boolean;
     onClick?: () => void;
     onMouseEnter?: () => void;
@@ -34,10 +43,10 @@ export const SearchResult: React.FC<SearchResultProps> = ({
         return price.toLocaleString();
     };
 
-    // Note: currentPrice is not part of base Item type
-    // It may be added via ItemWithPrice or API response
-    const currentPrice = (item as any).currentPrice?.high || 0;
-    const priceChange = (item as any).currentPrice?.change24h;
+    // Note: currentPrice may be present on ItemWithPrice but not base Item
+    const itemWithPrice = item as ItemWithPrice;
+    const currentPrice = itemWithPrice.currentPrice?.highPrice || 0;
+    const priceChange = itemWithPrice.currentPrice?.change24h;
 
     return (
         <button

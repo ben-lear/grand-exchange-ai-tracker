@@ -7,7 +7,7 @@
  * - Handle global keyboard shortcuts (Ctrl+K for search)
  */
 
-import { useCallback, useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import { Outlet } from 'react-router-dom';
 import { Toaster } from 'sonner';
 import { useItemPrefetcher } from '../../hooks/useItemPrefetcher';

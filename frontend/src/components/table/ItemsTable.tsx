@@ -7,22 +7,23 @@
  * - Loading and error states
  */
 
-import { useEffect, useRef, useState } from 'react';
+import { ErrorDisplay, LoadingSpinner } from '@/components/common';
+import { useColumnVisibilityStore } from '@/stores/useColumnVisibilityStore';
 import {
-  useReactTable,
+  flexRender,
   getCoreRowModel,
-  getSortedRowModel,
   getFilteredRowModel,
   getPaginationRowModel,
-  type SortingState,
+  getSortedRowModel,
+  useReactTable,
   type ColumnFiltersState,
+  type SortingState,
   type VisibilityState,
-  flexRender,
 } from '@tanstack/react-table';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
-import { columns, defaultColumnVisibility, type ItemWithPrice } from './columns';
-import { LoadingSpinner, ErrorDisplay } from '@/components/common';
+import { ArrowDown, ArrowUp, ArrowUpDown } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { columns, type ItemWithPrice } from './columns';
 
 export interface ItemsTableProps {
   data: ItemWithPrice[];
@@ -43,7 +44,19 @@ export function ItemsTable({
 }: ItemsTableProps) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
-  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(defaultColumnVisibility);
+  const { visibleColumns } = useColumnVisibilityStore();
+
+  // Convert array of visible column IDs to VisibilityState object
+  const columnVisibility = useMemo<VisibilityState>(() => {
+    const visibility: VisibilityState = {};
+    columns.forEach(col => {
+      if (col.id) { // explicit check if id exists
+        visibility[col.id] = visibleColumns.includes(col.id);
+      }
+    });
+    return visibility;
+  }, [visibleColumns]);
+
   const [rowSelection, setRowSelection] = useState({});
 
   const tableContainerRef = useRef<HTMLDivElement>(null);
@@ -59,7 +72,6 @@ export function ItemsTable({
     },
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
-    onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
@@ -79,7 +91,7 @@ export function ItemsTable({
   const rowVirtualizer = useVirtualizer({
     count: rows.length,
     getScrollElement: () => tableContainerRef.current,
-    estimateSize: () => 60, // Estimated row height
+    estimateSize: () => 48, // Reduced row height
     overscan: 10,
     enabled: enableVirtualization,
   });
@@ -198,14 +210,12 @@ export function ItemsTable({
                           <div
                             onMouseDown={header.getResizeHandler()}
                             onTouchStart={header.getResizeHandler()}
-                            className={`absolute right-0 top-0 h-full w-1 cursor-col-resize select-none touch-none hover:bg-blue-500 ${
-                              header.column.getIsResizing() ? 'bg-blue-500' : ''
-                            }`}
+                            className={`absolute right-0 top-0 h-full w-1 cursor-col-resize select-none touch-none hover:bg-blue-500 ${header.column.getIsResizing() ? 'bg-blue-500' : ''
+                              }`}
                             style={{
                               transform: header.column.getIsResizing()
-                                ? `translateX(${
-                                    table.getState().columnSizingInfo.deltaOffset
-                                  }px)`
+                                ? `translateX(${table.getState().columnSizingInfo.deltaOffset
+                                }px)`
                                 : '',
                             }}
                           />
@@ -230,9 +240,8 @@ export function ItemsTable({
               return (
                 <tr
                   key={row.id}
-                  className={`hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors ${
-                    onRowClick ? 'cursor-pointer' : ''
-                  }`}
+                  className={`hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors ${onRowClick ? 'cursor-pointer' : ''
+                    }`}
                   onClick={() => onRowClick?.(row.original)}
                 >
                   {row.getVisibleCells().map((cell) => (

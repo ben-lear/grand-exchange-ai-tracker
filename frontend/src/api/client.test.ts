@@ -2,7 +2,7 @@
  * Tests for API client functions
  */
 
-import { AxiosError } from 'axios';
+import { AxiosError, type InternalAxiosRequestConfig } from 'axios';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import apiClient from './client';
 import { fetchItemById, fetchItemCount, fetchItems } from './items';
@@ -27,7 +27,7 @@ vi.mock('axios', () => {
       })),
     },
     AxiosError: class AxiosError extends Error {
-      response?: any;
+      response?: unknown;
       isAxiosError = true;
     },
   };
@@ -296,7 +296,7 @@ describe('API Client - Error Handling', () => {
       data: { error: 'Item not found' },
       statusText: 'Not Found',
       headers: {},
-      config: {} as any,
+      config: {} as InternalAxiosRequestConfig,
     };
 
     vi.spyOn(apiClient, 'get').mockRejectedValue(error);
@@ -311,7 +311,7 @@ describe('API Client - Error Handling', () => {
       data: { error: 'Internal server error' },
       statusText: 'Internal Server Error',
       headers: {},
-      config: {} as any,
+      config: {} as InternalAxiosRequestConfig,
     };
 
     vi.spyOn(apiClient, 'get').mockRejectedValue(error);

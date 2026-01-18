@@ -5,12 +5,13 @@
 import { PriceChart } from '@/components/charts/PriceChart';
 import type { PricePoint } from '@/types';
 import { render, screen } from '@testing-library/react';
+import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
 // Mock Recharts components
 vi.mock('recharts', () => ({
-  ComposedChart: ({ children }: any) => <div data-testid="composed-chart">{children}</div>,
-  LineChart: ({ children }: any) => <div data-testid="line-chart">{children}</div>,
+  ComposedChart: ({ children }: { children?: React.ReactNode }) => <div data-testid="composed-chart">{children}</div>,
+  LineChart: ({ children }: { children?: React.ReactNode }) => <div data-testid="line-chart">{children}</div>,
   Line: () => <div data-testid="line" />,
   Area: () => <div data-testid="area" />,
   Bar: () => <div data-testid="bar" />,
@@ -19,7 +20,7 @@ vi.mock('recharts', () => ({
   CartesianGrid: () => <div data-testid="grid" />,
   Tooltip: () => <div data-testid="tooltip" />,
   Legend: () => <div data-testid="legend" />,
-  ResponsiveContainer: ({ children }: any) => <div data-testid="responsive-container">{children}</div>,
+  ResponsiveContainer: ({ children }: { children?: React.ReactNode }) => <div data-testid="responsive-container">{children}</div>,
   ReferenceLine: () => <div data-testid="reference-line" />,
 }));
 

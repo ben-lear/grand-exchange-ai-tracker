@@ -90,8 +90,8 @@ describe('SearchResultItem', () => {
     it('does not render prices when both prices are null', () => {
         const priceWithNulls: CurrentPrice = {
             ...mockPrice,
-            highPrice: null as any,
-            lowPrice: null as any,
+            highPrice: null,
+            lowPrice: null,
         };
 
         render(<SearchResultItem item={mockItem} price={priceWithNulls} />);
@@ -102,7 +102,7 @@ describe('SearchResultItem', () => {
     it('renders only highPrice when lowPrice is missing', () => {
         const priceWithHighOnly: CurrentPrice = {
             ...mockPrice,
-            lowPrice: null as any,
+            lowPrice: null,
         };
 
         render(<SearchResultItem item={mockItem} price={priceWithHighOnly} />);
@@ -114,7 +114,7 @@ describe('SearchResultItem', () => {
     it('renders only lowPrice when highPrice is missing', () => {
         const priceWithLowOnly: CurrentPrice = {
             ...mockPrice,
-            highPrice: null as any,
+            highPrice: null,
         };
 
         render(<SearchResultItem item={mockItem} price={priceWithLowOnly} />);

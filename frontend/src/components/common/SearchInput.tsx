@@ -4,7 +4,7 @@
  */
 
 import { Search, X } from 'lucide-react';
-import { forwardRef, useCallback } from 'react';
+import React, { forwardRef, useCallback } from 'react';
 import { cn } from '../../utils';
 
 export interface SearchInputProps {

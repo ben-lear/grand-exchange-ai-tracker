@@ -191,7 +191,7 @@ export const DashboardPage: React.FC = () => {
               searchValue={searchQuery}
               onSearchChange={handleSearchChange}
               onRefresh={handleRefresh}
-              onColumnsToggle={() => setShowFilters(!showFilters)}
+              onFilterClick={() => setShowFilters(!showFilters)}
               isRefreshing={!isFullyLoaded}
               totalCount={allItems.length}
               visibleCount={totalItems}

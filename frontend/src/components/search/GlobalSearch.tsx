@@ -3,7 +3,7 @@
  * Combines SearchInput, Dropdown, and item search logic
  */
 
-import {
+import React, {
     forwardRef,
     useCallback,
     useEffect,

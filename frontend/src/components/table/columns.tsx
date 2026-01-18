@@ -3,10 +3,10 @@
  * Uses TanStack Table v8 column definitions
  */
 
+import type { CurrentPrice, Item } from '@/types';
+import { formatGold, formatNumber, getItemUrl } from '@/utils';
 import { createColumnHelper } from '@tanstack/react-table';
 import { Link } from 'react-router-dom';
-import { formatGold, formatNumber, getItemUrl } from '@/utils';
-import type { Item, CurrentPrice } from '@/types';
 
 export interface ItemWithPrice extends Item {
   currentPrice?: CurrentPrice;
@@ -32,15 +32,15 @@ export const columns = [
               loading="lazy"
             />
           )}
-          <div className="flex flex-col">
+          <div className="flex items-center gap-2">
             <Link
               to={itemUrl}
               className="font-medium text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
             >
               {item.name}
             </Link>
-            <span className="text-xs text-gray-500 dark:text-gray-400">
-              ID: {item.itemId}
+            <span className="text-xs text-gray-400 dark:text-gray-500">
+              #{item.itemId}
             </span>
           </div>
         </div>
@@ -176,32 +176,3 @@ export const columns = [
   }),
 ];
 
-/**
- * Default column visibility configuration
- */
-export const defaultColumnVisibility = {
-  name: true,
-  highPrice: true,
-  lowPrice: true,
-  avgPrice: true,
-  highVolume: false,
-  lowVolume: false,
-  members: true,
-  buyLimit: false,
-  highAlch: false,
-};
-
-/**
- * Export column IDs for reference
- */
-export const COLUMN_IDS = {
-  NAME: 'name',
-  HIGH_PRICE: 'highPrice',
-  LOW_PRICE: 'lowPrice',
-  AVG_PRICE: 'avgPrice',
-  HIGH_VOLUME: 'highVolume',
-  LOW_VOLUME: 'lowVolume',
-  MEMBERS: 'members',
-  BUY_LIMIT: 'buyLimit',
-  HIGH_ALCH: 'highAlch',
-} as const;

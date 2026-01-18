@@ -6,6 +6,7 @@
 import type { PricePoint } from '@/types';
 import { formatGold, formatNumber } from '@/utils/formatters';
 import { format } from 'date-fns';
+import React from 'react';
 
 export interface ChartTooltipProps {
   active?: boolean;

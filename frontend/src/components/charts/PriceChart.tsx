@@ -61,16 +61,6 @@ export function PriceChart({
   const { addPoint, getLiveTip, getConsolidatedPoints, clearBuffer } = useLiveBufferStore();
   const timestepConfig = getTimestepForPeriod(period);
 
-  // Guard against undefined timestepConfig (shouldn't happen with fixed config)
-  if (!timestepConfig) {
-    return (
-      <ErrorDisplay
-        error={`Invalid time period: ${period}`}
-        title="Chart Configuration Error"
-      />
-    );
-  }
-
   // Add SSE updates to buffer
   useEffect(() => {
     if (lastUpdate && itemId && lastUpdate.item_id === itemId) {
@@ -139,6 +129,7 @@ export function PriceChart({
   // Merge historical data with live SSE data
   const mergedChartData = useMemo(() => {
     if (!itemId) return chartData;
+    if (!timestepConfig) return chartData;
 
     const liveTip = getLiveTip(itemId);
     const consolidated = getConsolidatedPoints(itemId, timestepConfig.displayTimestepMs);
@@ -180,7 +171,7 @@ export function PriceChart({
     }
 
     return merged.sort((a, b) => a.timestamp - b.timestamp);
-  }, [chartData, itemId, getLiveTip, getConsolidatedPoints, timestepConfig.displayTimestepMs]);
+  }, [chartData, itemId, getLiveTip, getConsolidatedPoints, timestepConfig]);
 
   // Calculate price statistics
   const stats = useMemo(() => {
@@ -207,6 +198,16 @@ export function PriceChart({
       trend: change > 0 ? 'up' : change < 0 ? 'down' : 'flat',
     };
   }, [mergedChartData]);
+
+  // Guard against undefined timestepConfig (shouldn't happen with fixed config)
+  if (!timestepConfig) {
+    return (
+      <ErrorDisplay
+        error={`Invalid time period: ${period}`}
+        title="Chart Configuration Error"
+      />
+    );
+  }
 
   // Format X-axis ticks based on period
   const formatXAxisTick = (timestamp: number) => {
@@ -288,7 +289,15 @@ export function PriceChart({
   const lineColor = stats?.trend === 'up' ? '#10b981' : stats?.trend === 'down' ? '#ef4444' : '#6b7280';
 
   // Custom dot renderer to highlight live data points
-  const CustomDot = (props: any) => {
+  interface DotProps {
+    cx?: number;
+    cy?: number;
+    payload?: { isLive?: boolean };
+    fill?: string;
+    [key: string]: unknown;
+  }
+
+  const CustomDot = (props: DotProps) => {
     const { cx, cy, payload, fill } = props;
     if (!payload?.isLive) {
       return <Dot {...props} />;
@@ -327,10 +336,10 @@ export function PriceChart({
           <div className="text-right">
             <div
               className={`flex items-center gap-1 text-lg font-semibold ${stats.trend === 'up'
-                  ? 'text-green-600 dark:text-green-400'
-                  : stats.trend === 'down'
-                    ? 'text-red-600 dark:text-red-400'
-                    : 'text-gray-600 dark:text-gray-400'
+                ? 'text-green-600 dark:text-green-400'
+                : stats.trend === 'down'
+                  ? 'text-red-600 dark:text-red-400'
+                  : 'text-gray-600 dark:text-gray-400'
                 }`}
             >
               {stats.trend === 'up' && <TrendingUp className="w-5 h-5" />}
@@ -343,8 +352,8 @@ export function PriceChart({
             </div>
             <div
               className={`text-sm ${stats.changePercent >= 0
-                  ? 'text-green-600 dark:text-green-400'
-                  : 'text-red-600 dark:text-red-400'
+                ? 'text-green-600 dark:text-green-400'
+                : 'text-red-600 dark:text-red-400'
                 }`}
             >
               ({stats.changePercent >= 0 ? '+' : ''}{stats.changePercent.toFixed(2)}%)

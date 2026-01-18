@@ -54,7 +54,7 @@ describe('TableToolbar', () => {
     expect(searchInput).toBeInTheDocument();
 
     // Clear button should be visible (look for the X icon button)
-    const clearButton = screen.getByRole('button');
+    const clearButton = screen.getByRole('button', { name: /clear search/i });
     expect(clearButton).toBeInTheDocument();
 
     // Click clear button
@@ -84,15 +84,21 @@ describe('TableToolbar', () => {
     expect(icon).toHaveClass('animate-spin');
   });
 
-  it('renders columns toggle when provided', () => {
-    const onColumnsToggle = vi.fn();
-    render(<TableToolbar {...defaultProps} onColumnsToggle={onColumnsToggle} />);
+  it('renders filter button when provided', () => {
+    const onFilterClick = vi.fn();
+    render(<TableToolbar {...defaultProps} onFilterClick={onFilterClick} />);
 
-    const columnsButton = screen.getByRole('button', { name: /toggle columns/i });
-    expect(columnsButton).toBeInTheDocument();
+    const filterButton = screen.getByRole('button', { name: /filter items/i });
+    expect(filterButton).toBeInTheDocument();
+    expect(screen.getByText('Filters')).toBeInTheDocument();
 
-    fireEvent.click(columnsButton);
-    expect(onColumnsToggle).toHaveBeenCalled();
+    fireEvent.click(filterButton);
+    expect(onFilterClick).toHaveBeenCalled();
+  });
+
+  it('renders column toggle button', () => {
+    render(<TableToolbar {...defaultProps} />);
+    expect(screen.getByRole('button', { name: /toggle column visibility/i })).toBeInTheDocument();
   });
 
   it('renders export button when provided', () => {

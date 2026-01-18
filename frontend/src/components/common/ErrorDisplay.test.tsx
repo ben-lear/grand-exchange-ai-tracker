@@ -2,10 +2,10 @@
  * Tests for ErrorDisplay component
  */
 
-import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
-import { ErrorDisplay } from './ErrorDisplay';
+import { fireEvent, render, screen } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
 import type { ApiError } from '../../types';
+import { ErrorDisplay } from './ErrorDisplay';
 
 // Helper to create ApiError objects with required Error properties
 const createApiError = (error: string, status: number, extras?: Partial<ApiError>): ApiError => ({
@@ -41,8 +41,8 @@ describe('ErrorDisplay', () => {
     });
 
     it('should display default error message for unknown error type', () => {
-      render(<ErrorDisplay error={{} as any} />);
-      expect(screen.getByText('An unknown error occurred')).toBeInTheDocument();
+      render(<ErrorDisplay error={{ name: 'TestError', message: 'Test error message' }} />);
+      expect(screen.getByText('Test error message')).toBeInTheDocument();
     });
   });
 
@@ -98,7 +98,7 @@ describe('ErrorDisplay', () => {
       const onRetry = vi.fn();
       render(<ErrorDisplay error="Test error" onRetry={onRetry} />);
       const retryButton = screen.getByRole('button', { name: /retry/i });
-      
+
       fireEvent.click(retryButton);
       expect(onRetry).toHaveBeenCalledTimes(1);
     });

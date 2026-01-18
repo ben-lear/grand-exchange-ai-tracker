@@ -3,8 +3,15 @@
  * Provides typo-tolerant search across item names
  */
 
-import Fuse, { type IFuseOptions } from 'fuse.js';
+import Fuse, { type FuseIndex, type IFuseOptions } from 'fuse.js';
 import type { Item } from '../types';
+
+/**
+ * Extended Fuse instance that exposes the internal index with docs
+ */
+interface FuseWithIndex<T> extends Fuse<T> {
+    getIndex(): FuseIndex<T> & { docs: T[] };
+}
 
 /**
  * Fuse.js configuration for item search
@@ -64,7 +71,8 @@ export function searchItems(fuse: Fuse<Item>, query: string, limit = 12): Item[]
     const numericQuery = parseInt(trimmedQuery, 10);
     if (!isNaN(numericQuery) && trimmedQuery === numericQuery.toString()) {
         // Direct ID lookup from the fuse index
-        const allItems = fuse.getIndex().docs as Item[];
+        const fuseWithIndex = fuse as FuseWithIndex<Item>;
+        const allItems = fuseWithIndex.getIndex().docs;
         return allItems.filter(item => item.itemId === numericQuery).slice(0, limit);
     }
 
@@ -140,7 +148,8 @@ export function filterItemIdsByRelevance(fuse: Fuse<Item>, query: string): numbe
     const numericQuery = parseInt(trimmedQuery, 10);
     if (!isNaN(numericQuery) && trimmedQuery === numericQuery.toString()) {
         // Direct ID lookup from the fuse index
-        const allItems = fuse.getIndex().docs as Item[];
+        const fuseWithIndex = fuse as FuseWithIndex<Item>;
+        const allItems = fuseWithIndex.getIndex().docs;
         const matchingItem = allItems.find(item => item.itemId === numericQuery);
         return matchingItem ? [matchingItem.itemId] : [];
     }

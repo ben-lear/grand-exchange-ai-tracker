@@ -2,7 +2,7 @@
  * Data transformation and validation utilities
  */
 
-import type { PriceTrend, CurrentPrice } from '../types';
+import type { CurrentPrice, PriceTrend } from '../types';
 
 /**
  * Calculate the trend based on price change
@@ -81,14 +81,14 @@ export const sortPrices = (
   return [...prices].sort((a, b) => {
     const aValue = a[sortBy];
     const bValue = b[sortBy];
-    
+
     // Handle null/undefined values
     if (aValue == null && bValue == null) return 0;
     if (aValue == null) return 1;
     if (bValue == null) return -1;
-    
+
     if (aValue === bValue) return 0;
-    
+
     const comparison = aValue < bValue ? -1 : 1;
     return sortOrder === 'asc' ? comparison : -comparison;
   });
@@ -110,7 +110,7 @@ export const filterPrices = (
   return prices.filter((price) => {
     // Use highPrice for filtering, fallback to lowPrice
     const priceValue = price.highPrice ?? price.lowPrice;
-    
+
     if (filters.minPrice !== undefined && priceValue != null && priceValue < filters.minPrice) {
       return false;
     }
@@ -150,13 +150,12 @@ export const isValidItemId = (id: number): boolean => {
  * @param wait - Wait time in milliseconds
  * @returns Debounced function
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const debounce = <T extends (...args: any[]) => any>(
+export const debounce = <T extends (...args: unknown[]) => unknown>(
   func: T,
   wait: number
 ): ((...args: Parameters<T>) => void) => {
   let timeout: ReturnType<typeof setTimeout> | null = null;
-  
+
   return (...args: Parameters<T>) => {
     if (timeout) clearTimeout(timeout);
     timeout = setTimeout(() => func(...args), wait);
@@ -169,13 +168,12 @@ export const debounce = <T extends (...args: any[]) => any>(
  * @param limit - Limit time in milliseconds
  * @returns Throttled function
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const throttle = <T extends (...args: any[]) => any>(
+export const throttle = <T extends (...args: unknown[]) => unknown>(
   func: T,
   limit: number
 ): ((...args: Parameters<T>) => void) => {
   let inThrottle: boolean;
-  
+
   return (...args: Parameters<T>) => {
     if (!inThrottle) {
       func(...args);

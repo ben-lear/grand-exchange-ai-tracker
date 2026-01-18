@@ -124,7 +124,7 @@ export function usePriceStream(options: UsePriceStreamOptions): UsePriceStreamRe
       cleanupEventSource();
       setIsConnected(false);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- options.onUpdate is a callback that shouldn't trigger re-renders
   }, [enabled, url]);
 
   return { isConnected, lastUpdate, connectionError, reconnectCount, lastHeartbeatAt };
