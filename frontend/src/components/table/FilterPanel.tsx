@@ -9,7 +9,7 @@
 
 import { SlidersHorizontal, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { Button } from '../ui';
+import { Button, Input, Radio } from '../ui';
 
 export interface FilterState {
   priceMin?: number;
@@ -121,25 +121,20 @@ export function FilterPanel({
               { value: 'members', label: 'Members Only (P2P)', id: 'membership-members' },
               { value: 'f2p', label: 'Free-to-Play', id: 'membership-f2p' },
             ].map((option) => (
-              <label key={option.value} htmlFor={option.id} className="flex items-center">
-                <input
-                  id={option.id}
-                  type="radio"
-                  name="members"
-                  value={option.value}
-                  checked={localFilters.members === option.value}
-                  onChange={(e) =>
-                    setLocalFilters({
-                      ...localFilters,
-                      members: e.target.value as FilterState['members'],
-                    })
-                  }
-                  className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700"
-                />
-                <span className="ml-2 text-sm text-gray-700 dark:text-gray-300">
-                  {option.label}
-                </span>
-              </label>
+              <Radio
+                key={option.value}
+                id={option.id}
+                name="members"
+                value={option.value}
+                label={option.label}
+                checked={localFilters.members === option.value}
+                onChange={(e) =>
+                  setLocalFilters({
+                    ...localFilters,
+                    members: e.target.value as FilterState['members'],
+                  })
+                }
+              />
             ))}
           </div>
         </fieldset>
@@ -154,28 +149,26 @@ export function FilterPanel({
               <label htmlFor="filter-price-min" className="sr-only">
                 Minimum Price
               </label>
-              <input
+              <Input
                 id="filter-price-min"
                 name="priceMin"
                 type="number"
                 placeholder="Min"
                 value={localFilters.priceMin ?? ''}
                 onChange={(e) => handlePriceMinChange(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
               />
             </div>
             <div>
               <label htmlFor="filter-price-max" className="sr-only">
                 Maximum Price
               </label>
-              <input
+              <Input
                 id="filter-price-max"
                 name="priceMax"
                 type="number"
                 placeholder="Max"
                 value={localFilters.priceMax ?? ''}
                 onChange={(e) => handlePriceMaxChange(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
               />
             </div>
           </div>
@@ -191,28 +184,26 @@ export function FilterPanel({
               <label htmlFor="filter-volume-min" className="sr-only">
                 Minimum Volume
               </label>
-              <input
+              <Input
                 id="filter-volume-min"
                 name="volumeMin"
                 type="number"
                 placeholder="Min"
                 value={localFilters.volumeMin ?? ''}
                 onChange={(e) => handleVolumeMinChange(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
               />
             </div>
             <div>
               <label htmlFor="filter-volume-max" className="sr-only">
                 Maximum Volume
               </label>
-              <input
+              <Input
                 id="filter-volume-max"
                 name="volumeMax"
                 type="number"
                 placeholder="Max"
                 value={localFilters.volumeMax ?? ''}
                 onChange={(e) => handleVolumeMaxChange(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
               />
             </div>
           </div>

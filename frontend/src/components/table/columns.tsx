@@ -7,6 +7,7 @@ import type { CurrentPrice, Item } from '@/types';
 import { formatGold, formatNumber, getItemUrl } from '@/utils';
 import { createColumnHelper } from '@tanstack/react-table';
 import { Link } from 'react-router-dom';
+import { Badge } from '../ui';
 
 export interface ItemWithPrice extends Item {
   currentPrice?: CurrentPrice;
@@ -124,13 +125,9 @@ export const columns = [
       return (
         <div className="flex items-center justify-center">
           {value ? (
-            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200">
-              P2P
-            </span>
+            <Badge variant="warning">P2P</Badge>
           ) : (
-            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200">
-              F2P
-            </span>
+            <Badge variant="default">F2P</Badge>
           )}
         </div>
       );

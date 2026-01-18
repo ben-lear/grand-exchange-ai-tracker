@@ -2,7 +2,7 @@ import { useOnClickOutside } from '@/hooks/useOnClickOutside';
 import { ALL_COLUMNS, useColumnVisibilityStore } from '@/stores/useColumnVisibilityStore';
 import { Check, Columns } from 'lucide-react';
 import { useRef, useState } from 'react';
-import { Button } from '../ui';
+import { Button, Checkbox } from '../ui';
 
 interface ColumnInfo {
     id: string;
@@ -58,12 +58,10 @@ export function ColumnToggle() {
                                     key={column.id}
                                     className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer text-gray-700 dark:text-gray-300"
                                 >
-                                    <input
-                                        type="checkbox"
+                                    <Checkbox
                                         checked={visibleColumns.includes(column.id)}
                                         onChange={() => toggleColumn(column.id)}
                                         disabled={column.required}
-                                        className="rounded border-gray-300 dark:border-gray-600 dark:bg-gray-700 text-blue-600 focus:ring-blue-500"
                                     />
                                     <span className="text-sm">{column.label}</span>
                                     {visibleColumns.includes(column.id) && (

@@ -4,8 +4,8 @@
 
 import { Download } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import { ItemWithPrice } from './columns';
 import { Button } from '../ui';
+import { ItemWithPrice } from './columns';
 
 export interface ExportButtonProps {
   data: ItemWithPrice[];

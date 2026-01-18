@@ -2,10 +2,10 @@
  * Error display component
  */
 
-import React from 'react';
 import { AlertCircle, RefreshCw } from 'lucide-react';
-import { cn } from '../../utils';
+import React from 'react';
 import type { ApiError } from '../../types';
+import { cn } from '../../utils';
 import { Button } from '../ui';
 
 export interface ErrorDisplayProps {

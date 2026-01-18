@@ -9,8 +9,8 @@
 
 import { Download, RefreshCw, SlidersHorizontal } from 'lucide-react';
 import { SearchInput } from '../common/SearchInput';
-import { ColumnToggle } from './ColumnToggle';
 import { Button } from '../ui';
+import { ColumnToggle } from './ColumnToggle';
 
 export interface TableToolbarProps {
   searchValue: string;

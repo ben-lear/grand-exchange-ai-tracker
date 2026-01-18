@@ -2,9 +2,9 @@
  * 404 Not Found page
  */
 
+import { Home } from 'lucide-react';
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Home } from 'lucide-react';
 import { Button } from '../components/ui';
 
 /**
@@ -16,15 +16,15 @@ export const NotFoundPage: React.FC = () => {
       <div className="text-9xl font-bold text-gray-300 dark:text-gray-700 mb-4">
         404
       </div>
-      
+
       <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
         Page Not Found
       </h1>
-      
+
       <p className="text-gray-600 dark:text-gray-400 mb-8 max-w-md">
         The page you're looking for doesn't exist or has been moved.
       </p>
-      
+
       <div className="flex gap-4">
         <Link
           to="/"
@@ -33,7 +33,7 @@ export const NotFoundPage: React.FC = () => {
           <Home className="w-5 h-5" />
           Go Home
         </Link>
-        
+
         <Button
           variant="secondary"
           size="lg"
