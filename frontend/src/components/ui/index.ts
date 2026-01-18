@@ -17,15 +17,15 @@ export type { CheckboxProps } from './Checkbox';
 export { Radio, radioVariants } from './Radio';
 export type { RadioProps } from './Radio';
 
-export { Card, CardHeader, CardContent, CardFooter, cardVariants } from './Card';
-export type { CardProps, CardHeaderProps, CardContentProps, CardFooterProps } from './Card';
+export { Card, CardContent, CardFooter, CardHeader, cardVariants } from './Card';
+export type { CardContentProps, CardFooterProps, CardHeaderProps, CardProps } from './Card';
 
-export { Modal, ModalHeader, ModalBody, ModalFooter, modalVariants } from './Modal';
-export type { ModalProps, ModalHeaderProps, ModalBodyProps, ModalFooterProps } from './Modal';
+export { Modal, ModalBody, ModalFooter, ModalHeader, modalVariants } from './Modal';
+export type { ModalBodyProps, ModalFooterProps, ModalHeaderProps, ModalProps } from './Modal';
 
 export { Alert, alertVariants } from './Alert';
 export type { AlertProps } from './Alert';
 
-export { Skeleton, AvatarSkeleton, TableRowSkeleton, CardSkeleton, skeletonVariants } from './Skeleton';
-export type { SkeletonProps, AvatarSkeletonProps, TableRowSkeletonProps, CardSkeletonProps } from './Skeleton';
+export { AvatarSkeleton, CardSkeleton, Skeleton, skeletonVariants, TableRowSkeleton } from './Skeleton';
+export type { AvatarSkeletonProps, CardSkeletonProps, SkeletonProps, TableRowSkeletonProps } from './Skeleton';
 

@@ -42,7 +42,7 @@ const SpinnerLoading: React.FC<{ size: 'sm' | 'md' | 'lg' | 'xl'; className?: st
 }) => (
   <div
     className={cn(
-      'animate-spin rounded-full border-blue-600 border-t-transparent',
+      'loading-spinner',
       sizeClasses[size],
       className
     )}
@@ -58,24 +58,24 @@ const DotsLoading: React.FC<{ size: 'sm' | 'md' | 'lg' | 'xl'; className?: strin
   size,
   className,
 }) => (
-  <div className={cn('flex items-center gap-1', className)} role="status" aria-label="Loading">
+  <div className={cn('loading-dots', className)} role="status" aria-label="Loading">
     <div
       className={cn(
-        'animate-bounce bg-blue-600 rounded-full',
+        'loading-dot',
         dotSizeClasses[size]
       )}
       style={{ animationDelay: '0ms' }}
     />
     <div
       className={cn(
-        'animate-bounce bg-blue-600 rounded-full',
+        'loading-dot',
         dotSizeClasses[size]
       )}
       style={{ animationDelay: '150ms' }}
     />
     <div
       className={cn(
-        'animate-bounce bg-blue-600 rounded-full',
+        'loading-dot',
         dotSizeClasses[size]
       )}
       style={{ animationDelay: '300ms' }}
@@ -92,7 +92,7 @@ const PulseLoading: React.FC<{ size: 'sm' | 'md' | 'lg' | 'xl'; className?: stri
 }) => (
   <div
     className={cn(
-      'animate-pulse bg-blue-600 rounded-full',
+      'loading-pulse',
       sizeClasses[size].replace(/border-\d+/, ''), // Remove border classes
       className
     )}
@@ -145,30 +145,30 @@ export const Loading: React.FC<LoadingProps> = ({
 /**
  * Inline loading spinner (smaller, for inline use)
  */
-export const InlineLoading: React.FC<{ 
+export const InlineLoading: React.FC<{
   className?: string;
   variant?: 'spinner' | 'dots' | 'pulse';
-}> = ({ 
+}> = ({
   className,
-  variant = 'spinner' 
+  variant = 'spinner'
 }) => {
-  const LoadingComponent = {
-    spinner: () => (
-      <div
-        className={cn(
-          'inline-block w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin',
-          className
-        )}
-        role="status"
-        aria-label="Loading"
-      />
-    ),
-    dots: () => <DotsLoading size="sm" className={className} />,
-    pulse: () => <PulseLoading size="sm" className={className} />,
-  }[variant];
+    const LoadingComponent = {
+      spinner: () => (
+        <div
+          className={cn(
+            'inline-block w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin',
+            className
+          )}
+          role="status"
+          aria-label="Loading"
+        />
+      ),
+      dots: () => <DotsLoading size="sm" className={className} />,
+      pulse: () => <PulseLoading size="sm" className={className} />,
+    }[variant];
 
-  return <LoadingComponent />;
-};
+    return <LoadingComponent />;
+  };
 
 /**
  * Loading states for specific UI patterns

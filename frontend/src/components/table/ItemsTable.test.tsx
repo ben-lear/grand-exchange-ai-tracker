@@ -2,11 +2,11 @@
  * Tests for ItemsTable component
  */
 
-import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
 import { ItemsTable } from '@/components/table/ItemsTable';
 import type { ItemWithPrice } from '@/components/table/columns';
+import { fireEvent, render, screen } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
+import { describe, expect, it, vi } from 'vitest';
 
 // Mock data
 const mockItem: ItemWithPrice = {
@@ -70,14 +70,14 @@ describe('ItemsTable', () => {
         <ItemsTable data={mockData} enableVirtualization={false} />
       </MemoryRouter>
     );
-    
+
     // Check if item name is rendered
     expect(screen.getByText('Abyssal whip')).toBeInTheDocument();
-    
+
     // Check if prices are formatted correctly
     expect(screen.getAllByText('2.5M')).toBeDefined(); // High price / Current price
     expect(screen.getByText('2.4M')).toBeInTheDocument(); // Low price
-    
+
     // Check if members badge is shown
     expect(screen.getByText('P2P')).toBeInTheDocument();
   });
@@ -88,11 +88,11 @@ describe('ItemsTable', () => {
         <ItemsTable data={mockData} enableVirtualization={false} />
       </MemoryRouter>
     );
-    
+
     // Find and click the name column header
     const nameHeader = screen.getByRole('button', { name: /item/i });
     fireEvent.click(nameHeader);
-    
+
     // Should show sort indicator
     // Lucide icons render as SVGs with specific classes
     expect(nameHeader.querySelector('.lucide-arrow-up')).toBeInTheDocument();
@@ -105,14 +105,14 @@ describe('ItemsTable', () => {
         <ItemsTable data={mockData} onRowClick={onRowClick} enableVirtualization={false} />
       </MemoryRouter>
     );
-    
+
     // Click on the item name link which should trigger row click
     const itemLink = screen.getByText('Abyssal whip');
     const tableRow = itemLink.closest('tr');
     if (tableRow) {
       fireEvent.click(tableRow);
     }
-    
+
     expect(onRowClick).toHaveBeenCalledWith(mockItem);
   });
 
@@ -131,7 +131,7 @@ describe('ItemsTable', () => {
         <ItemsTable data={mockData} enableVirtualization={false} />
       </MemoryRouter>
     );
-    
+
     // Should have visible columns for name, prices, and members
     const headers = screen.getAllByRole('columnheader');
     expect(headers.length).toBeGreaterThan(4); // At least item, high price, low price, avg price, members
