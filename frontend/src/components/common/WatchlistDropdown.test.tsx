@@ -13,6 +13,8 @@ const mockIsItemInWatchlist = vi.fn();
 const mockAddItemToWatchlist = vi.fn();
 const mockRemoveItemFromWatchlist = vi.fn();
 const mockGetItemWatchlists = vi.fn();
+const mockGetWatchlistCount = vi.fn();
+const mockCreateWatchlist = vi.fn();
 
 vi.mock('../../stores/useWatchlistStore', () => ({
     useWatchlistStore: vi.fn((selector) => {
@@ -22,6 +24,8 @@ vi.mock('../../stores/useWatchlistStore', () => ({
             addItemToWatchlist: mockAddItemToWatchlist,
             removeItemFromWatchlist: mockRemoveItemFromWatchlist,
             getItemWatchlists: mockGetItemWatchlists,
+            getWatchlistCount: mockGetWatchlistCount,
+            createWatchlist: mockCreateWatchlist,
         };
         return selector ? selector(state) : state;
     }),
@@ -52,6 +56,8 @@ describe('WatchlistDropdown', () => {
         mockGetAllWatchlists.mockReturnValue(mockWatchlists);
         mockGetItemWatchlists.mockReturnValue([]);
         mockIsItemInWatchlist.mockReturnValue(false);
+        mockGetWatchlistCount.mockReturnValue(2);
+        mockCreateWatchlist.mockReturnValue('new-watchlist-id');
     });
 
     it('renders button with default icon', () => {

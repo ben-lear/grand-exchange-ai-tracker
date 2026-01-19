@@ -6,7 +6,7 @@ import { RefreshCw } from 'lucide-react';
 import React from 'react';
 import type { ApiError } from '../../types';
 import { cn } from '../../utils';
-import { Alert, Button, Card, CardContent } from '../ui';
+import { Alert, Button, Card, CardContent, Icon, Text } from '../ui';
 
 export interface ErrorDisplayProps {
   /** Error object or message */
@@ -85,7 +85,7 @@ export const ErrorDisplay: React.FC<ErrorDisplayProps> = ({
                 variant="error"
                 size="sm"
                 onClick={onRetry}
-                leftIcon={<RefreshCw className="w-4 h-4" />}
+                leftIcon={<Icon as={RefreshCw} size="sm" />}
               >
                 Retry
               </Button>
@@ -135,13 +135,13 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
           {icon}
         </div>
       )}
-      <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
+      <Text as="h3" variant="heading" size="lg" className="mb-2">
         {title}
-      </h3>
+      </Text>
       {description && (
-        <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 max-w-sm">
+        <Text variant="muted" size="sm" className="mb-4 max-w-sm">
           {description}
-        </p>
+        </Text>
       )}
       {action && (
         <Button

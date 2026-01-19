@@ -1,4 +1,5 @@
 import { formatDistanceToNow } from 'date-fns';
+import { Stack, Text } from '../ui';
 
 export interface LiveIndicatorProps {
   isConnected: boolean;
@@ -8,23 +9,22 @@ export interface LiveIndicatorProps {
 
 export function LiveIndicator({ isConnected, lastUpdateTime, reconnectCount }: LiveIndicatorProps) {
   return (
-    <div className="flex items-center gap-2 text-sm">
+    <Stack direction="row" align="center" gap={2} className="text-sm">
       <span
-        className={`h-2 w-2 rounded-full ${
-          isConnected ? 'bg-green-500 animate-pulse' : 'bg-gray-400'
-        }`}
+        className={`h-2 w-2 rounded-full ${isConnected ? 'bg-green-500 animate-pulse' : 'bg-gray-400'
+          }`}
       />
-      <span className={isConnected ? 'text-green-600' : 'text-gray-500'}>
+      <Text className={isConnected ? 'text-green-600' : 'text-gray-500'}>
         {isConnected ? 'LIVE' : 'Connecting...'}
-      </span>
+      </Text>
       {typeof reconnectCount === 'number' && reconnectCount > 0 && (
-        <span className="text-gray-400 text-xs">retries: {reconnectCount}</span>
+        <Text variant="muted" size="xs">retries: {reconnectCount}</Text>
       )}
       {lastUpdateTime && (
-        <span className="text-gray-400 text-xs">
+        <Text variant="muted" size="xs">
           Updated {formatDistanceToNow(lastUpdateTime, { addSuffix: true })}
-        </span>
+        </Text>
       )}
-    </div>
+    </Stack>
   );
 }

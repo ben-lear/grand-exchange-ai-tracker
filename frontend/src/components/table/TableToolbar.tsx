@@ -9,7 +9,7 @@
 
 import { Download, ListCheck, RefreshCw, SlidersHorizontal } from 'lucide-react';
 import { SearchInput } from '../common/SearchInput';
-import { Button } from '../ui';
+import { Button, Icon, Stack } from '../ui';
 import { ColumnToggle } from './ColumnToggle';
 
 export interface TableToolbarProps {
@@ -50,7 +50,7 @@ export function TableToolbar({
       </div>
 
       {/* Right side - Actions */}
-      <div className="flex items-center gap-2">
+      <Stack direction="row" align="center" gap={2}>
         {/* Item count */}
         {totalCount > 0 && (
           <div className="text-sm text-gray-600 dark:text-gray-400 mr-2">
@@ -76,7 +76,7 @@ export function TableToolbar({
             disabled={isRefreshing}
             title="Refresh data"
           >
-            <RefreshCw className={`w-5 h-5 ${isRefreshing ? 'animate-spin' : ''}`} />
+            <Icon as={RefreshCw} size="md" spin={isRefreshing} />
           </Button>
         )}
 
@@ -91,7 +91,7 @@ export function TableToolbar({
             onClick={onManageWatchlists}
             title="Manage watchlists"
             aria-label="Manage watchlists"
-            leftIcon={<ListCheck className="w-4 h-4" />}
+            leftIcon={<Icon as={ListCheck} size="sm" />}
           >
             <span className="hidden sm:inline">Watchlists</span>
           </Button>
@@ -105,7 +105,7 @@ export function TableToolbar({
             onClick={onFilterClick}
             title="Filter items"
             aria-label="Filter items"
-            leftIcon={<SlidersHorizontal className="w-4 h-4" />}
+            leftIcon={<Icon as={SlidersHorizontal} size="sm" />}
           >
             <span className="hidden sm:inline">Filters</span>
           </Button>
@@ -118,12 +118,12 @@ export function TableToolbar({
             size="default"
             onClick={onExport}
             title="Export data"
-            leftIcon={<Download className="w-4 h-4" />}
+            leftIcon={<Icon as={Download} size="sm" />}
           >
             <span className="hidden sm:inline">Export</span>
           </Button>
         )}
-      </div>
+      </Stack>
     </div>
   );
 }

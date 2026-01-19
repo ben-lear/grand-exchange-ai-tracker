@@ -13,7 +13,9 @@
     "test:coverage": "vitest run --coverage",
     "test:ui": "vitest --ui",
     "test:e2e": "playwright test",
-    "test:e2e:ui": "playwright test --ui"
+    "test:e2e:ui": "playwright test --ui",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
@@ -38,9 +40,13 @@
     "zustand": "^5.0.2"
   },
   "devDependencies": {
+    "@axe-core/react": "^4.11.0",
     "@eslint/js": "^9.18.0",
     "@headlessui/react": "^2.2.0",
     "@playwright/test": "^1.49.1",
+    "@storybook/addon-a11y": "^8.6.15",
+    "@storybook/addon-essentials": "^8.6.14",
+    "@storybook/react-vite": "^8.6.15",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.1.0",
     "@testing-library/user-event": "^14.5.2",
@@ -54,6 +60,7 @@
     "@vitest/ui": "^2.1.8",
     "autoprefixer": "^10.4.20",
     "eslint": "^9.18.0",
+    "eslint-plugin-jsx-a11y": "^6.10.2",
     "eslint-plugin-react-hooks": "^5.1.0",
     "eslint-plugin-react-refresh": "^0.4.16",
     "globals": "^15.14.0",

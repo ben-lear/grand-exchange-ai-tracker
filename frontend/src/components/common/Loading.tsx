@@ -4,7 +4,7 @@
 
 import React from 'react';
 import { cn } from '../../utils';
-import { Skeleton } from '../ui';
+import { Skeleton, Stack } from '../ui';
 
 export interface LoadingProps {
   /** Size of the spinner */
@@ -194,13 +194,13 @@ export const TableLoading: React.FC<TableLoadingProps> = ({
   return (
     <div className={cn('space-y-3', className)}>
       {Array.from({ length: rows }, (_, index) => (
-        <div key={index} className="flex items-center gap-4 py-3">
+        <Stack key={index} direction="row" align="center" gap={4} className="py-3">
           {Array.from({ length: columns }, (_, colIndex) => (
             <div key={colIndex} className="flex-1">
               <Skeleton width={`${Math.floor(Math.random() * 30 + 70)}%`} />
             </div>
           ))}
-        </div>
+        </Stack>
       ))}
     </div>
   );
@@ -227,13 +227,13 @@ export const CardGridLoading: React.FC<CardGridLoadingProps> = ({
           key={index}
           className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 space-y-4"
         >
-          <div className="flex items-center gap-3">
+          <Stack direction="row" align="center" gap={3}>
             <Skeleton variant="circular" width="40px" height="40px" />
             <div className="flex-1">
               <Skeleton width="70%" />
               <Skeleton width="50%" size="sm" className="mt-1" />
             </div>
-          </div>
+          </Stack>
           <div className="space-y-2">
             <Skeleton lines={3} randomWidth />
           </div>

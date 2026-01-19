@@ -17,6 +17,7 @@ import {
 } from '@/components/table';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { useItemDataStore } from '@/stores/itemDataStore';
+import { usePinnedItemsStore } from '@/stores/usePinnedItemsStore';
 import { createItemSearchIndex, filterItemIdsByRelevance } from '@/utils/itemSearch';
 import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -46,6 +47,10 @@ export const DashboardPage: React.FC = () => {
   const pricesLoaded = useItemDataStore((state) => state.pricesLoaded);
   const isFullyLoaded = useItemDataStore((state) => state.isFullyLoaded);
 
+  // Get pinned items
+  const { getPinnedItemIds } = usePinnedItemsStore();
+  const pinnedItemIds = useMemo(() => new Set(getPinnedItemIds()), [getPinnedItemIds]);
+
   const allItems = useMemo(() => Array.from(items.values()), [items]);
   const hasItems = items.size > 0;
   const isDataReady = hasItems && pricesLoaded;
@@ -67,8 +72,12 @@ export const DashboardPage: React.FC = () => {
   const filteredItems = useMemo(() => {
     let results = allItems;
 
-    // Apply non-search filters first
-    results = results.filter(item => {
+    // Separate pinned and non-pinned items
+    const pinnedItems = results.filter(item => pinnedItemIds.has(item.itemId));
+    const nonPinnedItems = results.filter(item => !pinnedItemIds.has(item.itemId));
+
+    // Apply non-search filters only to non-pinned items
+    const filteredNonPinned = nonPinnedItems.filter(item => {
       // Members filter
       if (filters.members === 'members' && !item.members) return false;
       if (filters.members === 'f2p' && item.members) return false;
@@ -82,13 +91,14 @@ export const DashboardPage: React.FC = () => {
       return true;
     });
 
-    // Apply search filter with relevance ordering
+    // Apply search filter with relevance ordering to non-pinned items
+    let searchFilteredNonPinned = filteredNonPinned;
     if (searchMatchIds !== null && searchMatchIds.length > 0) {
       // Create a map for O(1) lookup and preserve relevance order
       const idToIndex = new Map(searchMatchIds.map((id, index) => [id, index]));
 
       // Filter and sort by relevance
-      results = results
+      searchFilteredNonPinned = filteredNonPinned
         .filter(item => idToIndex.has(item.itemId))
         .sort((a, b) => {
           const indexA = idToIndex.get(a.itemId) ?? Infinity;
@@ -97,8 +107,9 @@ export const DashboardPage: React.FC = () => {
         });
     }
 
-    return results;
-  }, [allItems, searchMatchIds, filters, currentPrices]);
+    // Combine: pinned items first (preserving order), then filtered non-pinned items
+    return [...pinnedItems, ...searchFilteredNonPinned];
+  }, [allItems, pinnedItemIds, searchMatchIds, filters, currentPrices]);
 
   // Map filtered items to ItemWithPrice for the table
   const itemsWithPrices: ItemWithPrice[] = useMemo(() => {

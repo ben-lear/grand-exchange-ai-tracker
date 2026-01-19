@@ -4,7 +4,7 @@
 
 import { Download } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import { Button } from '../ui';
+import { Button, Icon } from '../ui';
 import { ItemWithPrice } from './columns';
 
 export interface ExportButtonProps {
@@ -145,7 +145,7 @@ export function ExportButton({ data, filename = 'osrs-items', className = '' }: 
         aria-label="Export data"
         aria-expanded={isOpen}
         aria-haspopup="true"
-        leftIcon={<Download className="w-4 h-4" />}
+        leftIcon={<Icon as={Download} size="sm" />}
       >
         Export
       </Button>

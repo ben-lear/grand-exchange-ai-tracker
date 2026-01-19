@@ -2,7 +2,7 @@
  * Tests for useFavoritesStore
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { useFavoritesStore } from './useFavoritesStore';
 
 describe('useFavoritesStore', () => {
@@ -35,7 +35,7 @@ describe('useFavoritesStore', () => {
     it('should add a favorite item', () => {
       const { addFavorite } = useFavoritesStore.getState();
       addFavorite(mockItem1);
-      
+
       const state = useFavoritesStore.getState();
       expect(state.favorites[1]).toBeDefined();
       expect(state.favorites[1].itemId).toBe(1);
@@ -47,7 +47,7 @@ describe('useFavoritesStore', () => {
       const { addFavorite } = useFavoritesStore.getState();
       addFavorite(mockItem1);
       addFavorite(mockItem2);
-      
+
       const state = useFavoritesStore.getState();
       expect(Object.keys(state.favorites).length).toBe(2);
       expect(state.getFavoritesCount()).toBe(2);
@@ -57,11 +57,11 @@ describe('useFavoritesStore', () => {
       const { addFavorite } = useFavoritesStore.getState();
       addFavorite(mockItem1);
       const firstAddedAt = useFavoritesStore.getState().favorites[1].addedAt;
-      
+
       // Wait a tiny bit and add again
       addFavorite(mockItem1);
       const secondAddedAt = useFavoritesStore.getState().favorites[1].addedAt;
-      
+
       expect(secondAddedAt).toBeGreaterThanOrEqual(firstAddedAt);
     });
   });
@@ -71,7 +71,7 @@ describe('useFavoritesStore', () => {
       const { addFavorite, removeFavorite } = useFavoritesStore.getState();
       addFavorite(mockItem1);
       expect(useFavoritesStore.getState().favorites[1]).toBeDefined();
-      
+
       removeFavorite(1);
       expect(useFavoritesStore.getState().favorites[1]).toBeUndefined();
     });
@@ -86,7 +86,7 @@ describe('useFavoritesStore', () => {
     it('should add favorite if not already favorited', () => {
       const { toggleFavorite } = useFavoritesStore.getState();
       toggleFavorite(mockItem1);
-      
+
       const state = useFavoritesStore.getState();
       expect(state.favorites[1]).toBeDefined();
     });
@@ -95,7 +95,7 @@ describe('useFavoritesStore', () => {
       const { toggleFavorite } = useFavoritesStore.getState();
       toggleFavorite(mockItem1);
       expect(useFavoritesStore.getState().favorites[1]).toBeDefined();
-      
+
       toggleFavorite(mockItem1);
       expect(useFavoritesStore.getState().favorites[1]).toBeUndefined();
     });
@@ -120,26 +120,31 @@ describe('useFavoritesStore', () => {
       expect(getFavorites()).toEqual([]);
     });
 
-    it('should return array of favorite items', () => {
+    it('should return array of favorite items', async () => {
       const { addFavorite, getFavorites } = useFavoritesStore.getState();
       addFavorite(mockItem1);
+
+      // Small delay to ensure different timestamps
+      await new Promise(resolve => setTimeout(resolve, 10));
+
       addFavorite(mockItem2);
-      
+
       const favorites = getFavorites();
       expect(favorites.length).toBe(2);
-      expect(favorites[0].itemId).toBe(1);
-      expect(favorites[1].itemId).toBe(2);
+      // Items are sorted by addedAt descending (most recent first)
+      expect(favorites[0].itemId).toBe(2);
+      expect(favorites[1].itemId).toBe(1);
     });
 
     it('should return favorites sorted by addedAt descending', async () => {
       const { addFavorite, getFavorites } = useFavoritesStore.getState();
       addFavorite(mockItem1);
-      
+
       // Small delay to ensure different timestamps
       await new Promise(resolve => setTimeout(resolve, 10));
-      
+
       addFavorite(mockItem2);
-      
+
       const favorites = getFavorites();
       // Most recently added should be first
       expect(favorites[0].itemId).toBe(2);
@@ -157,7 +162,7 @@ describe('useFavoritesStore', () => {
       const { addFavorite, getFavoritesCount } = useFavoritesStore.getState();
       addFavorite(mockItem1);
       expect(getFavoritesCount()).toBe(1);
-      
+
       addFavorite(mockItem2);
       expect(getFavoritesCount()).toBe(2);
     });
@@ -169,7 +174,7 @@ describe('useFavoritesStore', () => {
       addFavorite(mockItem1);
       addFavorite(mockItem2);
       expect(getFavoritesCount()).toBe(2);
-      
+
       clearFavorites();
       expect(getFavoritesCount()).toBe(0);
       expect(useFavoritesStore.getState().favorites).toEqual({});

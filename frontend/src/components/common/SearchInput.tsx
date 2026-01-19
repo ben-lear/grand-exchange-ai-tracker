@@ -6,7 +6,7 @@
 import { Search, X } from 'lucide-react';
 import React, { forwardRef, useCallback } from 'react';
 import { cn } from '../../utils';
-import { Button } from '../ui';
+import { Button, Icon } from '../ui';
 
 export interface SearchInputProps {
     /** Current input value */
@@ -79,7 +79,12 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
 
         return (
             <div className={cn('relative', className)}>
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                <Icon
+                    as={Search}
+                    size="sm"
+                    color="muted"
+                    className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
+                />
                 <input
                     ref={ref}
                     id={id}
@@ -114,7 +119,7 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
                         className="absolute right-2 top-1/2 -translate-y-1/2"
                         tabIndex={-1}
                     >
-                        <X className="w-4 h-4" />
+                        <Icon as={X} size="sm" />
                     </Button>
                 )}
             </div>

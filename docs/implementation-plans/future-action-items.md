@@ -9,6 +9,26 @@ Collection of features and improvements identified during watchlist system plann
 
 ## Action Items
 
+### Pin Item Limit Toast Notification
+**Priority:** Low  
+**Effort:** XS (< 30 minutes)  
+**Description:** Add toast notification (using Sonner) when user attempts to pin more than 50 items
+
+**Requirements:**
+- Show informative toast message when pin limit is reached
+- Include current count in message (e.g., "Maximum 50 items can be pinned")
+- Use appropriate toast variant (warning or info)
+- Potentially include action to manage/unpin items
+
+**Technical Considerations:**
+- Trigger from `usePinnedItemsStore.togglePin()` when limit check fails
+- Import and use Sonner toast library (already in project)
+- Consider adding link to "Manage Pins" feature (future enhancement)
+
+**Related:**
+- Implemented in dashboard table enhancements (January 2026)
+- Store already returns `false` from `togglePin()` when at limit
+
 ### Template Management System
 **Priority:** Medium  
 **Effort:** L (2-4 hours)  

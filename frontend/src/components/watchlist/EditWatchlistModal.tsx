@@ -2,7 +2,7 @@
  * EditWatchlistModal - Modal for renaming a watchlist
  */
 
-import { Button } from '@/components/ui';
+import { Button, Icon, Input, Stack, Text } from '@/components/ui';
 import { WatchlistSchema } from '@/schemas/watchlist';
 import { useWatchlistStore } from '@/stores/useWatchlistStore';
 import { X } from 'lucide-react';
@@ -99,51 +99,66 @@ export function EditWatchlistModal({
                 onKeyDown={handleKeyDown}
             >
                 {/* Header */}
-                <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
-                    <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+                <Stack
+                    direction="row"
+                    align="center"
+                    justify="between"
+                    className="p-6 border-b border-gray-200 dark:border-gray-700"
+                >
+                    <Text as="h2" variant="heading" size="xl">
                         Rename Watchlist
-                    </h2>
+                    </Text>
                     <button
                         onClick={onClose}
                         className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
                         aria-label="Close"
                     >
-                        <X className="w-5 h-5 text-gray-500" />
+                        <Icon as={X} size="md" color="muted" />
                     </button>
-                </div>
+                </Stack>
 
                 {/* Form */}
                 <form onSubmit={handleSubmit}>
-                    <div className="p-6">
-                        <label
-                            htmlFor="watchlist-name"
-                            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-                        >
-                            Watchlist Name
-                        </label>
-                        <input
-                            id="watchlist-name"
-                            type="text"
-                            value={name}
-                            onChange={(e) => setName(e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            placeholder="Enter watchlist name"
-                            maxLength={50}
-                            autoFocus
-                            disabled={isSubmitting}
-                        />
+                    <Stack direction="col" gap={4} className="p-6">
+                        <Stack direction="col" gap={2}>
+                            <Text
+                                as="label"
+                                htmlFor="watchlist-name"
+                                variant="body"
+                                size="sm"
+                                weight="medium"
+                            >
+                                Watchlist Name
+                            </Text>
+                            <Input
+                                id="watchlist-name"
+                                type="text"
+                                value={name}
+                                onChange={(e) => setName(e.target.value)}
+                                placeholder="Enter watchlist name"
+                                maxLength={50}
+                                autoFocus
+                                disabled={isSubmitting}
+                            />
+                        </Stack>
                         {error && (
-                            <p className="mt-2 text-sm text-red-600 dark:text-red-400">
+                            <Text variant="error" size="sm">
                                 {error}
-                            </p>
+                            </Text>
                         )}
-                        <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                        <Text variant="muted" size="xs">
                             {name.length}/50 characters
-                        </p>
-                    </div>
+                        </Text>
+                    </Stack>
 
                     {/* Footer */}
-                    <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200 dark:border-gray-700">
+                    <Stack
+                        direction="row"
+                        align="center"
+                        justify="end"
+                        gap={3}
+                        className="p-6 border-t border-gray-200 dark:border-gray-700"
+                    >
                         <Button
                             type="button"
                             variant="secondary"
@@ -161,7 +176,7 @@ export function EditWatchlistModal({
                         >
                             {isSubmitting ? 'Saving...' : 'Save'}
                         </Button>
-                    </div>
+                    </Stack>
                 </form>
             </div>
         </div>

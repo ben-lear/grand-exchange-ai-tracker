@@ -8,6 +8,7 @@
  */
 
 import { ErrorDisplay, LoadingSpinner } from '@/components/common';
+import { Icon, Stack, Text } from '@/components/ui';
 import { useColumnVisibilityStore } from '@/stores/useColumnVisibilityStore';
 import {
   flexRender,
@@ -106,9 +107,9 @@ export function ItemsTable({
   // Loading state
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-96">
+      <Stack direction="col" align="center" justify="center" className="h-96">
         <LoadingSpinner size="lg" message="Loading items..." />
-      </div>
+      </Stack>
     );
   }
 
@@ -128,7 +129,7 @@ export function ItemsTable({
   // Empty state
   if (data.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-96 text-center">
+      <Stack direction="col" align="center" justify="center" className="h-96 text-center">
         <div className="text-gray-400 dark:text-gray-500 mb-2">
           <svg
             className="w-16 h-16 mx-auto mb-4"
@@ -144,13 +145,13 @@ export function ItemsTable({
             />
           </svg>
         </div>
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-1">
+        <Text as="h3" variant="heading" size="lg" className="mb-1">
           No items found
-        </h3>
-        <p className="text-gray-500 dark:text-gray-400">
+        </Text>
+        <Text variant="muted">
           Try adjusting your filters or search query
-        </p>
-      </div>
+        </Text>
+      </Stack>
     );
   }
 
@@ -167,61 +168,70 @@ export function ItemsTable({
           <thead className="bg-gray-50 dark:bg-gray-800 sticky top-0 z-10">
             {table.getHeaderGroups().map((headerGroup) => (
               <tr key={headerGroup.id}>
-                {headerGroup.headers.map((header) => (
-                  <th
-                    key={header.id}
-                    className="px-4 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider border-b border-gray-200 dark:border-gray-700"
-                    style={{
-                      width: header.getSize(),
-                      position: 'relative',
-                    }}
-                  >
-                    {header.isPlaceholder ? null : (
-                      <div className="flex items-center gap-2">
-                        {/* Column Header with Sort Button */}
-                        {header.column.getCanSort() ? (
-                          <button
-                            className="flex items-center gap-1 hover:text-gray-900 dark:hover:text-white"
-                            onClick={header.column.getToggleSortingHandler()}
-                          >
-                            {flexRender(
+                {headerGroup.headers.map((header, index) => {
+                  const customClassName = (header.column.columnDef.meta as any)?.cellClassName;
+                  const baseClassName = customClassName || 'px-2';
+
+                  return (
+                    <th
+                      key={header.id}
+                      className={`${baseClassName} py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider border-b border-gray-200 dark:border-gray-700 relative`}
+                      style={{
+                        width: header.getSize(),
+                      }}
+                    >
+                      {header.isPlaceholder ? null : (
+                        <div className="flex items-center gap-2">
+                          {/* Column Header with Sort Button */}
+                          {header.column.getCanSort() ? (
+                            <button
+                              className="flex items-center gap-1 hover:text-gray-900 dark:hover:text-white"
+                              onClick={header.column.getToggleSortingHandler()}
+                            >
+                              {flexRender(
+                                header.column.columnDef.header,
+                                header.getContext()
+                              )}
+                              {header.column.getIsSorted() === 'asc' ? (
+                                <Icon as={ArrowUp} size="sm" />
+                              ) : header.column.getIsSorted() === 'desc' ? (
+                                <Icon as={ArrowDown} size="sm" />
+                              ) : (
+                                <Icon as={ArrowUpDown} size="sm" className="opacity-0 group-hover:opacity-50" />
+                              )}
+                            </button>
+                          ) : (
+                            flexRender(
                               header.column.columnDef.header,
                               header.getContext()
-                            )}
-                            {header.column.getIsSorted() === 'asc' ? (
-                              <ArrowUp className="w-4 h-4" />
-                            ) : header.column.getIsSorted() === 'desc' ? (
-                              <ArrowDown className="w-4 h-4" />
-                            ) : (
-                              <ArrowUpDown className="w-4 h-4 opacity-0 group-hover:opacity-50" />
-                            )}
-                          </button>
-                        ) : (
-                          flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )
-                        )}
+                            )
+                          )}
 
-                        {/* Column Resizer */}
-                        {header.column.getCanResize() && (
-                          <div
-                            onMouseDown={header.getResizeHandler()}
-                            onTouchStart={header.getResizeHandler()}
-                            className={`absolute right-0 top-0 h-full w-1 cursor-col-resize select-none touch-none hover:bg-blue-500 ${header.column.getIsResizing() ? 'bg-blue-500' : ''
-                              }`}
-                            style={{
-                              transform: header.column.getIsResizing()
-                                ? `translateX(${table.getState().columnSizingInfo.deltaOffset
-                                }px)`
-                                : '',
-                            }}
-                          />
-                        )}
-                      </div>
-                    )}
-                  </th>
-                ))}
+                          {/* Column Divider */}
+                          {index < headerGroup.headers.length - 1 && (
+                            <div className="absolute right-0 top-3 bottom-3 w-px bg-gray-200 dark:bg-gray-700" />
+                          )}
+
+                          {/* Column Resizer */}
+                          {header.column.getCanResize() && (
+                            <div
+                              onMouseDown={header.getResizeHandler()}
+                              onTouchStart={header.getResizeHandler()}
+                              className={`absolute right-0 top-0 h-full w-1 cursor-col-resize select-none touch-none hover:bg-blue-500 ${header.column.getIsResizing() ? 'bg-blue-500' : ''
+                                }`}
+                              style={{
+                                transform: header.column.getIsResizing()
+                                  ? `translateX(${table.getState().columnSizingInfo.deltaOffset
+                                  }px)`
+                                  : '',
+                              }}
+                            />
+                          )}
+                        </div>
+                      )}
+                    </th>
+                  );
+                })}
               </tr>
             ))}
           </thead>
@@ -240,15 +250,23 @@ export function ItemsTable({
                   key={row.id}
                   className="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                 >
-                  {row.getVisibleCells().map((cell) => (
-                    <td
-                      key={cell.id}
-                      className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100"
-                      style={{ width: cell.column.getSize() }}
-                    >
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </td>
-                  ))}
+                  {row.getVisibleCells().map((cell, cellIndex) => {
+                    const customClassName = (cell.column.columnDef.meta as any)?.cellClassName;
+                    const baseClassName = customClassName || 'px-2';
+
+                    return (
+                      <td
+                        key={cell.id}
+                        className={`${baseClassName} py-3 text-sm text-gray-900 dark:text-gray-100 relative`}
+                        style={{ width: cell.column.getSize() }}
+                      >
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                        {cellIndex < row.getVisibleCells().length - 1 && (
+                          <div className="absolute right-0 top-2 bottom-2 w-px bg-gray-200 dark:bg-gray-700" />
+                        )}
+                      </td>
+                    );
+                  })}
                 </tr>
               );
             })}

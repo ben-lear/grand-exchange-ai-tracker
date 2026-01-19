@@ -7,6 +7,7 @@ import type { PricePoint } from '@/types';
 import { formatGold, formatNumber } from '@/utils/formatters';
 import { format } from 'date-fns';
 import React from 'react';
+import { Stack, Text } from '../ui';
 
 export interface ChartTooltipProps {
   active?: boolean;
@@ -69,62 +70,62 @@ export function ChartTooltip({ active, payload, label, coordinate, viewBox }: Ch
       style={customStyle}
     >
       {/* Timestamp */}
-      <div className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">
+      <Text variant="heading" size="sm" className="mb-2">
         {format(timestamp, 'MMM d, yyyy HH:mm')}
-      </div>
+      </Text>
 
       {/* Prices */}
       <div className="space-y-1">
         {hasDualPrices ? (
           <>
             {/* High Price */}
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2">
+            <Stack direction="row" align="center" justify="between" gap={3}>
+              <Stack direction="row" align="center" gap={2}>
                 <div className="w-3 h-3 rounded-full bg-green-500" />
-                <span className="text-sm text-gray-600 dark:text-gray-400">High:</span>
-              </div>
-              <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                <Text variant="muted" size="sm">High:</Text>
+              </Stack>
+              <Text variant="heading" size="sm">
                 {formatGold(highPrice)}
-              </span>
-            </div>
+              </Text>
+            </Stack>
 
             {/* Low Price */}
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2">
+            <Stack direction="row" align="center" justify="between" gap={3}>
+              <Stack direction="row" align="center" gap={2}>
                 <div className="w-3 h-3 rounded-full bg-orange-500" />
-                <span className="text-sm text-gray-600 dark:text-gray-400">Low:</span>
-              </div>
-              <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                <Text variant="muted" size="sm">Low:</Text>
+              </Stack>
+              <Text variant="heading" size="sm">
                 {formatGold(lowPrice)}
-              </span>
-            </div>
+              </Text>
+            </Stack>
 
             {/* Spread */}
-            <div className="flex items-center justify-between gap-3 pt-1 border-t border-gray-200 dark:border-gray-600">
-              <span className="text-xs text-gray-500 dark:text-gray-400">Spread:</span>
-              <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
+            <Stack direction="row" align="center" justify="between" gap={3} className="pt-1 border-t border-gray-200 dark:border-gray-600">
+              <Text variant="muted" size="xs">Spread:</Text>
+              <Text size="xs" weight="medium" className="text-gray-700 dark:text-gray-300">
                 {formatGold(highPrice - lowPrice)}
-              </span>
-            </div>
+              </Text>
+            </Stack>
           </>
         ) : (
           /* Fallback to single price */
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-gray-600 dark:text-gray-400">Price:</span>
-            <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+          <Stack direction="row" align="center" justify="between">
+            <Text variant="muted" size="sm">Price:</Text>
+            <Text variant="heading" size="sm">
               {formatGold(data.price ?? 0)}
-            </span>
-          </div>
+            </Text>
+          </Stack>
         )}
 
         {/* Volume if available */}
         {(highVolume > 0 || lowVolume > 0) && (
-          <div className="flex items-center justify-between pt-1 border-t border-gray-200 dark:border-gray-600">
-            <span className="text-xs text-gray-500 dark:text-gray-400">Volume:</span>
-            <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
+          <Stack direction="row" align="center" justify="between" className="pt-1 border-t border-gray-200 dark:border-gray-600">
+            <Text variant="muted" size="xs">Volume:</Text>
+            <Text size="xs" weight="medium" className="text-gray-700 dark:text-gray-300">
               {formatNumber(highVolume + lowVolume)}
-            </span>
-          </div>
+            </Text>
+          </Stack>
         )}
       </div>
     </div>

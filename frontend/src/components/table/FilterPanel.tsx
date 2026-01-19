@@ -9,7 +9,7 @@
 
 import { SlidersHorizontal, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { Button, Input, Radio } from '../ui';
+import { Button, Icon, Input, Radio, Stack } from '../ui';
 
 export interface FilterState {
   priceMin?: number;
@@ -84,9 +84,9 @@ export function FilterPanel({
   return (
     <div className={`bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 ${className}`}>
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-        <div className="flex items-center gap-2">
-          <SlidersHorizontal className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+      <Stack direction="row" align="center" justify="between" className="p-4 border-b border-gray-200 dark:border-gray-700">
+        <Stack direction="row" align="center" gap={2}>
+          <Icon as={SlidersHorizontal} size="md" color="muted" />
           <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
             Filters
           </h3>
@@ -95,7 +95,7 @@ export function FilterPanel({
               Active
             </span>
           )}
-        </div>
+        </Stack>
         {onClose && (
           <Button
             variant="close"
@@ -103,10 +103,10 @@ export function FilterPanel({
             onClick={onClose}
             aria-label="Close filters"
           >
-            <X className="w-5 h-5" />
+            <Icon as={X} size="md" />
           </Button>
         )}
-      </div>
+      </Stack>
 
       {/* Filter Content */}
       <div className="p-4 space-y-6">

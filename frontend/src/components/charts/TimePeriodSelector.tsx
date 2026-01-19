@@ -7,7 +7,7 @@
  */
 
 import { TimePeriod } from '@/types';
-import { Button } from '../ui';
+import { Button, Stack } from '../ui';
 
 export interface TimePeriodSelectorProps {
   activePeriod: TimePeriod;
@@ -39,7 +39,7 @@ export function TimePeriodSelector({
   };
 
   return (
-    <div className="flex items-center gap-1 p-1 bg-gray-100 dark:bg-gray-800 rounded-lg">
+    <Stack direction="row" align="center" gap={1} className="p-1 bg-gray-100 dark:bg-gray-800 rounded-lg">
       {PERIOD_OPTIONS.map((option) => {
         const isActive = activePeriod === option.value;
         const available = isAvailable(option.value);
@@ -58,6 +58,6 @@ export function TimePeriodSelector({
           </Button>
         );
       })}
-    </div>
+    </Stack>
   );
 }

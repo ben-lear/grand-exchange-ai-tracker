@@ -3,6 +3,7 @@
  * Displays recent item with clock icon and remove button
  */
 
+import { Icon, Stack, Text } from '@/components/ui';
 import { Clock, X } from 'lucide-react';
 import type { RecentItem } from '../../hooks/useRecentSearches';
 
@@ -26,12 +27,12 @@ export interface RecentSearchItemProps {
 export function RecentSearchItem({ item, onRemove }: RecentSearchItemProps) {
     return (
         <>
-            <div className="flex items-center gap-2 min-w-0">
-                <Clock className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                <span className="text-gray-900 dark:text-white truncate">
+            <Stack direction="row" align="center" gap={2} className="min-w-0">
+                <Icon as={Clock} size="sm" color="muted" />
+                <Text className="truncate">
                     {item.name}
-                </span>
-            </div>
+                </Text>
+            </Stack>
             <button
                 type="button"
                 onClick={(e) => {
@@ -42,7 +43,7 @@ export function RecentSearchItem({ item, onRemove }: RecentSearchItemProps) {
                 aria-label={`Remove ${item.name} from recent`}
                 tabIndex={-1}
             >
-                <X className="w-3 h-3" />
+                <Icon as={X} size="xs" />
             </button>
         </>
     );

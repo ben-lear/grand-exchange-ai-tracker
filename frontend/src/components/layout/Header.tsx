@@ -8,7 +8,7 @@ import { Link } from 'react-router-dom';
 import { useUIStore } from '../../stores';
 import { cn } from '../../utils';
 import { GlobalSearch, type GlobalSearchHandle } from '../search';
-import { Button } from '../ui';
+import { Button, Icon, Stack, Text } from '../ui';
 
 export interface HeaderProps {
   className?: string;
@@ -42,29 +42,29 @@ export const Header = forwardRef<HeaderHandle, HeaderProps>(
         <div className="container mx-auto px-4">
           <div className="flex h-16 items-center justify-between">
             {/* Left: Logo and Title */}
-            <div className="flex items-center gap-4">
+            <Stack direction="row" align="center" gap={4}>
               <button
                 onClick={toggleMobileMenu}
                 className="lg:hidden p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800"
                 aria-label="Toggle mobile menu"
               >
-                <Menu className="w-5 h-5" />
+                <Icon as={Menu} size="md" />
               </button>
 
               <Link to="/" className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-yellow-500 to-amber-600 flex items-center justify-center">
                   <span className="text-white font-bold text-lg">GE</span>
                 </div>
-                <div className="hidden sm:block">
-                  <h1 className="text-lg font-bold text-gray-900 dark:text-white">
+                <Stack direction="col" gap={0} className="hidden sm:flex">
+                  <Text as="h1" variant="heading" size="lg">
                     OSRS GE Tracker
-                  </h1>
-                  <p className="text-xs text-gray-600 dark:text-gray-400">
+                  </Text>
+                  <Text variant="muted" size="xs">
                     Grand Exchange Price Tracker
-                  </p>
-                </div>
+                  </Text>
+                </Stack>
               </Link>
-            </div>
+            </Stack>
 
             {/* Center: Global Search (Desktop) */}
             <div className="hidden md:flex flex-1 max-w-xl mx-8">
@@ -72,7 +72,7 @@ export const Header = forwardRef<HeaderHandle, HeaderProps>(
             </div>
 
             {/* Right: Actions */}
-            <div className="flex items-center gap-2">
+            <Stack direction="row" align="center" gap={2}>
               {/* Mobile search button - focuses the search on click */}
               <Button
                 variant="ghost"
@@ -81,7 +81,7 @@ export const Header = forwardRef<HeaderHandle, HeaderProps>(
                 className="md:hidden"
                 aria-label="Search"
               >
-                <Search className="w-5 h-5" />
+                <Icon as={Search} size="md" />
               </Button>
 
               <Button
@@ -90,7 +90,7 @@ export const Header = forwardRef<HeaderHandle, HeaderProps>(
                 className="relative"
                 aria-label="Notifications"
               >
-                <Bell className="w-5 h-5" />
+                <Icon as={Bell} size="md" />
                 <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
               </Button>
 
@@ -99,9 +99,9 @@ export const Header = forwardRef<HeaderHandle, HeaderProps>(
                 className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800"
                 aria-label="Settings"
               >
-                <Settings className="w-5 h-5" />
+                <Icon as={Settings} size="md" />
               </Link>
-            </div>
+            </Stack>
           </div>
         </div>
 

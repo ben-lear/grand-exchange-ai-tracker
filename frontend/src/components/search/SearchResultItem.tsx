@@ -3,6 +3,7 @@
  * Displays item icon, name, members badge, and prices
  */
 
+import { Stack, Text } from '@/components/ui';
 import type { CurrentPrice, Item } from '../../types';
 import { formatCompact } from '../../utils';
 
@@ -28,7 +29,7 @@ export function SearchResultItem({ item, price }: SearchResultItemProps) {
 
     return (
         <>
-            <div className="flex items-center gap-2 min-w-0">
+            <Stack direction="row" align="center" gap={2} className="min-w-0">
                 {item.iconUrl && (
                     <img
                         src={item.iconUrl}
@@ -37,28 +38,28 @@ export function SearchResultItem({ item, price }: SearchResultItemProps) {
                         loading="lazy"
                     />
                 )}
-                <span className="text-gray-900 dark:text-white truncate">
+                <Text className="truncate">
                     {item.name}
-                </span>
+                </Text>
                 {item.members && (
                     <span className="px-1.5 py-0.5 text-xs bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-400 rounded flex-shrink-0">
                         P2P
                     </span>
                 )}
-            </div>
+            </Stack>
             {hasPrice && (
-                <div className="flex items-center gap-3 text-sm flex-shrink-0">
+                <Stack direction="row" align="center" gap={3} className="text-sm flex-shrink-0">
                     {price.highPrice && (
-                        <span className="text-green-600 dark:text-green-400">
+                        <Text variant="success">
                             {formatCompact(price.highPrice)}
-                        </span>
+                        </Text>
                     )}
                     {price.lowPrice && (
-                        <span className="text-red-600 dark:text-red-400">
+                        <Text variant="error">
                             {formatCompact(price.lowPrice)}
-                        </span>
+                        </Text>
                     )}
-                </div>
+                </Stack>
             )}
         </>
     );

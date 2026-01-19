@@ -2,6 +2,17 @@
  * Common component exports
  */
 
+export { ErrorBoundary } from './ErrorBoundary';
+export type { ErrorFallbackProps } from './ErrorBoundary';
+
+export { ErrorFallback } from './ErrorFallback';
+
+export { ItemIcon } from './ItemIcon';
+export type { ItemIconProps } from './ItemIcon';
+
+export { BackButton } from './BackButton';
+export type { BackButtonProps } from './BackButton';
+
 export { InlineLoading, Loading as LoadingSpinner } from './Loading';
 export type { LoadingProps } from './Loading';
 

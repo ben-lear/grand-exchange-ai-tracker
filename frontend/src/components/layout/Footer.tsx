@@ -2,6 +2,7 @@
  * Footer component for the main layout
  */
 
+import { Icon, Stack, Text } from '@/components/ui';
 import { Github, Heart } from 'lucide-react';
 import React from 'react';
 import { cn } from '../../utils';
@@ -27,20 +28,20 @@ export const Footer: React.FC<FooterProps> = ({ className }) => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {/* About */}
           <div>
-            <h3 className="font-semibold text-gray-900 dark:text-white mb-3">
+            <Text as="h3" variant="heading" size="base" className="mb-3">
               About
-            </h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
+            </Text>
+            <Text variant="muted" size="sm">
               Track Old School RuneScape Grand Exchange prices in real-time.
               Get historical data, price trends, and trading volume for all items.
-            </p>
+            </Text>
           </div>
 
           {/* Links */}
           <div>
-            <h3 className="font-semibold text-gray-900 dark:text-white mb-3">
+            <Text as="h3" variant="heading" size="base" className="mb-3">
               Resources
-            </h3>
+            </Text>
             <ul className="space-y-2 text-sm">
               <li>
                 <a
@@ -77,35 +78,37 @@ export const Footer: React.FC<FooterProps> = ({ className }) => {
 
           {/* Info */}
           <div>
-            <h3 className="font-semibold text-gray-900 dark:text-white mb-3">
+            <Text as="h3" variant="heading" size="base" className="mb-3">
               Project
-            </h3>
-            <div className="flex flex-col gap-3">
+            </Text>
+            <Stack direction="col" gap={3}>
               <a
                 href="https://github.com/ben-lear/grand-exchange-ai-tracker"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400"
               >
-                <Github className="w-4 h-4" />
+                <Icon as={Github} size="sm" />
                 View on GitHub
               </a>
-              <p className="text-xs text-gray-500 dark:text-gray-500">
+              <Text variant="muted" size="xs">
                 Data updated every minute from OSRS API
-              </p>
-            </div>
+              </Text>
+            </Stack>
           </div>
         </div>
 
         {/* Bottom Bar */}
         <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-800">
           <div className="flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
-            <p>
+            <Text variant="muted" size="sm">
               © {currentYear} OSRS GE Tracker. All rights reserved.
-            </p>
-            <p className="flex items-center gap-1">
-              Made with <Heart className="w-4 h-4 text-red-500" /> for the OSRS community
-            </p>
+            </Text>
+            <Stack direction="row" align="center" gap={1}>
+              <Text variant="muted" size="sm">Made with</Text>
+              <Icon as={Heart} size="sm" className="text-red-500" />
+              <Text variant="muted" size="sm">for the OSRS community</Text>
+            </Stack>
           </div>
         </div>
       </div>

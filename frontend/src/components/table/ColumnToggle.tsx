@@ -2,7 +2,7 @@ import { useOnClickOutside } from '@/hooks/useOnClickOutside';
 import { ALL_COLUMNS, useColumnVisibilityStore } from '@/stores/useColumnVisibilityStore';
 import { Check, Columns } from 'lucide-react';
 import { useRef, useState } from 'react';
-import { Button, Checkbox } from '../ui';
+import { Button, Checkbox, Icon } from '../ui';
 
 interface ColumnInfo {
     id: string;
@@ -42,7 +42,7 @@ export function ColumnToggle() {
                 onClick={() => setIsOpen(!isOpen)}
                 aria-label="Toggle column visibility"
                 title="Toggle visible columns"
-                leftIcon={<Columns className="w-4 h-4" />}
+                leftIcon={<Icon as={Columns} size="sm" />}
             >
                 <span className="hidden sm:inline">Columns</span>
             </Button>
@@ -65,7 +65,7 @@ export function ColumnToggle() {
                                     />
                                     <span className="text-sm">{column.label}</span>
                                     {visibleColumns.includes(column.id) && (
-                                        <Check className="w-4 h-4 ml-auto text-blue-600 dark:text-blue-400" />
+                                        <Icon as={Check} size="sm" color="primary" className="ml-auto" />
                                     )}
                                 </label>
                             ))}

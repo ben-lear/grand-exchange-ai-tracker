@@ -3,6 +3,7 @@
  * Combines SearchInput, Dropdown, and item search logic
  */
 
+import { Text } from '@/components/ui';
 import React, {
     forwardRef,
     useCallback,
@@ -201,8 +202,10 @@ export const GlobalSearch = forwardRef<GlobalSearchHandle, GlobalSearchProps>(
                     {/* Recent Searches */}
                     {showRecent && (
                         <>
-                            <li className="px-3 py-2 text-xs font-medium text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-750">
-                                Recent Searches
+                            <li className="px-3 py-2 bg-gray-50 dark:bg-gray-750">
+                                <Text variant="muted" size="xs" weight="medium">
+                                    Recent Searches
+                                </Text>
                             </li>
                             {recentItems.map((item, index) => (
                                 <DropdownItem
@@ -234,8 +237,10 @@ export const GlobalSearch = forwardRef<GlobalSearchHandle, GlobalSearchProps>(
 
                     {/* No Results */}
                     {showNoResults && (
-                        <li className="px-3 py-4 text-center text-gray-500 dark:text-gray-400">
-                            No items found for "{query}"
+                        <li className="px-3 py-4 text-center">
+                            <Text variant="muted">
+                                No items found for "{query}"
+                            </Text>
                         </li>
                     )}
                 </Dropdown>

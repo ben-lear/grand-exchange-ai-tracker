@@ -7,6 +7,7 @@ import { Download, Edit2, MoreVertical, Share2, Star, Trash2 } from 'lucide-reac
 import { useState } from 'react';
 import type { Watchlist } from '../../types/watchlist';
 import { formatItemCount, getRelativeTime } from '../../utils/watchlist-utils';
+import { Icon, Stack } from '../ui';
 
 export interface WatchlistCardProps {
     watchlist: Watchlist;
@@ -42,15 +43,15 @@ export function WatchlistCard({
         >
             {/* Header */}
             <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-                <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-2 flex-1">
+                <Stack direction="row" align="start" justify="between">
+                    <Stack direction="row" align="center" gap={2} className="flex-1">
                         {watchlist.isDefault && (
-                            <Star className="w-4 h-4 text-yellow-500 fill-yellow-500 flex-shrink-0" />
+                            <Icon as={Star} size="sm" color="warning" className="fill-yellow-500" />
                         )}
                         <h3 className="font-semibold text-gray-900 dark:text-gray-100 truncate">
                             {watchlist.name}
                         </h3>
-                    </div>
+                    </Stack>
 
                     {/* Actions menu */}
                     <Menu as="div" className="relative">
@@ -58,7 +59,7 @@ export function WatchlistCard({
                             className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
                             onClick={(e) => e.stopPropagation()}
                         >
-                            <MoreVertical className="w-4 h-4 text-gray-500" />
+                            <Icon as={MoreVertical} size="sm" color="muted" />
                         </Menu.Button>
 
                         <Menu.Items className="absolute right-0 mt-1 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-10">
@@ -74,7 +75,7 @@ export function WatchlistCard({
                                                 className={`${active ? 'bg-gray-100 dark:bg-gray-700' : ''
                                                     } flex items-center gap-2 w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-300`}
                                             >
-                                                <Edit2 className="w-4 h-4" />
+                                                <Icon as={Edit2} size="sm" />
                                                 Edit
                                             </button>
                                         )}
@@ -140,7 +141,7 @@ export function WatchlistCard({
                             </div>
                         </Menu.Items>
                     </Menu>
-                </div>
+                </Stack>
 
                 {/* Stats */}
                 <div className="mt-2 flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">

@@ -10,8 +10,8 @@ interface ColumnVisibilityState {
 }
 
 // Columns that align with frontend/src/components/table/columns.tsx
-export const DEFAULT_COLUMNS = ['name', 'watchlist', 'highPrice', 'lowPrice', 'avgPrice', 'members', 'buyLimit'];
-export const ALL_COLUMNS = ['name', 'watchlist', 'highPrice', 'lowPrice', 'avgPrice', 'members', 'buyLimit', 'highAlch'];
+export const DEFAULT_COLUMNS = ['pin', 'favorite', 'watchlist', 'name', 'highPrice', 'lowPrice', 'avgPrice', 'members', 'buyLimit'];
+export const ALL_COLUMNS = ['pin', 'favorite', 'watchlist', 'name', 'highPrice', 'lowPrice', 'avgPrice', 'members', 'buyLimit', 'highAlch'];
 
 export const useColumnVisibilityStore = create<ColumnVisibilityState>()(
     persist(

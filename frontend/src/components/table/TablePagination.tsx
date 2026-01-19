@@ -7,7 +7,7 @@
  */
 
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
-import { Button } from '../ui';
+import { Button, Icon, Stack } from '../ui';
 
 export interface TablePaginationProps {
   currentPage: number;
@@ -60,7 +60,7 @@ export function TablePagination({
   return (
     <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-4 py-3 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
       {/* Left side - Page size selector */}
-      <div className="flex items-center gap-2">
+      <Stack direction="row" align="center" gap={2}>
         <label htmlFor="page-size-select" className="text-sm text-gray-700 dark:text-gray-300">
           Items per page:
         </label>
@@ -77,7 +77,7 @@ export function TablePagination({
             </option>
           ))}
         </select>
-      </div>
+      </Stack>
 
       {/* Center - Page info */}
       <div className="text-sm text-gray-700 dark:text-gray-300">
@@ -95,7 +95,7 @@ export function TablePagination({
       </div>
 
       {/* Right side - Navigation buttons */}
-      <div className="flex items-center gap-1">
+      <Stack direction="row" align="center" gap={1}>
         <Button
           variant="toolbar"
           size="icon"
@@ -103,7 +103,7 @@ export function TablePagination({
           disabled={!canGoPrevious}
           title="First page"
         >
-          <ChevronsLeft className="w-5 h-5" />
+          <Icon as={ChevronsLeft} size="md" />
         </Button>
         <Button
           variant="toolbar"
@@ -112,7 +112,7 @@ export function TablePagination({
           disabled={!canGoPrevious}
           title="Previous page"
         >
-          <ChevronLeft className="w-5 h-5" />
+          <Icon as={ChevronLeft} size="md" />
         </Button>
 
         {/* Page number display */}
@@ -130,7 +130,7 @@ export function TablePagination({
           disabled={!canGoNext}
           title="Next page"
         >
-          <ChevronRight className="w-5 h-5" />
+          <Icon as={ChevronRight} size="md" />
         </Button>
         <Button
           variant="toolbar"
@@ -139,9 +139,9 @@ export function TablePagination({
           disabled={!canGoNext}
           title="Last page"
         >
-          <ChevronsRight className="w-5 h-5" />
+          <Icon as={ChevronsRight} size="md" />
         </Button>
-      </div>
+      </Stack>
     </div>
   );
 }
