@@ -286,7 +286,7 @@ func (s *priceService) GetPriceHistory(ctx context.Context, params models.PriceH
 
 	// 3. Fetch data points (with automatic seeding if empty)
 	var dataPoints []models.PricePoint
-	
+
 	if source.useDaily {
 		points, err := s.fetchDailyPoints(ctx, params.ItemID, params)
 		if err != nil {

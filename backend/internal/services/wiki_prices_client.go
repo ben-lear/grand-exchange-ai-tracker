@@ -183,7 +183,11 @@ func (c *wikiPricesClient) FetchLatest(ctx context.Context, itemIDs []int) (map[
 	return parseLatestMap(parsed.Data), nil
 }
 
-func (c *wikiPricesClient) FetchTimeseries(ctx context.Context, itemID int, timestep string) ([]WikiTimeseriesPoint, error) {
+func (c *wikiPricesClient) FetchTimeseries(
+	ctx context.Context,
+	itemID int,
+	timestep string,
+) ([]WikiTimeseriesPoint, error) {
 	normalized := strings.TrimSpace(strings.ToLower(timestep))
 	switch normalized {
 	case "5m", "1h", "6h", "24h":
@@ -205,7 +209,11 @@ func (c *wikiPricesClient) FetchTimeseries(ctx context.Context, itemID int, time
 		return nil, fmt.Errorf("fetch wiki timeseries: %w", err)
 	}
 	if resp.StatusCode() != 200 {
-		c.logger.Errorw("Wiki timeseries request failed", "itemID", itemID, "timestep", normalized, "statusCode", resp.StatusCode(), "body", string(resp.Body()))
+		c.logger.Errorw("Wiki timeseries request failed",
+			"itemID", itemID,
+			"timestep", normalized,
+			"statusCode", resp.StatusCode(),
+			"body", string(resp.Body()))
 		return nil, fmt.Errorf("wiki timeseries request failed with status %d", resp.StatusCode())
 	}
 

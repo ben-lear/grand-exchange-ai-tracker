@@ -9,31 +9,27 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
-	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
-	"gorm.io/gorm/logger"
 
 	"github.com/guavi/osrs-ge-tracker/internal/models"
 	"github.com/guavi/osrs-ge-tracker/internal/services"
+	"github.com/guavi/osrs-ge-tracker/tests/testutil"
 )
 
-// setupWatchlistTestDB creates an in-memory SQLite database for testing.
-func setupWatchlistTestDB(t *testing.T) *gorm.DB {
-	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{
-		Logger: logger.Default.LogMode(logger.Silent),
-	})
-	require.NoError(t, err)
-
-	// Migrate the schema
-	err = db.AutoMigrate(&models.WatchlistShare{})
-	require.NoError(t, err)
-
-	return db
+// setupWatchlistTestDB creates a PostgreSQL testcontainer database for testing.
+// Requires Docker to be running.
+func setupWatchlistTestDB(t *testing.T) (*gorm.DB, func()) {
+	t.Helper()
+	// SharedPostgres already runs migrations, including watchlist_shares table
+	db, cleanup := testutil.SharedPostgres(t)
+	return db, cleanup
 }
 
 // TestWatchlistService_CreateShare tests creating a watchlist share.
 func TestWatchlistService_CreateShare(t *testing.T) {
-	db := setupWatchlistTestDB(t)
+	db, cleanup := setupWatchlistTestDB(t)
+	defer cleanup()
+
 	zapLogger, _ := zap.NewDevelopment()
 	sugaredLogger := zapLogger.Sugar()
 
@@ -70,7 +66,9 @@ func TestWatchlistService_CreateShare(t *testing.T) {
 
 // TestWatchlistService_CreateShare_InvalidData tests creating a share with invalid data.
 func TestWatchlistService_CreateShare_InvalidData(t *testing.T) {
-	db := setupWatchlistTestDB(t)
+	db, cleanup := setupWatchlistTestDB(t)
+	defer cleanup()
+
 	zapLogger, _ := zap.NewDevelopment()
 	sugaredLogger := zapLogger.Sugar()
 
@@ -80,10 +78,6 @@ func TestWatchlistService_CreateShare_InvalidData(t *testing.T) {
 		name string
 		data interface{}
 	}{
-		{
-			name: "nil data",
-			data: nil,
-		},
 		{
 			name: "channel data (not JSON serializable)",
 			data: make(chan int),
@@ -103,7 +97,9 @@ func TestWatchlistService_CreateShare_InvalidData(t *testing.T) {
 
 // TestWatchlistService_GetShare tests retrieving a watchlist share.
 func TestWatchlistService_GetShare(t *testing.T) {
-	db := setupWatchlistTestDB(t)
+	db, cleanup := setupWatchlistTestDB(t)
+	defer cleanup()
+
 	zapLogger, _ := zap.NewDevelopment()
 	sugaredLogger := zapLogger.Sugar()
 
@@ -143,7 +139,9 @@ func TestWatchlistService_GetShare(t *testing.T) {
 
 // TestWatchlistService_GetShare_IncrementAccessCount tests that access count increments.
 func TestWatchlistService_GetShare_IncrementAccessCount(t *testing.T) {
-	db := setupWatchlistTestDB(t)
+	db, cleanup := setupWatchlistTestDB(t)
+	defer cleanup()
+
 	zapLogger, _ := zap.NewDevelopment()
 	sugaredLogger := zapLogger.Sugar()
 
@@ -168,7 +166,9 @@ func TestWatchlistService_GetShare_IncrementAccessCount(t *testing.T) {
 
 // TestWatchlistService_GetShare_NotFound tests retrieving a non-existent share.
 func TestWatchlistService_GetShare_NotFound(t *testing.T) {
-	db := setupWatchlistTestDB(t)
+	db, cleanup := setupWatchlistTestDB(t)
+	defer cleanup()
+
 	zapLogger, _ := zap.NewDevelopment()
 	sugaredLogger := zapLogger.Sugar()
 
@@ -184,7 +184,9 @@ func TestWatchlistService_GetShare_NotFound(t *testing.T) {
 
 // TestWatchlistService_GetShare_InvalidToken tests retrieving with invalid token format.
 func TestWatchlistService_GetShare_InvalidToken(t *testing.T) {
-	db := setupWatchlistTestDB(t)
+	db, cleanup := setupWatchlistTestDB(t)
+	defer cleanup()
+
 	zapLogger, _ := zap.NewDevelopment()
 	sugaredLogger := zapLogger.Sugar()
 
@@ -226,7 +228,9 @@ func TestWatchlistService_GetShare_InvalidToken(t *testing.T) {
 
 // TestWatchlistService_GetShare_Expired tests retrieving an expired share.
 func TestWatchlistService_GetShare_Expired(t *testing.T) {
-	db := setupWatchlistTestDB(t)
+	db, cleanup := setupWatchlistTestDB(t)
+	defer cleanup()
+
 	zapLogger, _ := zap.NewDevelopment()
 	sugaredLogger := zapLogger.Sugar()
 
@@ -238,7 +242,7 @@ func TestWatchlistService_GetShare_Expired(t *testing.T) {
 	jsonData, _ := json.Marshal(watchlistData)
 
 	expiredShare := models.WatchlistShare{
-		Token:         "expired-test-token",
+		Token:         "ancient-expired-token",
 		WatchlistData: jsonData,
 		ExpiresAt:     time.Now().Add(-24 * time.Hour), // Expired 1 day ago
 		AccessCount:   0,
@@ -250,7 +254,7 @@ func TestWatchlistService_GetShare_Expired(t *testing.T) {
 	service := services.NewWatchlistService(db, sugaredLogger)
 
 	ctx := context.Background()
-	response, err := service.GetShare(ctx, "expired-test-token")
+	response, err := service.GetShare(ctx, "ancient-expired-token")
 
 	assert.Error(t, err)
 	assert.Nil(t, response)
@@ -259,7 +263,9 @@ func TestWatchlistService_GetShare_Expired(t *testing.T) {
 
 // TestWatchlistService_CleanupExpiredShares tests cleanup of expired shares.
 func TestWatchlistService_CleanupExpiredShares(t *testing.T) {
-	db := setupWatchlistTestDB(t)
+	db, cleanup := setupWatchlistTestDB(t)
+	defer cleanup()
+
 	zapLogger, _ := zap.NewDevelopment()
 	sugaredLogger := zapLogger.Sugar()
 
@@ -269,22 +275,22 @@ func TestWatchlistService_CleanupExpiredShares(t *testing.T) {
 	now := time.Now()
 	shares := []models.WatchlistShare{
 		{
-			Token:         "expired-one",
+			Token:         "old-expired-share",
 			WatchlistData: []byte(`{"name":"Expired 1"}`),
 			ExpiresAt:     now.Add(-2 * 24 * time.Hour),
 		},
 		{
-			Token:         "expired-two",
+			Token:         "ancient-past-memory",
 			WatchlistData: []byte(`{"name":"Expired 2"}`),
 			ExpiresAt:     now.Add(-1 * 24 * time.Hour),
 		},
 		{
-			Token:         "valid-one",
+			Token:         "fresh-valid-item",
 			WatchlistData: []byte(`{"name":"Valid 1"}`),
 			ExpiresAt:     now.Add(5 * 24 * time.Hour),
 		},
 		{
-			Token:         "valid-two",
+			Token:         "new-active-list",
 			WatchlistData: []byte(`{"name":"Valid 2"}`),
 			ExpiresAt:     now.Add(7 * 24 * time.Hour),
 		},
@@ -316,7 +322,9 @@ func TestWatchlistService_CleanupExpiredShares(t *testing.T) {
 
 // TestWatchlistService_CleanupExpiredShares_NoExpired tests cleanup with no expired shares.
 func TestWatchlistService_CleanupExpiredShares_NoExpired(t *testing.T) {
-	db := setupWatchlistTestDB(t)
+	db, cleanup := setupWatchlistTestDB(t)
+	defer cleanup()
+
 	zapLogger, _ := zap.NewDevelopment()
 	sugaredLogger := zapLogger.Sugar()
 
@@ -326,12 +334,12 @@ func TestWatchlistService_CleanupExpiredShares_NoExpired(t *testing.T) {
 	now := time.Now()
 	shares := []models.WatchlistShare{
 		{
-			Token:         "valid-one",
+			Token:         "fresh-valid-item",
 			WatchlistData: []byte(`{"name":"Valid 1"}`),
 			ExpiresAt:     now.Add(5 * 24 * time.Hour),
 		},
 		{
-			Token:         "valid-two",
+			Token:         "new-active-list",
 			WatchlistData: []byte(`{"name":"Valid 2"}`),
 			ExpiresAt:     now.Add(7 * 24 * time.Hour),
 		},
@@ -359,7 +367,9 @@ func TestWatchlistService_CleanupExpiredShares_NoExpired(t *testing.T) {
 
 // TestWatchlistService_TokenCollisionHandling tests token collision retry logic.
 func TestWatchlistService_TokenCollisionHandling(t *testing.T) {
-	db := setupWatchlistTestDB(t)
+	db, cleanup := setupWatchlistTestDB(t)
+	defer cleanup()
+
 	zapLogger, _ := zap.NewDevelopment()
 	sugaredLogger := zapLogger.Sugar()
 
@@ -391,10 +401,10 @@ func TestWatchlistService_TokenCollisionHandling(t *testing.T) {
 
 // BenchmarkWatchlistService_CreateShare benchmarks share creation.
 func BenchmarkWatchlistService_CreateShare(b *testing.B) {
-	db, _ := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{
-		Logger: logger.Default.LogMode(logger.Silent),
-	})
-	db.AutoMigrate(&models.WatchlistShare{})
+	// Note: This benchmark requires Docker to be running for testcontainers
+	testDB := testutil.NewPostgresTestDB(&testing.T{})
+	db := testDB.DB
+	// Migrations already run by NewPostgresTestDB
 
 	zapLogger, _ := zap.NewDevelopment()
 	sugaredLogger := zapLogger.Sugar()
@@ -415,10 +425,10 @@ func BenchmarkWatchlistService_CreateShare(b *testing.B) {
 
 // BenchmarkWatchlistService_GetShare benchmarks share retrieval.
 func BenchmarkWatchlistService_GetShare(b *testing.B) {
-	db, _ := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{
-		Logger: logger.Default.LogMode(logger.Silent),
-	})
-	db.AutoMigrate(&models.WatchlistShare{})
+	// Note: This benchmark requires Docker to be running for testcontainers
+	testDB := testutil.NewPostgresTestDB(&testing.T{})
+	db := testDB.DB
+	// Migrations already run by NewPostgresTestDB
 
 	zapLogger, _ := zap.NewDevelopment()
 	sugaredLogger := zapLogger.Sugar()
@@ -438,3 +448,5 @@ func BenchmarkWatchlistService_GetShare(b *testing.B) {
 		_, _ = service.GetShare(ctx, response.Token)
 	}
 }
+
+

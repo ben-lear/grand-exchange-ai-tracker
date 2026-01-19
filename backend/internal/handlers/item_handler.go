@@ -19,7 +19,11 @@ type ItemHandler struct {
 }
 
 // NewItemHandler creates a new item handler.
-func NewItemHandler(itemService services.ItemService, priceService services.PriceService, logger *zap.SugaredLogger) *ItemHandler {
+func NewItemHandler(
+	itemService services.ItemService,
+	priceService services.PriceService,
+	logger *zap.SugaredLogger,
+) *ItemHandler {
 	return &ItemHandler{
 		itemService:  itemService,
 		priceService: priceService,

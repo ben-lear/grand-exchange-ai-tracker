@@ -9,13 +9,13 @@ import (
 	"go.uber.org/zap"
 )
 
-// WatchlistHandler handles HTTP requests for watchlist sharing
+// WatchlistHandler handles HTTP requests for watchlist sharing.
 type WatchlistHandler struct {
 	service services.WatchlistService
 	logger  *zap.SugaredLogger
 }
 
-// NewWatchlistHandler creates a new watchlist handler
+// NewWatchlistHandler creates a new watchlist handler.
 func NewWatchlistHandler(service services.WatchlistService, logger *zap.SugaredLogger) *WatchlistHandler {
 	return &WatchlistHandler{
 		service: service,
@@ -23,7 +23,7 @@ func NewWatchlistHandler(service services.WatchlistService, logger *zap.SugaredL
 	}
 }
 
-// CreateShare creates a new watchlist share
+// CreateShare creates a new watchlist share.
 // POST /api/v1/watchlists/share
 func (h *WatchlistHandler) CreateShare(c *fiber.Ctx) error {
 	var req models.WatchlistShareRequest
@@ -55,7 +55,7 @@ func (h *WatchlistHandler) CreateShare(c *fiber.Ctx) error {
 	return c.Status(http.StatusCreated).JSON(response)
 }
 
-// GetShare retrieves a watchlist share by token
+// GetShare retrieves a watchlist share by token.
 // GET /api/v1/watchlists/share/:token
 func (h *WatchlistHandler) GetShare(c *fiber.Ctx) error {
 	token := c.Params("token")
@@ -90,7 +90,7 @@ func (h *WatchlistHandler) GetShare(c *fiber.Ctx) error {
 	return c.JSON(response)
 }
 
-// RegisterRoutes registers the watchlist routes
+// RegisterRoutes registers the watchlist routes.
 func (h *WatchlistHandler) RegisterRoutes(app *fiber.App) {
 	v1 := app.Group("/api/v1")
 

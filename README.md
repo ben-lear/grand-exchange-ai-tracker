@@ -272,9 +272,9 @@ osrs-ge-tracker/
 │   │   └── scheduler/            # Cron job definitions
 │   ├── migrations/               # SQL schema migrations
 │   └── tests/
-│       ├── unit/                 # Unit tests
-│       ├── integration/          # Integration tests (require DB)
-│       └── testutil/             # Test helpers and mocks
+│       ├── unit/                 # Unit tests (uses testcontainers)
+│       ├── integration/          # Integration tests (requires Docker)
+│       └── testutil/             # Test helpers (testcontainers setup)
 ├── frontend/
 │   ├── src/
 │   │   ├── api/                  # Axios client and API functions
@@ -301,10 +301,15 @@ osrs-ge-tracker/
 
 ### Backend Tests
 
+**Prerequisites:**
+- Docker Desktop must be running for unit tests with testcontainers
+- First run downloads `postgres:16-alpine` image (~80MB)
+- No CGO required - works on all platforms
+
 ```bash
 cd backend
 
-# Run all tests
+# Run all tests (requires Docker)
 go test ./... -v
 
 # Run tests with coverage
@@ -314,10 +319,11 @@ go test ./... -cover -coverprofile=coverage.out
 go tool cover -html=coverage.out
 
 # Run specific package tests
-go test ./internal/services/... -v
-go test ./internal/handlers/... -v
+go test ./internal/services/... -v      # Service tests (no Docker needed)
+go test ./tests/unit/... -v             # Unit tests (requires Docker for watchlist)
+go test ./internal/handlers/... -v      # Handler tests (no Docker needed)
 
-# Run integration tests (requires database)
+# Run integration tests (requires Docker + services)
 go test ./tests/integration/... -v
 
 # Using test scripts (recommended)
@@ -331,10 +337,16 @@ go test ./tests/integration/... -v
 ```
 
 **Test Structure:**
-- `internal/*/` - Unit tests alongside source code
-- `tests/unit/` - Additional unit tests
-- `tests/integration/` - Integration tests requiring database
+- `internal/*/` - Unit tests alongside source code (no Docker)
+- `tests/unit/` - Unit tests with testcontainers (requires Docker)
+- `tests/integration/` - Full integration tests (requires Docker + PostgreSQL + Redis)
+- `tests/testutil/` - Testcontainers helpers and utilities
 - Target coverage: 80%+
+
+**Troubleshooting:**
+- If tests fail, ensure Docker Desktop is running
+- Check: `docker ps` to verify Docker is accessible
+- If Docker unavailable: `go test ./internal/services/... ./tests/testutil/...`
 
 ### Frontend Tests
 

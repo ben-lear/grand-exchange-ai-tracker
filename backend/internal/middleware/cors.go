@@ -13,12 +13,14 @@ type CORSConfig struct {
 // NewCORSMiddleware creates a new CORS middleware.
 func NewCORSMiddleware(config CORSConfig) fiber.Handler {
 	return cors.New(cors.Config{
-		AllowOrigins:     joinOrigins(config.AllowedOrigins),
-		AllowMethods:     "GET,POST,PUT,DELETE,OPTIONS,PATCH",
-		AllowHeaders:     "Origin,Content-Type,Accept,Authorization,X-Requested-With,X-Request-Id,X-Request-ID,X-Request-Time,Cache-Control,X-Accel-Buffering",
+		AllowOrigins: joinOrigins(config.AllowedOrigins),
+		AllowMethods: "GET,POST,PUT,DELETE,OPTIONS,PATCH",
+		AllowHeaders: "Origin,Content-Type,Accept,Authorization,X-Requested-With," +
+			"X-Request-Id,X-Request-ID,X-Request-Time,Cache-Control,X-Accel-Buffering",
 		AllowCredentials: false,
-		ExposeHeaders:    "Content-Length,Content-Range,Content-Type,Cache-Control,Connection,X-Accel-Buffering",
-		MaxAge:           3600, // 1 hour
+		ExposeHeaders: "Content-Length,Content-Range,Content-Type,Cache-Control,Connection," +
+			"X-Accel-Buffering",
+		MaxAge: 3600, // 1 hour
 	})
 }
 

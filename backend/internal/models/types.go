@@ -24,7 +24,8 @@ const (
 // IsValid checks if the time period is valid.
 func (p TimePeriod) IsValid() bool {
 	switch p {
-	case Period1Hour, Period12Hours, Period24Hours, Period3Days, Period7Days, Period30Days, Period90Days, Period1Year, PeriodAll:
+	case Period1Hour, Period12Hours, Period24Hours, Period3Days, Period7Days,
+		Period30Days, Period90Days, Period1Year, PeriodAll:
 		return true
 	default:
 		return false

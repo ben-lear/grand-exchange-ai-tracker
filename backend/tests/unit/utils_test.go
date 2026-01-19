@@ -365,11 +365,11 @@ func TestFormatGPValue_SmallValues(t *testing.T) {
 		expected string
 		input    int64
 	}{
-		{"0", 0},
-		{"1", 1},
-		{"10", 10},
-		{"100", 100},
-		{"999", 999},
+		{expected: "0", input: 0},
+		{expected: "1", input: 1},
+		{expected: "10", input: 10},
+		{expected: "100", input: 100},
+		{expected: "999", input: 999},
 	}
 
 	for _, tc := range testCases {
@@ -384,12 +384,12 @@ func TestFormatGPValue_Thousands(t *testing.T) {
 		expected string
 		input    int64
 	}{
-		{"1.0K", 1000},
-		{"1.5K", 1500},
-		{"10.0K", 10000},
-		{"15.5K", 15500},
-		{"100.0K", 100000},
-		{"1000.0K", 999999},
+		{expected: "1.0K", input: 1000},
+		{expected: "1.5K", input: 1500},
+		{expected: "10.0K", input: 10000},
+		{expected: "15.5K", input: 15500},
+		{expected: "100.0K", input: 100000},
+		{expected: "1000.0K", input: 999999},
 	}
 
 	for _, tc := range testCases {
@@ -404,10 +404,10 @@ func TestFormatGPValue_Millions(t *testing.T) {
 		expected string
 		input    int64
 	}{
-		{"1.0M", 1000000},
-		{"1.5M", 1500000},
-		{"10.0M", 10000000},
-		{"15.5M", 15500000},
+		{expected: "1.0M", input: 1000000},
+		{expected: "1.5M", input: 1500000},
+		{expected: "10.0M", input: 10000000},
+		{expected: "15.5M", input: 15500000},
 		{"100.0M", 100000000},
 		{"1234.6M", 1234567890},
 	}
@@ -442,10 +442,10 @@ func TestFormatGPValue_BoundaryValues(t *testing.T) {
 		expected string
 		input    int64
 	}{
-		{"999", 999},        // Just below 1K
-		{"1.0K", 1000},      // Exactly 1K
-		{"1000.0K", 999999}, // Just below 1M
-		{"1.0M", 1000000},   // Exactly 1M
+		{expected: "999", input: 999},        // Just below 1K
+		{expected: "1.0K", input: 1000},      // Exactly 1K
+		{expected: "1000.0K", input: 999999}, // Just below 1M
+		{expected: "1.0M", input: 1000000},   // Exactly 1M
 	}
 
 	for _, tc := range testCases {

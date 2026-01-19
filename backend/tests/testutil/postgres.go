@@ -42,10 +42,11 @@ var sharedPG struct {
 // Note: tests using this helper should not call t.Parallel().
 //
 
-//nolint:revive,gocognit // Test container initialization requires retry logic with multiple
 // error paths within sync.Once. This complexity is inherent to testcontainers pattern
 // (https://testcontainers.com/guides/getting-started-with-testcontainers-for-go/) and
 // necessary for reliable CI/CD execution. Complexity: 24 (acceptable for test infrastructure).
+//
+//nolint:revive,gocognit // Test container initialization requires retry logic with multiple
 func SharedPostgres(t *testing.T) (*gorm.DB, func()) {
 	t.Helper()
 
@@ -232,7 +233,9 @@ func TruncateAllTables(t *testing.T, dbClient *gorm.DB) {
 		"TRUNCATE TABLE " +
 			"price_latest, " +
 			"price_timeseries_5m, price_timeseries_1h, price_timeseries_6h, price_timeseries_24h, price_timeseries_daily, " +
-			"items CASCADE",
+			"items, " +
+			"watchlist_shares " +
+			"CASCADE",
 	).Error; err != nil {
 		t.Fatalf("failed to truncate tables: %v", err)
 	}

@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"time"
 
@@ -34,7 +35,10 @@ func NewWatchlistService(db *gorm.DB, logger *zap.SugaredLogger) WatchlistServic
 }
 
 // CreateShare creates a new watchlist share with a memorable token
-func (s *watchlistService) CreateShare(ctx context.Context, watchlistData interface{}) (*models.WatchlistShareResponse, error) {
+func (s *watchlistService) CreateShare(
+	ctx context.Context,
+	watchlistData interface{},
+) (*models.WatchlistShareResponse, error) {
 	// Convert watchlist data to JSON
 	jsonData, err := json.Marshal(watchlistData)
 	if err != nil {
@@ -108,7 +112,7 @@ func (s *watchlistService) GetShare(ctx context.Context, token string) (*models.
 
 	var share models.WatchlistShare
 	if err := s.db.WithContext(ctx).Where("token = ?", token).First(&share).Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			s.logger.Debugw("Share not found", "token", token)
 			return nil, fmt.Errorf("share not found")
 		}

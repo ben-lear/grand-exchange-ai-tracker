@@ -8,10 +8,13 @@ The backend uses a **three-tier testing strategy**:
 2. **Repository Tests (Testcontainers)** - Real PostgreSQL via Docker
 3. **Integration Tests (Full Stack)** - Complete request/response flow with database
 
+**Important:** All database-related tests (including service tests that interact with the database) now use **testcontainers with PostgreSQL** instead of SQLite. This eliminates CGO dependency issues and provides better production parity.
+
 ## Prerequisites
 
 - **Go 1.24.0+** installed
-- **Docker** running (only for repository/integration tests)
+- **Docker Desktop** running (required for database tests)
+- **No CGO required** - testcontainers eliminates SQLite/CGO dependency
 
 ## Quick Start
 
@@ -24,7 +27,7 @@ This runs everything including Testcontainers-based tests. Expect ~2-3 minutes o
 
 ### Run Fast Tests Only (No Docker)
 ```bash
-# Excludes repository and integration tests
+# Excludes repository, database, and service tests that require PostgreSQL
 go test ./tests/unit/models_test.go \
         ./tests/unit/handlers_test.go \
         ./tests/unit/middleware_test.go \
@@ -54,9 +57,10 @@ backend/
 │   │   ├── service_cache_test.go    # Mocked repos
 │   │   ├── utils_test.go            # Pure functions
 │   │   ├── rate_limiter_test.go     # Mocked storage
-│   │   ├── database_test.go         # ⚠️ Requires live DB
-│   │   └── repository_*.go          # Uses Testcontainers
-│   ├── integration/        # Full-stack tests (Testcontainers)
+│   │   ├── database_test.go         # Uses testcontainers
+│   │   ├── repository_*.go          # Uses testcontainers
+│   │   └── watchlist_service_test.go # Uses testcontainers
+│   ├── integration/        # Full-stack tests (testcontainers)
 │   └── testutil/           # Test helpers
 └── internal/services/      # Some services have co-located tests
 ```
@@ -81,6 +85,15 @@ go test ./tests/unit/cache_service_test.go -v
 ### Repository Tests (Testcontainers Required)
 ```bash
 go test ./tests/unit/repository*.go -v
+```
+
+### Database Service Tests (Testcontainers Required)
+```bash
+# Watchlist service tests (requires PostgreSQL for JSONB fields)
+go test ./tests/unit/... -run TestWatchlistService -v
+
+# Database tests
+go test ./tests/unit/database_test.go -v
 ```
 
 ### Integration Tests (Testcontainers Required)
@@ -151,15 +164,16 @@ func TestMyHandler_Integration(t *testing.T) {
 
 ## Test Infrastructure
 
-### Testcontainers (Repository/Integration Tests)
+### Testcontainers (Database Tests)
 
-Tests in `repository_*.go` and `tests/integration/` automatically start a PostgreSQL container:
+Tests in `repository_*.go`, `database_test.go`, `watchlist_service_test.go`, and `tests/integration/` automatically start a PostgreSQL container:
 
 - **Image:** `postgres:16-alpine`
 - **Port:** Random (auto-assigned by Docker)
-- **Lifecycle:** Started once per test run, shared across tests
-- **Cleanup:** Tables truncated between tests for isolation
+- **Lifecycle:** Shared container across test runs for performance
+- **Cleanup:** Tables truncated between tests for isolation (includes `watchlist_shares`)
 - **Migrations:** Applied automatically from `backend/migrations/`
+- **Benefits:** No CGO dependency, production parity, supports PostgreSQL-specific features (JSONB, partitioning)
 
 ### Miniredis (Cache Tests)
 
@@ -379,4 +393,14 @@ The project uses real PostgreSQL for repository tests because:
 
 ---
 
-**Last Updated:** January 16, 2026
+**Last Updated:** January 18, 2026
+
+## Recent Changes
+
+### January 2026 - Testcontainers Migration
+- **Migrated watchlist service tests** from SQLite to testcontainers PostgreSQL
+- **Eliminated CGO dependency** - tests now run on Windows without MinGW/GCC
+- **Fixed token validation** - Watchlist tokens now conform to PostgreSQL regex constraints
+- **Enhanced database cleanup** - Added `watchlist_shares` table to truncation routine
+- **Improved cache test expectations** - Updated tests to match actual service cache behavior
+- All 170+ backend tests now pass reliably across platforms

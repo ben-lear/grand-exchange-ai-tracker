@@ -6,7 +6,7 @@ import (
 	"gorm.io/datatypes"
 )
 
-// WatchlistShare represents a temporarily shared watchlist with a memorable token
+// WatchlistShare represents a temporarily shared watchlist with a memorable token.
 type WatchlistShare struct {
 	// Token is the memorable share identifier (adjective-adjective-noun format)
 	Token string `gorm:"primaryKey;column:token;type:varchar(50)" json:"token"`
@@ -24,28 +24,28 @@ type WatchlistShare struct {
 	AccessCount int `gorm:"column:access_count;default:0" json:"access_count"`
 }
 
-// TableName specifies the table name for GORM
+// TableName specifies the table name for GORM.
 func (WatchlistShare) TableName() string {
 	return "watchlist_shares"
 }
 
-// IsExpired checks if the share has expired
+// IsExpired checks if the share has expired.
 func (ws *WatchlistShare) IsExpired() bool {
 	return time.Now().After(ws.ExpiresAt)
 }
 
-// IncrementAccessCount increases the access counter
+// IncrementAccessCount increases the access counter.
 func (ws *WatchlistShare) IncrementAccessCount() {
 	ws.AccessCount++
 }
 
-// WatchlistShareRequest represents the request body for creating a share
+// WatchlistShareRequest represents the request body for creating a share.
 type WatchlistShareRequest struct {
 	// WatchlistData contains the watchlist to share
 	WatchlistData interface{} `json:"watchlist_data" validate:"required"`
 }
 
-// WatchlistShareResponse represents the response when creating a share
+// WatchlistShareResponse represents the response when creating a share.
 type WatchlistShareResponse struct {
 	// Token is the generated share token
 	Token string `json:"token"`
@@ -57,7 +57,7 @@ type WatchlistShareResponse struct {
 	ShareURL string `json:"share_url"`
 }
 
-// WatchlistShareDetailResponse represents the response when retrieving a share
+// WatchlistShareDetailResponse represents the response when retrieving a share.
 type WatchlistShareDetailResponse struct {
 	// WatchlistData contains the watchlist data
 	WatchlistData interface{} `json:"watchlist_data"`

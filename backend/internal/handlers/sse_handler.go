@@ -49,11 +49,13 @@ func NewSSEHandler(hub *services.SSEHub, logger *zap.SugaredLogger, config SSECo
 	}
 }
 
-//nolint:revive,gocognit // SSE streaming inherently requires 4-way select for heartbeat,
-// timeout, messages, and cancellation per SSE specification (https://html.spec.whatwg.org/multipage/server-sent-events.html).
+// timeout, messages, and cancellation per SSE specification
+// (https://html.spec.whatwg.org/multipage/server-sent-events.html).
 // This complexity is standard across SSE implementations (e.g., github.com/r3labs/sse) and
 // necessary for proper connection lifecycle management. Complexity: 21 (1 point over limit).
 // @Router /api/v1/prices/stream [get].
+//
+//nolint:revive,gocognit // SSE streaming inherently requires 4-way select for heartbeat,
 func (h *SSEHandler) Stream(c *fiber.Ctx) error {
 	// Check if hub is available
 	if h.hub == nil {

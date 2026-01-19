@@ -125,7 +125,18 @@ GET /api/v1/events                      # Server-Sent Events for live price upda
 
 ## Testing
 
+### Prerequisites
+
+**Docker must be running** for unit tests that use testcontainers (e.g., watchlist tests). Testcontainers automatically starts PostgreSQL in Docker for testing.
+
+- **Windows**: Docker Desktop must be running
+- **Linux/macOS**: Docker daemon must be running
+- No CGO required - testcontainers works without CGO
+
 ### Run all tests
+
+**Note**: First run will be slower as Docker images are downloaded. Subsequent runs use cached containers.
+
 ```bash
 go test ./...
 ```
@@ -143,13 +154,28 @@ go tool cover -html=coverage.out -o coverage.html
 
 ### Run specific test package
 ```bash
-go test ./tests/unit/...          # Unit tests only
-go test ./tests/integration/...   # Integration tests only
+go test ./tests/unit/...          # Unit tests (requires Docker for watchlist tests)
+go test ./tests/integration/...   # Integration tests (requires Docker + services)
+go test ./internal/services/...   # Service tests only (no Docker needed)
 ```
 
 ### Fast tests (skip integration)
 ```bash
 go test -short ./...
+```
+
+### Troubleshooting Tests
+
+**If watchlist tests fail:**
+1. Ensure Docker Desktop is running
+2. Check Docker is accessible: `docker ps`
+3. First run downloads `postgres:16-alpine` image (~80MB)
+4. Tests reuse shared container for speed
+
+**If Docker is unavailable:**
+```bash
+# Run only non-Docker tests
+go test ./internal/services/... ./tests/testutil/...
 ```
 
 ## Linting
@@ -198,9 +224,9 @@ backend/
 │   └── utils/                   # Shared utilities and helpers
 ├── migrations/                  # SQL database migrations
 ├── tests/
-│   ├── unit/                    # Unit tests (mocked dependencies)
-│   ├── integration/             # Integration tests (real DB/Redis)
-│   └── testutil/                # Test utilities and mocks
+│   ├── unit/                    # Unit tests (uses testcontainers + PostgreSQL)
+│   ├── integration/             # Integration tests (real DB/Redis via Docker)
+│   └── testutil/                # Test utilities (testcontainers helpers)
 ├── coverage/                    # Test coverage reports
 ├── go.mod                       # Go module dependencies
 ├── go.sum                       # Dependency checksums

@@ -223,7 +223,7 @@ func (h *PriceHandler) SyncCurrentPrices(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(fiber.Map{
-		"message":       "current prices synced successfully",
-		"synced_count":  len(updates),
+		"message":      "current prices synced successfully",
+		"synced_count": len(updates),
 	})
 }

@@ -27,15 +27,15 @@ var testSequenceMutex sync.Mutex
 
 func NewTestSSEHub(logger *zap.SugaredLogger, maxClients int, simulatedClients int) *TestSSEHub {
 	hub := services.NewSSEHub(logger, maxClients)
-	
+
 	testHub := &TestSSEHub{
 		SSEHub:   hub,
 		messages: make([]services.SSEMessage, 0),
 	}
-	
+
 	// Start the hub
 	go hub.Run()
-	
+
 	// Register simulated clients
 	for i := 0; i < simulatedClients; i++ {
 		client := &services.SSEClient{
@@ -44,7 +44,7 @@ func NewTestSSEHub(logger *zap.SugaredLogger, maxClients int, simulatedClients i
 			ConnectedAt: time.Now(),
 		}
 		hub.Register(client)
-		
+
 		// Capture messages from this client
 		go func(c *services.SSEClient) {
 			for msg := range c.MessageChan {
@@ -54,17 +54,17 @@ func NewTestSSEHub(logger *zap.SugaredLogger, maxClients int, simulatedClients i
 			}
 		}(client)
 	}
-	
+
 	// Give time for registration
 	time.Sleep(100 * time.Millisecond)
-	
+
 	return testHub
 }
 
 func (t *TestSSEHub) GetMessages() []services.SSEMessage {
 	t.mu.RLock()
 	defer t.mu.RUnlock()
-	
+
 	result := make([]services.SSEMessage, len(t.messages))
 	copy(result, t.messages)
 	return result

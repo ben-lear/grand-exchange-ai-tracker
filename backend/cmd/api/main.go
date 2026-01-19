@@ -158,12 +158,13 @@ func main() {
 	prices.Get("/current", priceHandler.GetAllCurrentPrices)         // GET /api/v1/prices/current
 	prices.Get("/current/batch", priceHandler.GetBatchCurrentPrices) // GET /api/v1/prices/current/batch?ids=1,2,3
 	prices.Get("/current/:id", priceHandler.GetCurrentPrice)         // GET /api/v1/prices/current/:id
-	prices.Get("/history/:id", priceHandler.GetPriceHistory)         // GET /api/v1/prices/history/:id?period=7d&sample=150
+	// GET /api/v1/prices/history/:id?period=7d&sample=150
+	prices.Get("/history/:id", priceHandler.GetPriceHistory)
 
 	// Watchlist routes
 	watchlists := api.Group("/watchlists")
-	watchlists.Post("/share", watchlistHandler.CreateShare)      // POST /api/v1/watchlists/share
-	watchlists.Get("/share/:token", watchlistHandler.GetShare)   // GET /api/v1/watchlists/share/:token
+	watchlists.Post("/share", watchlistHandler.CreateShare)    // POST /api/v1/watchlists/share
+	watchlists.Get("/share/:token", watchlistHandler.GetShare) // GET /api/v1/watchlists/share/:token
 
 	// SSE route (if enabled) - avoid rate limiting to prevent disconnect loops
 	if cfg.SSE.Enabled && sseHandler != nil {
