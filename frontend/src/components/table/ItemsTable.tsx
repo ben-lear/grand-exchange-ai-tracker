@@ -8,10 +8,9 @@
  */
 
 import { ErrorDisplay, LoadingSpinner } from '@/components/common';
-import { Icon, Stack, Text } from '@/components/ui';
+import { Stack, Text } from '@/components/ui';
 import { useColumnVisibilityStore } from '@/stores/useColumnVisibilityStore';
 import {
-  flexRender,
   getCoreRowModel,
   getFilteredRowModel,
   getPaginationRowModel,
@@ -22,9 +21,10 @@ import {
   type VisibilityState,
 } from '@tanstack/react-table';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { ArrowDown, ArrowUp, ArrowUpDown } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { columns, type ItemWithPrice } from './columns';
+import { TableBody } from './TableBody';
+import { TableHeader } from './TableHeader';
 
 export interface ItemsTableProps {
   data: ItemWithPrice[];
@@ -165,117 +165,19 @@ export function ItemsTable({
       >
         <table className="w-full border-collapse">
           {/* Table Header */}
-          <thead className="bg-gray-50 dark:bg-gray-800 sticky top-0 z-10">
-            {table.getHeaderGroups().map((headerGroup) => (
-              <tr key={headerGroup.id}>
-                {headerGroup.headers.map((header, index) => {
-                  const customClassName = (header.column.columnDef.meta as any)?.cellClassName;
-                  const baseClassName = customClassName || 'px-2';
-
-                  return (
-                    <th
-                      key={header.id}
-                      className={`${baseClassName} py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider border-b border-gray-200 dark:border-gray-700 relative`}
-                      style={{
-                        width: header.getSize(),
-                      }}
-                    >
-                      {header.isPlaceholder ? null : (
-                        <div className="flex items-center gap-2">
-                          {/* Column Header with Sort Button */}
-                          {header.column.getCanSort() ? (
-                            <button
-                              className="flex items-center gap-1 hover:text-gray-900 dark:hover:text-white"
-                              onClick={header.column.getToggleSortingHandler()}
-                            >
-                              {flexRender(
-                                header.column.columnDef.header,
-                                header.getContext()
-                              )}
-                              {header.column.getIsSorted() === 'asc' ? (
-                                <Icon as={ArrowUp} size="sm" />
-                              ) : header.column.getIsSorted() === 'desc' ? (
-                                <Icon as={ArrowDown} size="sm" />
-                              ) : (
-                                <Icon as={ArrowUpDown} size="sm" className="opacity-0 group-hover:opacity-50" />
-                              )}
-                            </button>
-                          ) : (
-                            flexRender(
-                              header.column.columnDef.header,
-                              header.getContext()
-                            )
-                          )}
-
-                          {/* Column Divider */}
-                          {index < headerGroup.headers.length - 1 && (
-                            <div className="absolute right-0 top-3 bottom-3 w-px bg-gray-200 dark:bg-gray-700" />
-                          )}
-
-                          {/* Column Resizer */}
-                          {header.column.getCanResize() && (
-                            <div
-                              onMouseDown={header.getResizeHandler()}
-                              onTouchStart={header.getResizeHandler()}
-                              className={`absolute right-0 top-0 h-full w-1 cursor-col-resize select-none touch-none hover:bg-blue-500 ${header.column.getIsResizing() ? 'bg-blue-500' : ''
-                                }`}
-                              style={{
-                                transform: header.column.getIsResizing()
-                                  ? `translateX(${table.getState().columnSizingInfo.deltaOffset
-                                  }px)`
-                                  : '',
-                              }}
-                            />
-                          )}
-                        </div>
-                      )}
-                    </th>
-                  );
-                })}
-              </tr>
-            ))}
-          </thead>
+          <TableHeader
+            headerGroups={table.getHeaderGroups()}
+            tableState={table.getState()}
+          />
 
           {/* Table Body with Virtual Scrolling */}
-          <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
-            {enableVirtualization && paddingTop > 0 && (
-              <tr>
-                <td style={{ height: `${paddingTop}px` }} />
-              </tr>
-            )}
-            {(enableVirtualization ? virtualRows.map(vr => rows[vr.index]) : rows).map((row) => {
-              if (!row) return null;
-              return (
-                <tr
-                  key={row.id}
-                  className="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-                >
-                  {row.getVisibleCells().map((cell, cellIndex) => {
-                    const customClassName = (cell.column.columnDef.meta as any)?.cellClassName;
-                    const baseClassName = customClassName || 'px-2';
-
-                    return (
-                      <td
-                        key={cell.id}
-                        className={`${baseClassName} py-3 text-sm text-gray-900 dark:text-gray-100 relative`}
-                        style={{ width: cell.column.getSize() }}
-                      >
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                        {cellIndex < row.getVisibleCells().length - 1 && (
-                          <div className="absolute right-0 top-2 bottom-2 w-px bg-gray-200 dark:bg-gray-700" />
-                        )}
-                      </td>
-                    );
-                  })}
-                </tr>
-              );
-            })}
-            {enableVirtualization && paddingBottom > 0 && (
-              <tr>
-                <td style={{ height: `${paddingBottom}px` }} />
-              </tr>
-            )}
-          </tbody>
+          <TableBody
+            rows={rows}
+            virtualRows={virtualRows}
+            paddingTop={paddingTop}
+            paddingBottom={paddingBottom}
+            enableVirtualization={enableVirtualization}
+          />
         </table>
       </div>
 
