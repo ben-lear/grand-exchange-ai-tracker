@@ -10,18 +10,16 @@
  */
 
 import { ErrorDisplay, LoadingSpinner } from '@/components/common';
+import { useChartData } from '@/hooks/useChartData';
 import { usePriceStream } from '@/hooks/usePriceStream';
 import { useLiveBufferStore } from '@/stores/liveBufferStore';
 import type { PricePoint, TimePeriod } from '@/types';
+import { formatXAxisTick, formatYAxisTick } from '@/utils/chartFormatters';
 import { getTimestepForPeriod } from '@/utils/chartTimesteps';
-import { formatGold } from '@/utils/formatters';
-import { format } from 'date-fns';
-import { Minus, TrendingDown, TrendingUp } from 'lucide-react';
-import { useEffect, useMemo } from 'react';
+import { useEffect } from 'react';
 import {
   CartesianGrid,
   ComposedChart,
-  Dot,
   Line,
   ReferenceLine,
   ResponsiveContainer,
@@ -29,7 +27,9 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
+import { ChartStatistics } from './ChartStatistics';
 import { ChartTooltip } from './ChartTooltip';
+import { CustomChartDot } from './CustomChartDot';
 
 export interface PriceChartProps {
   data: PricePoint[];
@@ -58,7 +58,7 @@ export function PriceChart({
     enabled: !!itemId,
   });
 
-  const { addPoint, getLiveTip, getConsolidatedPoints, clearBuffer } = useLiveBufferStore();
+  const { addPoint, clearBuffer } = useLiveBufferStore();
   const timestepConfig = getTimestepForPeriod(period);
 
   // Add SSE updates to buffer
@@ -80,124 +80,12 @@ export function PriceChart({
     }
   }, [itemId, period, clearBuffer]);
 
-  // Process data for chart
-  const chartData = useMemo(() => {
-    if (!data || data.length === 0) return [];
-
-    return data
-      .map((point, index) => {
-        // Use avgHighPrice/avgLowPrice if available, fallback to highPrice/lowPrice
-        const highPriceRaw = point.avgHighPrice ?? point.highPrice ?? null;
-        const lowPriceRaw = point.avgLowPrice ?? point.lowPrice ?? null;
-
-        // Convert to numbers (handle null/undefined)
-        const highPrice = highPriceRaw !== null && highPriceRaw !== undefined ? Number(highPriceRaw) : null;
-        const lowPrice = lowPriceRaw !== null && lowPriceRaw !== undefined ? Number(lowPriceRaw) : null;
-
-        // Calculate midPrice: if both exist, average them; otherwise use whichever exists
-        // Note: 0 is a valid price, so check for null/undefined explicitly
-        let midPrice = 0;
-        if (highPrice !== null && lowPrice !== null) {
-          midPrice = (highPrice + lowPrice) / 2;
-        } else if (highPrice !== null) {
-          midPrice = highPrice;
-        } else if (lowPrice !== null) {
-          midPrice = lowPrice;
-        } else if (point.price !== null && point.price !== undefined) {
-          midPrice = Number(point.price);
-        }
-
-        return {
-          ...point,
-          timestamp: typeof point.timestamp === 'number' ? point.timestamp : new Date(point.timestamp).getTime(),
-          // Explicitly set to undefined (not null or 0) so Recharts properly gaps the line
-          highPrice: highPrice !== null && highPrice > 0 ? highPrice : undefined,
-          lowPrice: lowPrice !== null && lowPrice > 0 ? lowPrice : undefined,
-          midPrice,
-          previousPrice: index > 0 ? (data[index - 1].price || 0) : null,
-        };
-      })
-      .filter(point => {
-        // Only filter out points with invalid timestamps or no price data at all
-        const hasValidTimestamp = point.timestamp > 0;
-        const hasAnyPrice = point.highPrice !== undefined || point.lowPrice !== undefined || point.midPrice > 0;
-        return hasValidTimestamp && hasAnyPrice;
-      })
-      .sort((a, b) => a.timestamp - b.timestamp);
-  }, [data]);
-
-  // Merge historical data with live SSE data
-  const mergedChartData = useMemo(() => {
-    if (!itemId) return chartData;
-    if (!timestepConfig) return chartData;
-
-    const liveTip = getLiveTip(itemId);
-    const consolidated = getConsolidatedPoints(itemId, timestepConfig.displayTimestepMs);
-
-    // Start with historical data
-    const merged = [...chartData];
-
-    // Get current timestep bucket start
-    const now = Date.now();
-    const currentBucketStart = Math.floor(now / timestepConfig.displayTimestepMs) * timestepConfig.displayTimestepMs;
-
-    // Add consolidated SSE points (excluding current incomplete bucket)
-    for (const cp of consolidated) {
-      const cpTime = cp.timestamp.getTime();
-      if (cpTime < currentBucketStart) {
-        const midPrice = cp.high !== null && cp.low !== null ? (cp.high + cp.low) / 2 : cp.high ?? cp.low ?? 0;
-        merged.push({
-          timestamp: cpTime,
-          highPrice: cp.high !== null ? cp.high : undefined,
-          lowPrice: cp.low !== null ? cp.low : undefined,
-          midPrice,
-          previousPrice: merged.length > 0 ? merged[merged.length - 1].midPrice : null,
-          price: midPrice,
-        });
-      }
-    }
-
-    // Always add live tip as the rightmost point (if it exists)
-    if (liveTip) {
-      const midPrice = liveTip.high !== null && liveTip.low !== null ? (liveTip.high + liveTip.low) / 2 : liveTip.high ?? liveTip.low ?? 0;
-      merged.push({
-        timestamp: liveTip.timestamp.getTime(),
-        highPrice: liveTip.high !== null ? liveTip.high : undefined,
-        lowPrice: liveTip.low !== null ? liveTip.low : undefined,
-        midPrice,
-        previousPrice: merged.length > 0 ? merged[merged.length - 1].midPrice : null,
-        price: midPrice,
-      });
-    }
-
-    return merged.sort((a, b) => a.timestamp - b.timestamp);
-  }, [chartData, itemId, getLiveTip, getConsolidatedPoints, timestepConfig]);
-
-  // Calculate price statistics
-  const stats = useMemo(() => {
-    if (mergedChartData.length === 0) return null;
-
-    const prices = mergedChartData.map(d => d.midPrice || d.price || 0).filter(p => p > 0);
-    if (prices.length === 0) return null;
-
-    const firstPrice = prices[0];
-    const lastPrice = prices[prices.length - 1];
-    const minPrice = Math.min(...prices);
-    const maxPrice = Math.max(...prices);
-
-    const change = lastPrice - firstPrice;
-    const changePercent = firstPrice > 0 ? (change / firstPrice) * 100 : 0;
-
-    return {
-      firstPrice,
-      lastPrice,
-      minPrice,
-      maxPrice,
-      change,
-      changePercent,
-      trend: change > 0 ? 'up' : change < 0 ? 'down' : 'flat',
-    };
-  }, [mergedChartData]);
+  // Use the extracted hook for data processing
+  const { chartData, stats, hasData } = useChartData({
+    rawData: data,
+    itemId,
+    period,
+  });
 
   // Guard against undefined timestepConfig (shouldn't happen with fixed config)
   if (!timestepConfig) {
@@ -208,29 +96,6 @@ export function PriceChart({
       />
     );
   }
-
-  // Format X-axis ticks based on period
-  const formatXAxisTick = (timestamp: number) => {
-    const date = new Date(timestamp);
-
-    switch (period) {
-      case '1h':
-      case '12h':
-      case '24h':
-        return format(date, 'HH:mm');
-      case '3d':
-      case '7d':
-      case '30d':
-        return format(date, 'MMM d');
-      case '90d':
-      case '1y':
-        return format(date, 'MMM d');
-      case 'all':
-        return format(date, 'MMM yyyy');
-      default:
-        return format(date, 'MMM d');
-    }
-  };
 
   // Loading state
   if (isLoading) {
@@ -255,7 +120,7 @@ export function PriceChart({
   }
 
   // Empty state
-  if (mergedChartData.length === 0) {
+  if (!hasData) {
     return (
       <div
         className="flex flex-col items-center justify-center text-center"
@@ -288,85 +153,16 @@ export function PriceChart({
 
   const lineColor = stats?.trend === 'up' ? '#10b981' : stats?.trend === 'down' ? '#ef4444' : '#6b7280';
 
-  // Custom dot renderer to highlight live data points
-  interface DotProps {
-    cx?: number;
-    cy?: number;
-    payload?: { isLive?: boolean };
-    fill?: string;
-    [key: string]: unknown;
-  }
-
-  const CustomDot = (props: DotProps) => {
-    const { cx, cy, payload, fill } = props;
-    if (!payload?.isLive) {
-      return <Dot {...props} />;
-    }
-    // Render live points with pulsing animation
-    return (
-      <g>
-        <circle cx={cx} cy={cy} r={6} fill={fill} opacity={0.3}>
-          <animate attributeName="r" from="6" to="10" dur="1s" repeatCount="indefinite" />
-          <animate attributeName="opacity" from="0.3" to="0" dur="1s" repeatCount="indefinite" />
-        </circle>
-        <circle cx={cx} cy={cy} r={4} fill={fill} stroke="#fff" strokeWidth={2} />
-      </g>
-    );
-  };
-
   return (
     <div className="space-y-4">
       {/* Chart Header with Stats */}
-      {stats && (
-        <div className="flex items-center justify-between">
-          <div>
-            {itemName && (
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                {itemName} Price Chart
-              </h3>
-            )}
-            <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
-              <span>Current: {formatGold(stats.lastPrice)}</span>
-              <span>High: {formatGold(stats.maxPrice)}</span>
-              <span>Low: {formatGold(stats.minPrice)}</span>
-            </div>
-          </div>
-
-          {/* Price Change */}
-          <div className="text-right">
-            <div
-              className={`flex items-center gap-1 text-lg font-semibold ${stats.trend === 'up'
-                ? 'text-green-600 dark:text-green-400'
-                : stats.trend === 'down'
-                  ? 'text-red-600 dark:text-red-400'
-                  : 'text-gray-600 dark:text-gray-400'
-                }`}
-            >
-              {stats.trend === 'up' && <TrendingUp className="w-5 h-5" />}
-              {stats.trend === 'down' && <TrendingDown className="w-5 h-5" />}
-              {stats.trend === 'flat' && <Minus className="w-5 h-5" />}
-
-              <span>
-                {stats.change >= 0 ? '+' : ''}{formatGold(stats.change)}
-              </span>
-            </div>
-            <div
-              className={`text-sm ${stats.changePercent >= 0
-                ? 'text-green-600 dark:text-green-400'
-                : 'text-red-600 dark:text-red-400'
-                }`}
-            >
-              ({stats.changePercent >= 0 ? '+' : ''}{stats.changePercent.toFixed(2)}%)
-            </div>
-          </div>
-        </div>
-      )}
+      {stats && <ChartStatistics stats={stats} itemName={itemName} />}
 
       {/* Chart */}
       <div style={{ height }}>
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart
-            data={mergedChartData}
+            data={chartData}
             margin={{
               top: 5,
               right: 30,
@@ -387,12 +183,12 @@ export function PriceChart({
               type="number"
               scale="time"
               domain={['dataMin', 'dataMax']}
-              tickFormatter={formatXAxisTick}
+              tickFormatter={(timestamp) => formatXAxisTick(timestamp, period)}
               stroke="#6b7280"
               fontSize={12}
             />
             <YAxis
-              tickFormatter={(value) => formatGold(value, 0)}
+              tickFormatter={formatYAxisTick}
               stroke="#6b7280"
               fontSize={12}
               domain={[(dataMin: number) => dataMin * 0.95, (dataMax: number) => dataMax * 1.05]}
@@ -427,7 +223,7 @@ export function PriceChart({
                 stroke="#10b981"
                 strokeWidth={2}
                 name="High Price"
-                dot={<CustomDot fill="#10b981" />}
+                dot={<CustomChartDot fill="#10b981" />}
                 activeDot={{
                   r: 6,
                   fill: '#10b981',
@@ -446,7 +242,7 @@ export function PriceChart({
                 stroke="#f97316"
                 strokeWidth={2}
                 name="Low Price"
-                dot={<CustomDot fill="#f97316" />}
+                dot={<CustomChartDot fill="#f97316" />}
                 activeDot={{
                   r: 6,
                   fill: '#f97316',
@@ -465,7 +261,7 @@ export function PriceChart({
                 stroke={lineColor}
                 strokeWidth={2}
                 name="Price"
-                dot={<CustomDot fill={lineColor} />}
+                dot={<CustomChartDot fill={lineColor} />}
                 activeDot={{
                   r: 6,
                   fill: lineColor,
