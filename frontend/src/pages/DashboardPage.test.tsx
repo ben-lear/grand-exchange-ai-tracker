@@ -5,6 +5,7 @@
 import { useItemDataStore } from '@/stores/itemDataStore';
 import type { Item } from '@/types';
 import { fireEvent, render, screen } from '@testing-library/react';
+import React from 'react';
 import { BrowserRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { DashboardPage } from './DashboardPage';

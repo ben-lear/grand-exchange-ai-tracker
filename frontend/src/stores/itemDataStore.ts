@@ -12,6 +12,7 @@ interface ItemDataState {
     currentPrices: Map<number, CurrentPrice>;
     isFullyLoaded: boolean;      // All item pages fetched
     pricesLoaded: boolean;       // Initial price fetch complete
+    isPrefetching: boolean;      // Prefetch in progress
     loadError: string | null;
 
     // Computed getters
@@ -26,6 +27,7 @@ interface ItemDataState {
     setPrices: (prices: CurrentPrice[]) => void;
     setFullyLoaded: () => void;
     setPricesLoaded: () => void;
+    setPrefetching: (isPrefetching: boolean) => void;
     setLoadError: (error: string | null) => void;
     reset: () => void;
 }
@@ -45,6 +47,7 @@ export const useItemDataStore = create<ItemDataState>((set, get) => ({
     currentPrices: new Map(),
     isFullyLoaded: false,
     pricesLoaded: false,
+    isPrefetching: false,
     loadError: null,
 
     // Computed getters
@@ -80,6 +83,8 @@ export const useItemDataStore = create<ItemDataState>((set, get) => ({
 
     setPricesLoaded: () => set({ pricesLoaded: true }),
 
+    setPrefetching: (isPrefetching) => set({ isPrefetching }),
+
     setLoadError: (error) => set({ loadError: error }),
 
     reset: () => set({
@@ -87,6 +92,7 @@ export const useItemDataStore = create<ItemDataState>((set, get) => ({
         currentPrices: new Map(),
         isFullyLoaded: false,
         pricesLoaded: false,
+        isPrefetching: false,
         loadError: null,
     }),
 }));

@@ -5,6 +5,7 @@
 import { useWatchlistStore } from '@/stores/useWatchlistStore';
 import type { Watchlist } from '@/types/watchlist';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import React from 'react';
 import { BrowserRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { WatchlistsPage } from './WatchlistsPage';
@@ -56,6 +57,12 @@ vi.mock('@/components/ui', () => ({
     Button: ({ onClick, children }: any) => (
         <button onClick={onClick}>{children}</button>
     ),
+    Icon: ({ as: Component, className = '', ...props }: any) => {
+        if (Component) {
+            return React.createElement(Component, { className, ...props, 'data-testid': 'icon' });
+        }
+        return React.createElement('span', { className, ...props, 'data-testid': 'icon' }, 'icon');
+    },
 }));
 
 vi.mock('lucide-react', () => ({
@@ -213,8 +220,8 @@ describe('WatchlistsPage', () => {
         });
 
         it('should export all watchlists when button clicked', () => {
-            global.URL.createObjectURL = vi.fn(() => 'blob:example');
-            global.URL.revokeObjectURL = vi.fn();
+            globalThis.URL.createObjectURL = vi.fn(() => 'blob:example');
+            globalThis.URL.revokeObjectURL = vi.fn();
 
             renderWithRouter(<WatchlistsPage />);
 
@@ -222,13 +229,13 @@ describe('WatchlistsPage', () => {
             fireEvent.click(exportButton);
 
             // Verify export was triggered (blob creation)
-            expect(global.URL.createObjectURL).toHaveBeenCalled();
+            expect(globalThis.URL.createObjectURL).toHaveBeenCalled();
         });
 
         it('should create proper export data structure', () => {
             const mockCreateObjectURL = vi.fn(() => 'blob:example');
-            global.URL.createObjectURL = mockCreateObjectURL;
-            global.URL.revokeObjectURL = vi.fn();
+            globalThis.URL.createObjectURL = mockCreateObjectURL;
+            globalThis.URL.revokeObjectURL = vi.fn();
 
             renderWithRouter(<WatchlistsPage />);
 

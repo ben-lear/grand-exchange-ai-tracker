@@ -6,6 +6,7 @@
  */
 
 import { LoadingSpinner } from '@/components/common';
+import { DashboardHeader } from '@/components/dashboard';
 import {
   ExportButton,
   FilterPanel,
@@ -16,9 +17,9 @@ import {
   type ItemWithPrice,
 } from '@/components/table';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
+import { useItemFiltering } from '@/hooks/useItemFiltering';
 import { useItemDataStore } from '@/stores/itemDataStore';
 import { usePinnedItemsStore } from '@/stores/usePinnedItemsStore';
-import { createItemSearchIndex, filterItemIdsByRelevance } from '@/utils/itemSearch';
 import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -55,61 +56,14 @@ export const DashboardPage: React.FC = () => {
   const hasItems = items.size > 0;
   const isDataReady = hasItems && pricesLoaded;
 
-  // Build fuse.js search index when items change
-  const fuseIndex = useMemo(() => {
-    if (allItems.length === 0) return null;
-    return createItemSearchIndex(allItems);
-  }, [allItems]);
-
-  // Get matching item IDs from search query (sorted by relevance)
-  // Supports both name search (fuzzy matching) and ID search (exact match)
-  const searchMatchIds = useMemo(() => {
-    if (!fuseIndex || !debouncedSearchQuery.trim()) return null;
-    return filterItemIdsByRelevance(fuseIndex, debouncedSearchQuery);
-  }, [fuseIndex, debouncedSearchQuery]);
-
-  // Filter items based on search and filters
-  const filteredItems = useMemo(() => {
-    let results = allItems;
-
-    // Separate pinned and non-pinned items
-    const pinnedItems = results.filter(item => pinnedItemIds.has(item.itemId));
-    const nonPinnedItems = results.filter(item => !pinnedItemIds.has(item.itemId));
-
-    // Apply non-search filters only to non-pinned items
-    const filteredNonPinned = nonPinnedItems.filter(item => {
-      // Members filter
-      if (filters.members === 'members' && !item.members) return false;
-      if (filters.members === 'f2p' && item.members) return false;
-
-      // Price filters
-      const price = currentPrices.get(item.itemId);
-      const highPrice = price?.highPrice;
-      if (filters.priceMin && (!highPrice || highPrice < filters.priceMin)) return false;
-      if (filters.priceMax && (!highPrice || highPrice > filters.priceMax)) return false;
-
-      return true;
-    });
-
-    // Apply search filter with relevance ordering to non-pinned items
-    let searchFilteredNonPinned = filteredNonPinned;
-    if (searchMatchIds !== null && searchMatchIds.length > 0) {
-      // Create a map for O(1) lookup and preserve relevance order
-      const idToIndex = new Map(searchMatchIds.map((id, index) => [id, index]));
-
-      // Filter and sort by relevance
-      searchFilteredNonPinned = filteredNonPinned
-        .filter(item => idToIndex.has(item.itemId))
-        .sort((a, b) => {
-          const indexA = idToIndex.get(a.itemId) ?? Infinity;
-          const indexB = idToIndex.get(b.itemId) ?? Infinity;
-          return indexA - indexB;
-        });
-    }
-
-    // Combine: pinned items first (preserving order), then filtered non-pinned items
-    return [...pinnedItems, ...searchFilteredNonPinned];
-  }, [allItems, pinnedItemIds, searchMatchIds, filters, currentPrices]);
+  // Use the filtering hook
+  const { filteredItems } = useItemFiltering({
+    items: allItems,
+    filters,
+    searchQuery: debouncedSearchQuery,
+    pinnedIds: pinnedItemIds,
+    currentPrices,
+  });
 
   // Map filtered items to ItemWithPrice for the table
   const itemsWithPrices: ItemWithPrice[] = useMemo(() => {
@@ -170,16 +124,7 @@ export const DashboardPage: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-            Grand Exchange Items
-          </h1>
-          <p className="mt-2 text-gray-600 dark:text-gray-400">
-            Browse and track all OSRS Grand Exchange items and their current prices
-          </p>
-        </div>
-      </div>
+      <DashboardHeader />
 
       {/* Main Content */}
       <div className="flex gap-6">

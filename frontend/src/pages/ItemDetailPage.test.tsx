@@ -4,6 +4,7 @@
 
 import type { CurrentPrice, Item, PricePoint } from '@/types';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import React from 'react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ItemDetailPage } from './ItemDetailPage';
@@ -35,6 +36,8 @@ vi.mock('@/components/common', () => ({
             <div>{error?.message || error}</div>
         </div>
     ),
+    BackButton: () => <button data-testid="back-button">Back</button>,
+    ItemIcon: ({ alt }: any) => <div data-testid="item-icon">{alt}</div>,
 }));
 
 vi.mock('lucide-react', () => ({
@@ -111,7 +114,7 @@ describe('ItemDetailPage', () => {
         (usePriceStream as any).mockReturnValue({
             isConnected: true,
             reconnectCount: 0,
-            lastHeartbeatAt: new Date().toISOString(),
+            lastHeartbeatAt: new Date(),
         });
     });
 
@@ -149,7 +152,7 @@ describe('ItemDetailPage', () => {
             renderWithRouter(<ItemDetailPage />);
 
             await waitFor(() => {
-                expect(screen.getByText(/Iron ore/i)).toBeInTheDocument();
+                expect(screen.getByRole('heading', { level: 1, name: /iron ore/i })).toBeInTheDocument();
             });
         });
 

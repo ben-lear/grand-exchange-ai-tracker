@@ -5,6 +5,7 @@
 import * as watchlistApi from '@/api/watchlist';
 import { useWatchlistStore } from '@/stores/useWatchlistStore';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import React from 'react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { SharedWatchlistPage } from './SharedWatchlistPage';
@@ -33,6 +34,20 @@ vi.mock('@/components/ui', () => ({
             {children}
         </button>
     ),
+    Icon: ({ as: Component, className = '', ...props }: any) => {
+        if (Component) {
+            return React.createElement(Component, { className, ...props, 'data-testid': 'icon' });
+        }
+        return React.createElement('span', { className, ...props, 'data-testid': 'icon' }, 'icon');
+    },
+    StatusBanner: ({ variant, title, description, icon: IconComponent, ...props }: any) =>
+        React.createElement(
+            'div',
+            { 'data-testid': 'status-banner', 'data-variant': variant, ...props },
+            IconComponent && React.createElement(IconComponent, { className: 'w-5 h-5', 'data-testid': 'status-icon' }),
+            React.createElement('h3', { 'data-testid': 'status-title' }, title),
+            React.createElement('div', { 'data-testid': 'status-description' }, description)
+        ),
 }));
 
 const mockWatchlistShare: any = {
@@ -153,11 +168,15 @@ describe('SharedWatchlistPage', () => {
             renderWithRouter();
 
             await waitFor(() => {
-                expect(screen.getByTestId('back-button')).toBeInTheDocument();
+                expect(screen.getByRole('button', { name: /back/i })).toBeInTheDocument();
             });
         });
 
         it('should have home link', async () => {
+            vi.mocked(watchlistApi.retrieveWatchlistShare).mockRejectedValueOnce(
+                new Error('Failed to load shared watchlist')
+            );
+
             renderWithRouter();
 
             await waitFor(() => {
@@ -325,8 +344,8 @@ describe('SharedWatchlistPage', () => {
         });
 
         it('should download watchlist data when button clicked', async () => {
-            global.URL.createObjectURL = vi.fn(() => 'blob:example');
-            global.URL.revokeObjectURL = vi.fn();
+            globalThis.URL.createObjectURL = vi.fn(() => 'blob:example');
+            globalThis.URL.revokeObjectURL = vi.fn();
 
             renderWithRouter();
 
@@ -336,7 +355,7 @@ describe('SharedWatchlistPage', () => {
             });
 
             // Should trigger download
-            expect(global.URL.createObjectURL).toHaveBeenCalled();
+            expect(globalThis.URL.createObjectURL).toHaveBeenCalled();
         });
     });
 
