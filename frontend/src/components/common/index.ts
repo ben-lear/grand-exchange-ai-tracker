@@ -13,8 +13,15 @@ export type { ItemIconProps } from './ItemIcon';
 export { BackButton } from './BackButton';
 export type { BackButtonProps } from './BackButton';
 
-export { InlineLoading, Loading as LoadingSpinner } from './Loading';
-export type { LoadingProps } from './Loading';
+// Loading components - re-export from loading folder
+export {
+    CardGridLoading, DotsLoading, InlineLoading, Loading,
+    LoadingSpinner, PulseLoading, TableLoading
+} from './loading';
+export type {
+    CardGridLoadingProps, DotsLoadingProps, InlineLoadingProps, LoadingProps,
+    LoadingSpinnerProps, PulseLoadingProps, TableLoadingProps
+} from './loading';
 
 export { EmptyState, ErrorDisplay } from './ErrorDisplay';
 export type { EmptyStateProps, ErrorDisplayProps } from './ErrorDisplay';
