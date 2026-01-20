@@ -1,7 +1,7 @@
 # Component Refactoring Implementation Plan
 
 **Created:** January 18, 2026  
-**Status:** Planning  
+**Status:** In Progress (Phase 4.5 Complete, Ready for Phase 5)  
 **Priority:** High  
 **Estimated Duration:** 5 weeks
 
@@ -921,6 +921,157 @@ interface DashboardHeaderProps {
 
 ---
 
+## Phase 4.5: Remediation (Catch-up) ✅ COMPLETE
+
+**Priority:** HIGH - Must complete before Phase 5  
+**Completed:** January 2026
+
+This phase addressed gaps identified in Phases 1-4: missing Loading component split, test utilities, component tests, and Storybook stories.
+
+---
+
+### 4.5.1 Split Loading.tsx ✅ COMPLETE
+
+**Priority:** CRITICAL - Blocks proper test/story organization
+
+**Current:** `components/common/Loading.tsx` (248 lines)
+
+**New Structure:**
+```
+components/common/loading/
+├── LoadingSpinner.tsx      (~40 lines)
+├── DotsLoading.tsx         (~40 lines)
+├── PulseLoading.tsx        (~30 lines)
+├── InlineLoading.tsx       (~45 lines)
+├── TableLoading.tsx        (~45 lines)
+├── CardGridLoading.tsx     (~45 lines)
+├── Loading.tsx             (unified wrapper)
+├── Loading.test.tsx        (migrated tests)
+├── loading.stories.tsx     (Storybook stories)
+└── index.ts                (barrel export)
+```
+
+**Migration:**
+```typescript
+// Old import
+import { Loading, TableLoading } from '@/components/common/Loading';
+
+// New imports
+import { Loading, TableLoading } from '@/components/common/loading';
+```
+
+**Files to Update:** ~15 files importing `Loading`
+
+**Validation:**
+- [x] All loading variants extracted
+- [x] Barrel export works
+- [x] All import paths updated
+- [x] Original Loading.tsx removed
+- [x] No TypeScript errors
+- [x] Visual parity with original
+
+---
+
+### 4.5.2 Create Test Utilities ✅ COMPLETE
+
+**Priority:** CRITICAL - Required for consistent testing
+
+**New Files:**
+- `frontend/src/test/test-utils.tsx` - renderWithProviders helper
+- `frontend/src/test/mocks/mockItems.ts` - Item data factories
+- `frontend/src/test/mocks/mockPrices.ts` - Price data factories
+- `frontend/src/test/mocks/mockStores.ts` - Zustand store mocks
+- `frontend/src/test/mocks/index.ts` - Barrel export
+
+**Validation:**
+- [x] test-utils.tsx compiles without errors
+- [x] renderWithProviders works in existing tests
+- [x] Mock factories produce valid typed data
+- [x] Can import from `@/test/test-utils` and `@/test/mocks`
+
+---
+
+### 4.5.3 Add Missing Tests ✅ COMPLETE
+
+**Priority:** HIGH - Required for 80% coverage target
+
+**Audit Results:** Most tests already existed. Only 3 were actually missing:
+
+**Phase 2 Tests (Actually Missing: 3):**
+- [x] TableHeader.test.tsx (8 tests)
+- [x] TableBody.test.tsx (11 tests)
+- [x] TableHeaderCell.test.tsx (12 tests)
+
+**Phase 2 Tests (Already Existed):**
+- WatchlistCell.test.tsx ✅
+- ItemNameCell.test.tsx ✅
+- PriceCell.test.tsx ✅
+- TableContainer.test.tsx ✅
+
+**Phase 3 Tests (Already Existed):**
+- CustomChartDot.test.tsx ✅
+- useChartData.test.ts ✅
+- chartFormatters.test.ts ✅
+
+**Phase 4 Tests (Already Existed):**
+- CurrentPriceCard.test.tsx ✅
+- ItemMetadata.test.tsx ✅
+- PriceChartSection.test.tsx ✅
+- ItemDisplay.test.tsx ✅
+- DashboardHeader.test.tsx ✅
+- useItemFiltering.test.ts ✅
+- ShareInfoBanner.test.tsx ✅
+- ImportSuccessBanner.test.tsx ✅
+- ItemGrid.test.tsx ✅
+
+**Validation:**
+- [x] All 3 missing test files created (31 new tests)
+- [x] All tests pass (`npm run test` - 79 files, 1230 tests)
+- [x] Coverage maintained
+
+---
+
+### 4.5.4 Add Missing Storybook Stories ✅ COMPLETE
+
+**Priority:** MEDIUM - Required for component documentation
+
+**Audit Results:** Most stories already existed. Created remaining missing ones.
+
+**Phase 2 Stories:**
+- [x] table/cells/index.stories.tsx ✅ (existed as combined file)
+- [x] table/TableHeader.stories.tsx (CREATED)
+- [x] table/TableBody.stories.tsx (CREATED)
+- [x] table/TableHeaderCell.stories.tsx (CREATED)
+- [x] table/TableContainer.stories.tsx ✅ (existed)
+
+**Phase 3 Stories:**
+- [x] charts/ChartStatistics.stories.tsx ✅ (existed)
+- [x] charts/CustomChartDot.stories.tsx ✅ (existed)
+
+**Phase 4 Stories:**
+- [x] item/ItemHeader.stories.tsx ✅ (existed)
+- [x] item/CurrentPriceCard.stories.tsx ✅ (existed)
+- [x] item/ItemMetadata.stories.tsx ✅ (existed)
+- [x] item/PriceChartSection.stories.tsx ✅ (existed)
+- [x] item/ItemDisplay.stories.tsx ✅ (existed)
+- [x] dashboard/DashboardHeader.stories.tsx ✅ (existed)
+- [x] watchlist/ShareInfoBanner.stories.tsx ✅ (existed)
+- [x] watchlist/ImportSuccessBanner.stories.tsx ✅ (existed)
+- [x] watchlist/ItemGrid.stories.tsx ✅ (existed)
+- [ ] watchlist/ItemGrid.stories.tsx
+
+**Loading Stories (after 4.5.1):**
+- [x] common/loading/loading.stories.tsx (CREATED)
+
+**Final Story Count:** 24 story files
+
+**Validation:**
+- [x] All story files created (4 new + 20 existing)
+- [x] Storybook builds (`npm run build-storybook`) ✅
+- [x] All stories render without errors
+
+---
+
 ## Phase 5: Standardize Patterns (Week 5)
 
 ### 5.1 GlobalSearch Decomposition
@@ -1616,6 +1767,22 @@ npm install -D @axe-core/react@^4.8.0
 - [ ] Component generator CLI
 - [ ] Pre-commit hooks (lint + test)
 - [ ] Automated changelog generation
+
+### Optional Line Count Reductions
+The following files are slightly over target line counts but functional. Consider further decomposition if they grow:
+- [ ] `ItemsTable.tsx` (~150 lines, target: 120) - Could extract row selection logic
+- [ ] `PriceChart.tsx` (~200 lines, target: 180) - Could extract tooltip component
+- [ ] `SharedWatchlistPage.tsx` (~160 lines, target: 140) - Could extract URL parsing hook
+
+---
+
+## Maintenance (Separate)
+
+### Polymorphic typing standardization
+- Add shared helper types in frontend/src/types/polymorphic.ts
+- Update Icon, Stack, and Text to use the helper
+- Ensure displayName is set before polymorphic casts
+- Scope intentionally limited to Icon, Stack, Text only
 
 ---
 
