@@ -8,7 +8,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useChartData } from './useChartData';
 
 // Mock the live buffer store
-vi.mock('@/stores/liveBufferStore', () => ({
+vi.mock('@/stores', () => ({
     useLiveBufferStore: () => ({
         getLiveTip: vi.fn(() => null),
         getConsolidatedPoints: vi.fn(() => []),
@@ -16,7 +16,7 @@ vi.mock('@/stores/liveBufferStore', () => ({
 }));
 
 // Mock the timesteps utility
-vi.mock('@/utils/chartTimesteps', () => ({
+vi.mock('@/utils', () => ({
     getTimestepForPeriod: vi.fn(() => ({
         displayTimestepMs: 60000,
     })),

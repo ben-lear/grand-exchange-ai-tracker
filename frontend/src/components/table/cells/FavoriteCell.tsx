@@ -3,7 +3,7 @@
  * Renders a favorite toggle button for table rows
  */
 
-import { useWatchlistStore } from '@/stores/useWatchlistStore';
+import { useWatchlistStore } from '@/stores';
 import type { Item } from '@/types';
 import { DEFAULT_WATCHLIST_ID } from '@/types/watchlist';
 import { Star } from 'lucide-react';

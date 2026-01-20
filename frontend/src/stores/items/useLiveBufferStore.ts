@@ -12,7 +12,7 @@ interface LiveBuffer {
   latestPoint: LivePricePoint | null;
 }
 
-interface LiveBufferState {
+export interface LiveBufferState {
   buffers: Map<number, LiveBuffer>;
 
   maxPointsPerItem: number;

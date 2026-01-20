@@ -8,7 +8,7 @@
  */
 
 import { Button } from '@/components/ui';
-import { useWatchlistStore } from '@/stores/useWatchlistStore';
+import { useWatchlistStore } from '@/stores';
 import { ArrowLeft, FileDown, FileUp, ListPlus } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';

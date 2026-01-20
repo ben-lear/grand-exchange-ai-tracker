@@ -8,7 +8,7 @@
  */
 
 import { Download, ListCheck, RefreshCw, SlidersHorizontal } from 'lucide-react';
-import { SearchInput } from '../common/SearchInput';
+import { SearchInput } from '../search';
 import { Button, Icon, Stack } from '../ui';
 import { ColumnToggle } from './ColumnToggle';
 

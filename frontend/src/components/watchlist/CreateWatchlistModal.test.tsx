@@ -5,7 +5,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { useWatchlistStore } from '../../stores/useWatchlistStore';
+import { useWatchlistStore } from '../../stores';
 import { WATCHLIST_LIMITS } from '../../types/watchlist';
 import { CreateWatchlistModal } from './CreateWatchlistModal';
 
@@ -18,7 +18,7 @@ vi.mock('sonner', () => ({
 }));
 
 // Mock the store
-vi.mock('../../stores/useWatchlistStore', () => ({
+vi.mock('../../stores/watchlist/useWatchlistStore', () => ({
     useWatchlistStore: vi.fn(),
 }));
 

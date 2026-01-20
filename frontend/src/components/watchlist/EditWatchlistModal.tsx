@@ -4,7 +4,7 @@
 
 import { Button, Icon, Input, Stack, Text } from '@/components/ui';
 import { WatchlistSchema } from '@/schemas/watchlist';
-import { useWatchlistStore } from '@/stores/useWatchlistStore';
+import { useWatchlistStore } from '@/stores';
 import { X } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import type { Watchlist } from '../../types/watchlist';

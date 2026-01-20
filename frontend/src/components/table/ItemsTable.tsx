@@ -9,7 +9,7 @@
 
 import { ErrorDisplay, LoadingSpinner } from '@/components/common';
 import { Stack, Text } from '@/components/ui';
-import { useColumnVisibilityStore } from '@/stores/useColumnVisibilityStore';
+import { useColumnVisibilityStore } from '@/stores';
 import {
   getCoreRowModel,
   getFilteredRowModel,

@@ -4,28 +4,56 @@
 
 // Item hooks
 export {
-  itemKeys, useItem,
-  useItemCount, useItems, usePrefetchItem
-} from './useItems';
+    itemKeys,
+    useItem,
+    useItemCount,
+    useItemFiltering,
+    useItemPrefetcher,
+    useItems,
+    usePrefetchItem
+} from './items';
+export type {
+    PrefetcherState,
+    UseItemFilteringParams,
+    UseItemFilteringReturn
+} from './items';
 
 // Price hooks
 export {
-  priceKeys, useAllCurrentPrices, useBatchCurrentPrices, useCurrentPrice, usePrefetchPriceHistory, usePriceHistory,
-  useSyncCurrentPrices
-} from './usePrices';
-
-// SSE hooks
-export {
-  usePriceStream,
-  type PriceUpdate,
-  type UsePriceStreamOptions,
-  type UsePriceStreamReturn
-} from './usePriceStream';
+    priceKeys,
+    useAllCurrentPrices,
+    useBatchCurrentPrices,
+    useChartData,
+    useCurrentPrice,
+    usePrefetchPriceHistory,
+    usePriceHistory,
+    usePriceStream,
+    useSyncCurrentPrices
+} from './prices';
+export type {
+    ChartDataPoint,
+    ChartStats,
+    PriceUpdate,
+    UseChartDataParams,
+    UseChartDataReturn,
+    UsePriceStreamOptions,
+    UsePriceStreamReturn
+} from './prices';
 
 // Search hooks
 export {
-  useSearchKeyboard,
-  type UseSearchKeyboardParams,
-  type UseSearchKeyboardReturn
-} from './useSearchKeyboard';
+    useRecentSearches,
+    useSearchKeyboard
+} from './search';
+export type {
+    RecentItem,
+    UseSearchKeyboardParams,
+    UseSearchKeyboardReturn
+} from './search';
+
+// Utility hooks
+export {
+    useDebouncedValue,
+    useOnClickOutside
+} from './utils';
 

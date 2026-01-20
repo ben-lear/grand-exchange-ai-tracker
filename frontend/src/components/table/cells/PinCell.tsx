@@ -3,7 +3,7 @@
  * Renders a pin toggle button for table rows
  */
 
-import { usePinnedItemsStore } from '@/stores/usePinnedItemsStore';
+import { usePinnedItemsStore } from '@/stores';
 import { Pin } from 'lucide-react';
 
 interface PinCellProps {

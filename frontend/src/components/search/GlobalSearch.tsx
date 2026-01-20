@@ -3,7 +3,6 @@
  * Combines SearchInput, Dropdown, and item search logic
  */
 
-import { Text } from '@/components/ui';
 import {
     forwardRef,
     useCallback,
@@ -14,16 +13,13 @@ import {
     useState,
 } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useDebouncedValue } from '../../hooks/useDebouncedValue';
-import { useRecentSearches, type RecentItem } from '../../hooks/useRecentSearches';
-import { useSearchKeyboard } from '../../hooks/useSearchKeyboard';
-import { useItemDataStore } from '../../stores/itemDataStore';
+import { useDebouncedValue, useRecentSearches, useSearchKeyboard, type RecentItem } from '../../hooks';
+import { useItemDataStore } from '../../stores';
 import type { Item } from '../../types';
-import { createItemSearchIndex, searchItems } from '../../utils/itemSearch';
-import { Dropdown } from '../common/Dropdown';
-import { DropdownItem } from '../common/DropdownItem';
-import { SearchInput } from '../common/SearchInput';
+import { createItemSearchIndex, searchItems } from '../../utils';
+import { Dropdown, DropdownItem, Text } from '../ui';
 import { RecentSearchItem } from './RecentSearchItem';
+import { SearchInput } from './SearchInput';
 import { SearchResultItem } from './SearchResultItem';
 
 export interface GlobalSearchHandle {

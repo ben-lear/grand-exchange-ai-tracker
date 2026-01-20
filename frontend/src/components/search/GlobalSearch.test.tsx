@@ -7,7 +7,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { useItemDataStore } from '../../stores/itemDataStore';
+import { useItemDataStore } from '../../stores';
 import type { CurrentPrice, Item } from '../../types';
 import { GlobalSearch, type GlobalSearchHandle } from './GlobalSearch';
 

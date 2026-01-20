@@ -2,7 +2,7 @@
  * Storybook stories for ChartStatistics component
  */
 
-import type { ChartStats } from '@/hooks/useChartData';
+import type { ChartStats } from '@/hooks';
 import type { Meta, StoryObj } from '@storybook/react';
 import { ChartStatistics } from './ChartStatistics';
 

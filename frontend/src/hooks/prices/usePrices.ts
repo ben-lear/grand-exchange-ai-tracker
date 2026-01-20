@@ -2,21 +2,21 @@
  * TanStack Query hooks for price-related data fetching
  */
 
-import { useQuery, useMutation, useQueryClient, type UseQueryOptions } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient, type UseQueryOptions } from '@tanstack/react-query';
 import {
   fetchAllCurrentPrices,
-  fetchCurrentPrice,
   fetchBatchCurrentPrices,
+  fetchCurrentPrice,
   fetchPriceHistory,
   syncCurrentPrices,
-} from '../api';
+} from '../../api';
 import type {
+  ApiError,
+  BatchPriceResponse,
   CurrentPrice,
   PriceHistory,
-  BatchPriceResponse,
   TimePeriod,
-  ApiError,
-} from '../types';
+} from '../../types';
 
 /**
  * Query keys for prices
@@ -28,7 +28,7 @@ export const priceKeys = {
   currentOne: (itemId: number) => [...priceKeys.current(), itemId] as const,
   currentBatch: (itemIds: number[]) => [...priceKeys.current(), 'batch', itemIds] as const,
   history: () => [...priceKeys.all, 'history'] as const,
-  historyOne: (itemId: number, period: TimePeriod, sample?: number) => 
+  historyOne: (itemId: number, period: TimePeriod, sample?: number) =>
     [...priceKeys.history(), itemId, period, sample] as const,
 };
 
@@ -105,7 +105,7 @@ export const usePriceHistory = (
  */
 export const useSyncCurrentPrices = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: syncCurrentPrices,
     onSuccess: () => {
@@ -120,7 +120,7 @@ export const useSyncCurrentPrices = () => {
  */
 export const usePrefetchPriceHistory = () => {
   const queryClient = useQueryClient();
-  
+
   return (itemId: number, period: TimePeriod = '7d', sample?: number) => {
     queryClient.prefetchQuery({
       queryKey: priceKeys.historyOne(itemId, period, sample),

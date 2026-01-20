@@ -7,9 +7,9 @@
 import { v4 as uuidv4 } from 'uuid';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { Watchlist, WatchlistItem } from '../types/watchlist';
-import { DEFAULT_WATCHLIST_ID, WATCHLIST_LIMITS } from '../types/watchlist';
-import { FavoriteItem } from './useFavoritesStore';
+import type { Watchlist, WatchlistItem } from '../../types/watchlist';
+import { DEFAULT_WATCHLIST_ID, WATCHLIST_LIMITS } from '../../types/watchlist';
+import type { FavoriteItem } from '../user/useFavoritesStore';
 
 /**
  * Watchlist store state

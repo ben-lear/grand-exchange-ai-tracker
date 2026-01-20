@@ -5,8 +5,10 @@
  * Items are prefetched on app mount; prices are synced from MainLayout.
  */
 
-import { LoadingSpinner } from '@/components/common';
-import { DashboardHeader } from '@/components/dashboard';
+import React, { useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { LoadingSpinner } from '../components/common';
+import { DashboardHeader } from '../components/dashboard';
 import {
   ExportButton,
   FilterPanel,
@@ -15,13 +17,9 @@ import {
   TableToolbar,
   type FilterState,
   type ItemWithPrice,
-} from '@/components/table';
-import { useDebouncedValue } from '@/hooks/useDebouncedValue';
-import { useItemFiltering } from '@/hooks/useItemFiltering';
-import { useItemDataStore } from '@/stores/itemDataStore';
-import { usePinnedItemsStore } from '@/stores/usePinnedItemsStore';
-import React, { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+} from '../components/table';
+import { useDebouncedValue, useItemFiltering } from '../hooks';
+import { useItemDataStore, usePinnedItemsStore } from '../stores';
 
 /**
  * Dashboard page component

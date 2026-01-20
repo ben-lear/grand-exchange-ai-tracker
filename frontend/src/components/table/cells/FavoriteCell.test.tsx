@@ -5,7 +5,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { FavoriteCell } from './FavoriteCell';
 
 // Mock the store
-vi.mock('@/stores/useWatchlistStore', () => ({
+vi.mock('@/stores', () => ({
     useWatchlistStore: vi.fn(() => ({
         isItemInWatchlist: vi.fn((_watchlistId: string, itemId: number) => itemId === 1),
         addItemToWatchlist: vi.fn(),
@@ -48,7 +48,7 @@ describe('FavoriteCell', () => {
     });
 
     it('should add item to favorites when clicked on unfavorited item', async () => {
-        const { useWatchlistStore } = await import('@/stores/useWatchlistStore');
+        const { useWatchlistStore } = await import('@/stores');
         const addItemToWatchlist = vi.fn();
         vi.mocked(useWatchlistStore).mockReturnValue({
             isItemInWatchlist: vi.fn(() => false),
@@ -72,7 +72,7 @@ describe('FavoriteCell', () => {
     });
 
     it('should remove item from favorites when clicked on favorited item', async () => {
-        const { useWatchlistStore } = await import('@/stores/useWatchlistStore');
+        const { useWatchlistStore } = await import('@/stores');
         const removeItemFromWatchlist = vi.fn();
         vi.mocked(useWatchlistStore).mockReturnValue({
             isItemInWatchlist: vi.fn(() => true),
@@ -98,7 +98,7 @@ describe('FavoriteCell', () => {
     });
 
     it('should apply correct styling for unfavorited state', async () => {
-        const { useWatchlistStore } = await import('@/stores/useWatchlistStore');
+        const { useWatchlistStore } = await import('@/stores');
         vi.mocked(useWatchlistStore).mockReturnValue({
             isItemInWatchlist: vi.fn(() => false),
             addItemToWatchlist: vi.fn(),

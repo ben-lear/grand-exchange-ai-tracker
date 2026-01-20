@@ -5,13 +5,13 @@
 
 import { renderHook, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import * as api from '../api';
-import { useItemDataStore } from '../stores/itemDataStore';
-import type { Item } from '../types';
+import * as api from '../../api';
+import { useItemDataStore } from '../../stores';
+import type { Item } from '../../types';
 import { useItemPrefetcher } from './useItemPrefetcher';
 
 // Mock the API
-vi.mock('../api', () => ({
+vi.mock('../../api', () => ({
     fetchItems: vi.fn(),
 }));
 

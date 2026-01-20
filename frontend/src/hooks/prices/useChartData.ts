@@ -8,10 +8,10 @@
  * - Period-based sampling
  */
 
-import { useLiveBufferStore } from '@/stores/liveBufferStore';
-import type { PricePoint, TimePeriod } from '@/types';
-import { getTimestepForPeriod } from '@/utils/chartTimesteps';
 import { useMemo } from 'react';
+import { useLiveBufferStore } from '../../stores';
+import type { PricePoint, TimePeriod } from '../../types';
+import { getTimestepForPeriod } from '../../utils/chart';
 
 export interface ChartDataPoint {
     timestamp: number;

@@ -4,7 +4,7 @@
  */
 
 import { WatchlistDropdown } from '@/components/common/WatchlistDropdown';
-import { useWatchlistStore } from '@/stores/useWatchlistStore';
+import { useWatchlistStore } from '@/stores';
 import type { Item } from '@/types';
 import { ListPlus } from 'lucide-react';
 

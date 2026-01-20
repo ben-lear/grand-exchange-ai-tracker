@@ -17,7 +17,7 @@ import {
     mergeWatchlists,
     searchWatchlistItems,
     sortWatchlistItems,
-} from '../../utils/watchlist-utils';
+} from './watchlist-utils';
 
 describe('Watchlist Utilities', () => {
     const mockItem1: WatchlistItem = {

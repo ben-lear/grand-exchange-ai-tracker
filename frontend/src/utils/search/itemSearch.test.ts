@@ -4,7 +4,7 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import type { Item } from '../types';
+import type { Item } from '../../types';
 import {
     createItemSearchIndex,
     filterItemIds,

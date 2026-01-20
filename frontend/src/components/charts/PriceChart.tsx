@@ -10,12 +10,12 @@
  */
 
 import { ErrorDisplay, LoadingSpinner } from '@/components/common';
-import { useChartData } from '@/hooks/useChartData';
-import { usePriceStream } from '@/hooks/usePriceStream';
-import { useLiveBufferStore } from '@/stores/liveBufferStore';
+import { useChartData } from '@/hooks';
+import { usePriceStream } from '@/hooks';
+import { useLiveBufferStore } from '@/stores';
 import type { PricePoint, TimePeriod } from '@/types';
-import { formatXAxisTick, formatYAxisTick } from '@/utils/chartFormatters';
-import { getTimestepForPeriod } from '@/utils/chartTimesteps';
+import { formatXAxisTick, formatYAxisTick } from '@/utils';
+import { getTimestepForPeriod } from '@/utils';
 import { useEffect } from 'react';
 import {
   CartesianGrid,

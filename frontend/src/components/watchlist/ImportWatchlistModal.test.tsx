@@ -5,14 +5,14 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { validateWatchlistExport } from '../../utils/watchlist-validation';
+import { validateWatchlistExport } from '../../utils';
 import { ImportWatchlistModal } from './ImportWatchlistModal';
 
 // Mock dependencies
 const mockImportWatchlist = vi.fn();
 const mockGetWatchlistCount = vi.fn();
 
-vi.mock('../../stores/useWatchlistStore', () => ({
+vi.mock('../../stores', () => ({
     useWatchlistStore: vi.fn((selector) => {
         const state = {
             importWatchlist: mockImportWatchlist,
@@ -22,7 +22,7 @@ vi.mock('../../stores/useWatchlistStore', () => ({
     }),
 }));
 
-vi.mock('../../utils/watchlist-validation');
+vi.mock('../../utils');
 
 describe('ImportWatchlistModal', () => {
     const mockOnClose = vi.fn();

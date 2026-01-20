@@ -6,7 +6,7 @@ import { Menu } from '@headlessui/react';
 import { Download, Edit2, MoreVertical, Share2, Star, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import type { Watchlist } from '../../types/watchlist';
-import { formatItemCount, getRelativeTime } from '../../utils/watchlist-utils';
+import { formatItemCount, getRelativeTime } from '../../utils';
 import { Icon, Stack } from '../ui';
 
 export interface WatchlistCardProps {

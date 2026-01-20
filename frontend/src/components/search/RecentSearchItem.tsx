@@ -3,9 +3,9 @@
  * Displays recent item with clock icon and remove button
  */
 
-import { Icon, Stack, Text } from '@/components/ui';
 import { Clock, X } from 'lucide-react';
-import type { RecentItem } from '../../hooks/useRecentSearches';
+import type { RecentItem } from '../../hooks';
+import { Icon, Stack, Text } from '../ui';
 
 export interface RecentSearchItemProps {
     /** The recent item to display */

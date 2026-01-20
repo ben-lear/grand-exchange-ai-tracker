@@ -16,7 +16,7 @@ const mockGetItemWatchlists = vi.fn();
 const mockGetWatchlistCount = vi.fn();
 const mockCreateWatchlist = vi.fn();
 
-vi.mock('../../stores/useWatchlistStore', () => ({
+vi.mock('../../stores/watchlist/useWatchlistStore', () => ({
     useWatchlistStore: vi.fn((selector) => {
         const state = {
             getAllWatchlists: mockGetAllWatchlists,

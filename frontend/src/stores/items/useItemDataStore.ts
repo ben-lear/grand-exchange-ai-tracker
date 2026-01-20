@@ -4,9 +4,9 @@
  */
 
 import { create } from 'zustand';
-import type { CurrentPrice, Item } from '../types';
+import type { CurrentPrice, Item } from '../../types';
 
-interface ItemDataState {
+export interface ItemDataState {
     // State
     items: Map<number, Item>;
     currentPrices: Map<number, CurrentPrice>;

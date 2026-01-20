@@ -6,9 +6,9 @@ import { Dialog, Transition } from '@headlessui/react';
 import { FolderPlus, Loader2, X } from 'lucide-react';
 import React, { Fragment, useState } from 'react';
 import { toast } from 'sonner';
-import { useWatchlistStore } from '../../stores/useWatchlistStore';
+import { useWatchlistStore } from '../../stores';
 import { WATCHLIST_LIMITS } from '../../types/watchlist';
-import { isValidWatchlistName } from '../../utils/watchlist-utils';
+import { isValidWatchlistName } from '../../utils';
 import { Icon, Input, Stack } from '../ui';
 
 export interface CreateWatchlistModalProps {

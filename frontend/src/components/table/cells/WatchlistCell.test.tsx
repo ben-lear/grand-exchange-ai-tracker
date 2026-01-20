@@ -11,7 +11,7 @@ vi.mock('@/components/common/WatchlistDropdown', () => ({
 }));
 
 // Mock the store
-vi.mock('@/stores/useWatchlistStore', () => ({
+vi.mock('@/stores', () => ({
     useWatchlistStore: vi.fn(() => ({
         getItemWatchlists: vi.fn((itemId: number) => {
             if (itemId === 1) {
@@ -57,7 +57,7 @@ describe('WatchlistCell', () => {
     });
 
     it('should show truncated text for more than 2 watchlists', async () => {
-        const { useWatchlistStore } = await import('@/stores/useWatchlistStore');
+        const { useWatchlistStore } = await import('@/stores');
         vi.mocked(useWatchlistStore).mockReturnValue({
             getItemWatchlists: vi.fn(() => [
                 { id: 'custom1', name: 'Watchlist 1', isDefault: false },
@@ -77,7 +77,7 @@ describe('WatchlistCell', () => {
     });
 
     it('should have tooltip with all watchlist names', async () => {
-        const { useWatchlistStore } = await import('@/stores/useWatchlistStore');
+        const { useWatchlistStore } = await import('@/stores');
         vi.mocked(useWatchlistStore).mockReturnValue({
             getItemWatchlists: vi.fn(() => [
                 { id: 'custom1', name: 'WL1', isDefault: false },

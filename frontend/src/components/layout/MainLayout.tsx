@@ -10,9 +10,8 @@
 import React, { useCallback, useEffect, useRef } from 'react';
 import { Outlet } from 'react-router-dom';
 import { Toaster } from 'sonner';
-import { useItemPrefetcher } from '../../hooks/useItemPrefetcher';
-import { useAllCurrentPrices } from '../../hooks/usePrices';
-import { useItemDataStore } from '../../stores/itemDataStore';
+import { useAllCurrentPrices, useItemPrefetcher } from '../../hooks';
+import { useItemDataStore } from '../../stores';
 import { cn } from '../../utils';
 import { Footer } from './Footer';
 import { Header, type HeaderHandle } from './Header';

@@ -4,9 +4,9 @@
  */
 
 import { useEffect, useRef, useState } from 'react';
-import { fetchItems } from '../api';
-import { useItemDataStore } from '../stores/itemDataStore';
-import type { Item } from '../types';
+import { fetchItems } from '../../api';
+import { useItemDataStore } from '../../stores';
+import type { Item } from '../../types';
 
 const MAX_RETRIES = 3;
 const PAGE_SIZE = 200;

@@ -4,12 +4,12 @@
 
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { useWatchlistStore } from '../../stores/useWatchlistStore';
+import { useWatchlistStore } from '../../stores';
 import type { Watchlist } from '../../types/watchlist';
 import { EditWatchlistModal } from './EditWatchlistModal';
 
 // Mock the store
-vi.mock('../../stores/useWatchlistStore');
+vi.mock('../../stores');
 
 describe('EditWatchlistModal', () => {
     const mockWatchlist: Watchlist = {

@@ -6,16 +6,16 @@ import { describe, expect, it, vi } from 'vitest';
 import { MainLayout } from './MainLayout';
 
 // Mock the hooks to avoid API calls
-vi.mock('../../hooks/useItemPrefetcher', () => ({
+vi.mock('../../hooks/items/useItemPrefetcher', () => ({
     useItemPrefetcher: () => ({}),
 }));
 
-vi.mock('../../hooks/usePrices', () => ({
+vi.mock('../../hooks/prices/usePrices', () => ({
     useAllCurrentPrices: () => ({ data: [] }),
 }));
 
 // Mock the itemDataStore to avoid infinite loop
-vi.mock('../../stores/itemDataStore', () => ({
+vi.mock('../../stores/items/useItemDataStore', () => ({
     useItemDataStore: () => ({
         setPrices: vi.fn(),
         prices: new Map(),

@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { PinCell } from './PinCell';
 
 // Mock the store
-vi.mock('@/stores/usePinnedItemsStore', () => ({
+vi.mock('@/stores', () => ({
     usePinnedItemsStore: vi.fn(() => ({
         togglePin: vi.fn(),
         isPinned: vi.fn((id: number) => id === 1),
@@ -31,7 +31,7 @@ describe('PinCell', () => {
     });
 
     it('should call togglePin when clicked', async () => {
-        const { usePinnedItemsStore } = await import('@/stores/usePinnedItemsStore');
+        const { usePinnedItemsStore } = await import('@/stores');
         const togglePin = vi.fn();
         vi.mocked(usePinnedItemsStore).mockReturnValue({
             togglePin,
@@ -49,7 +49,7 @@ describe('PinCell', () => {
     });
 
     it('should apply correct styling for pinned state', async () => {
-        const { usePinnedItemsStore } = await import('@/stores/usePinnedItemsStore');
+        const { usePinnedItemsStore } = await import('@/stores');
         vi.mocked(usePinnedItemsStore).mockReturnValue({
             togglePin: vi.fn(),
             isPinned: vi.fn(() => true),
@@ -62,7 +62,7 @@ describe('PinCell', () => {
     });
 
     it('should apply correct styling for unpinned state', async () => {
-        const { usePinnedItemsStore } = await import('@/stores/usePinnedItemsStore');
+        const { usePinnedItemsStore } = await import('@/stores');
         vi.mocked(usePinnedItemsStore).mockReturnValue({
             togglePin: vi.fn(),
             isPinned: vi.fn(() => false),

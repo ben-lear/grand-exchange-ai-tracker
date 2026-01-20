@@ -26,7 +26,7 @@ export type { ModalBodyProps, ModalFooterProps, ModalHeaderProps, ModalProps } f
 export { Alert, alertVariants } from './Alert';
 export type { AlertProps } from './Alert';
 
-export { AvatarSkeleton, CardSkeleton, Skeleton, TableRowSkeleton, skeletonVariants } from './Skeleton';
+export { AvatarSkeleton, CardSkeleton, Skeleton, skeletonVariants, TableRowSkeleton } from './Skeleton';
 export type { AvatarSkeletonProps, CardSkeletonProps, SkeletonProps, TableRowSkeletonProps } from './Skeleton';
 
 export { Stack, stackVariants } from './Stack';
@@ -70,4 +70,10 @@ export type {
     AnimatedDropdownItemProps,
     AnimatedDropdownProps
 } from './AnimatedDropdown';
+
+export { Dropdown } from './Dropdown';
+export type { DropdownProps } from './Dropdown';
+
+export { DropdownItem } from './DropdownItem';
+export type { DropdownItemProps } from './DropdownItem';
 

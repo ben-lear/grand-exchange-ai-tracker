@@ -5,10 +5,9 @@
  * Extracted from GlobalSearch.tsx for reuse in other search components.
  */
 
-import { Text } from '@/components/ui';
 import React from 'react';
 import type { Item } from '../../types';
-import { DropdownItem } from '../common/DropdownItem';
+import { DropdownItem, Text } from '../ui';
 
 export interface SearchDropdownContentProps<T extends { itemId: number }> {
   /** Whether to show recent searches */

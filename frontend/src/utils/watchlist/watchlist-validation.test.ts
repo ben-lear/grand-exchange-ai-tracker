@@ -11,7 +11,7 @@ import {
     validateWatchlist,
     validateWatchlistImport,
     validateWatchlistItem,
-} from '../../utils/watchlist-validation';
+} from './watchlist-validation';
 
 describe('Watchlist Validation', () => {
     describe('validateWatchlist', () => {

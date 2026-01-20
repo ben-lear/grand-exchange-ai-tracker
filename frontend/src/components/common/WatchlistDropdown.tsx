@@ -2,13 +2,13 @@
  * WatchlistDropdown - Multi-select dropdown for assigning items to watchlists
  */
 
-import { Icon, Input, Stack, Text } from '@/components/ui';
 import { Menu, Transition } from '@headlessui/react';
 import { Check, ListPlus, Star } from 'lucide-react';
 import React, { Fragment, KeyboardEvent, useState } from 'react';
-import { useWatchlistStore } from '../../stores/useWatchlistStore';
+import { useWatchlistStore } from '../../stores';
 import type { Watchlist } from '../../types/watchlist';
 import { WATCHLIST_LIMITS } from '../../types/watchlist';
+import { Icon, Input, Stack, Text } from '../ui';
 
 export interface WatchlistDropdownProps {
     /** Item ID to manage */

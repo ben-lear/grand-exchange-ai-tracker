@@ -2,7 +2,7 @@
  * Tests for ChartStatistics component
  */
 
-import type { ChartStats } from '@/hooks/useChartData';
+import type { ChartStats } from '@/hooks';
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { ChartStatistics } from './ChartStatistics';

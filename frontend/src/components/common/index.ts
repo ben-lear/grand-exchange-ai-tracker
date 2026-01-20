@@ -26,18 +26,6 @@ export type {
 export { EmptyState, ErrorDisplay } from './ErrorDisplay';
 export type { EmptyStateProps, ErrorDisplayProps } from './ErrorDisplay';
 
-export { SearchResult } from './SearchResult';
-export type { SearchResultProps } from './SearchResult';
-
-export { SearchInput } from './SearchInput';
-export type { SearchInputProps } from './SearchInput';
-
-export { Dropdown } from './Dropdown';
-export type { DropdownProps } from './Dropdown';
-
-export { DropdownItem } from './DropdownItem';
-
-export type { DropdownItemProps } from './DropdownItem';
 export { WatchlistDropdown } from './WatchlistDropdown';
 export type { WatchlistDropdownProps } from './WatchlistDropdown';
 

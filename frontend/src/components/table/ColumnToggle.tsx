@@ -1,5 +1,5 @@
-import { useOnClickOutside } from '@/hooks/useOnClickOutside';
-import { ALL_COLUMNS, useColumnVisibilityStore } from '@/stores/useColumnVisibilityStore';
+import { useOnClickOutside } from '@/hooks';
+import { ALL_COLUMNS, useColumnVisibilityStore } from '@/stores';
 import { Check, Columns } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { Button, Checkbox, Icon } from '../ui';

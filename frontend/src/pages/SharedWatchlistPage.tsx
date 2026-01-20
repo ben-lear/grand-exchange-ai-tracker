@@ -11,7 +11,7 @@ import { retrieveWatchlistShare } from '@/api/watchlist';
 import { BackButton } from '@/components/common';
 import { Button } from '@/components/ui';
 import { ImportSuccessBanner, ItemGrid, ShareInfoBanner } from '@/components/watchlist';
-import { useWatchlistStore } from '@/stores/useWatchlistStore';
+import { useWatchlistStore } from '@/stores';
 import { ArrowLeft, Download, ListPlus, Share2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';

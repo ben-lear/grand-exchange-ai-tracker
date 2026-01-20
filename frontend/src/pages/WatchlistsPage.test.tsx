@@ -2,7 +2,7 @@
  * Tests for WatchlistsPage component
  */
 
-import { useWatchlistStore } from '@/stores/useWatchlistStore';
+import { useWatchlistStore } from '@/stores';
 import type { Watchlist } from '@/types/watchlist';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
@@ -11,7 +11,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { WatchlistsPage } from './WatchlistsPage';
 
 // Mock the store
-vi.mock('@/stores/useWatchlistStore', () => ({
+vi.mock('@/stores', () => ({
     useWatchlistStore: vi.fn(),
 }));
 

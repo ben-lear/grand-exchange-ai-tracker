@@ -2,21 +2,24 @@
  * Tests for DashboardPage component
  */
 
-import { useItemDataStore } from '@/stores/itemDataStore';
-import type { Item } from '@/types';
 import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 import { BrowserRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { useItemDataStore } from '../stores';
+import type { Item } from '../types';
 import { DashboardPage } from './DashboardPage';
 
 // Mock the store
-vi.mock('@/stores/itemDataStore', () => ({
+vi.mock('../stores', () => ({
     useItemDataStore: vi.fn(),
+    usePinnedItemsStore: vi.fn(() => ({
+        getPinnedItemIds: vi.fn(() => []),
+    })),
 }));
 
 // Mock components that have complex dependencies
-vi.mock('@/components/table', () => ({
+vi.mock('../components/table', () => ({
     ItemsTable: () => <div data-testid="items-table">Items Table</div>,
     FilterPanel: ({ onFiltersChange }: any) => (
         <div data-testid="filter-panel">
@@ -44,15 +47,25 @@ vi.mock('@/components/table', () => ({
     ExportButton: () => <div data-testid="export-button">Export</div>,
 }));
 
-vi.mock('@/components/common', () => ({
+vi.mock('../components/common', () => ({
     LoadingSpinner: () => <div data-testid="loading-spinner">Loading...</div>,
 }));
 
-vi.mock('@/hooks/useDebouncedValue', () => ({
+// Create a mutable reference for filtered items
+let mockFilteredItems: Item[] = [];
+
+vi.mock('../hooks', () => ({
     useDebouncedValue: (value: string) => value,
+    useItemFiltering: () => ({ filteredItems: mockFilteredItems }),
 }));
 
-vi.mock('@/utils/itemSearch', () => ({
+// Also mock with the alias path since Vitest may resolve to it
+vi.mock('@/hooks', () => ({
+    useDebouncedValue: (value: string) => value,
+    useItemFiltering: () => ({ filteredItems: mockFilteredItems }),
+}));
+
+vi.mock('../utils', () => ({
     createItemSearchIndex: vi.fn(() => ({})),
     filterItemIdsByRelevance: vi.fn(() => []),
 }));
@@ -111,6 +124,8 @@ const mockStoreState = {
 describe('DashboardPage', () => {
     beforeEach(() => {
         vi.clearAllMocks();
+        // Set up the filtered items to include the mock items
+        mockFilteredItems = Array.from(mockItems.values());
         // Mock the store to properly handle selector functions
         (useItemDataStore as any).mockImplementation((selector: (state: any) => any) => {
             return selector(mockStoreState);

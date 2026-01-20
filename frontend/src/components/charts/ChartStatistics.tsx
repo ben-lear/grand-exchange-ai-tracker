@@ -8,7 +8,7 @@
  * - Responsive 4-column grid
  */
 
-import type { ChartStats } from '@/hooks/useChartData';
+import type { ChartStats } from '@/hooks';
 import { formatGold } from '@/utils/formatters';
 import { Minus, TrendingDown, TrendingUp } from 'lucide-react';
 

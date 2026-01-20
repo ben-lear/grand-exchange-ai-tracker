@@ -3,7 +3,7 @@
  */
 
 import * as watchlistApi from '@/api/watchlist';
-import { useWatchlistStore } from '@/stores/useWatchlistStore';
+import { useWatchlistStore } from '@/stores';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
@@ -16,7 +16,7 @@ vi.mock('@/api/watchlist', () => ({
 }));
 
 // Mock the store
-vi.mock('@/stores/useWatchlistStore', () => ({
+vi.mock('@/stores', () => ({
     useWatchlistStore: vi.fn(),
 }));
 

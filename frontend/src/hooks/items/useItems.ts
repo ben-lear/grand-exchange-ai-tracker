@@ -7,7 +7,7 @@ import {
   fetchItemById,
   fetchItemCount,
   fetchItems,
-} from '../api';
+} from '../../api';
 import type {
   ApiError,
   Item,
@@ -16,7 +16,7 @@ import type {
   ItemListResponse,
   PaginationParams,
   SortParams,
-} from '../types';
+} from '../../types';
 
 /**
  * Query keys for items
