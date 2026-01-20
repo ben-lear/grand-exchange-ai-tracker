@@ -44,4 +44,11 @@ export default [
       }],
     },
   },
+  {
+    files: ['**/*.test.{ts,tsx}', '**/*.stories.{ts,tsx}', 'src/test/**/*.{ts,tsx}'],
+    rules: {
+      '@typescript-eslint/no-explicit-any': 'off',
+      'max-lines': 'off',
+    },
+  },
 ]

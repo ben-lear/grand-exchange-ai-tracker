@@ -41,14 +41,7 @@ export function validateWatchlist(data: unknown): WatchlistValidationResult {
  */
 export function validateWatchlistImport(data: unknown): WatchlistValidationResult {
     // Check basic structure without validating individual watchlists yet
-    if (
-        typeof data !== 'object' ||
-        data === null ||
-        !('version' in data) ||
-        !('metadata' in data) ||
-        !('watchlists' in data) ||
-        !Array.isArray((data as any).watchlists)
-    ) {
+    if (typeof data !== 'object' || data === null) {
         return {
             valid: false,
             errors: ['Invalid export format: missing required fields or invalid structure'],
@@ -56,7 +49,17 @@ export function validateWatchlistImport(data: unknown): WatchlistValidationResul
         };
     }
 
-    const exportData = data as { watchlists: unknown[] };
+    const exportCandidate = data as Record<string, unknown>;
+    const watchlistsValue = exportCandidate.watchlists;
+    if (!('version' in exportCandidate) || !('metadata' in exportCandidate) || !Array.isArray(watchlistsValue)) {
+        return {
+            valid: false,
+            errors: ['Invalid export format: missing required fields or invalid structure'],
+            warnings: [],
+        };
+    }
+
+    const exportData = { watchlists: watchlistsValue } as { watchlists: unknown[] };
     const validWatchlists: Watchlist[] = [];
     const errors: string[] = [];
     const warnings: string[] = [];
@@ -70,7 +73,10 @@ export function validateWatchlistImport(data: unknown): WatchlistValidationResul
             validWatchlists.push(watchlistResult.data);
         } else {
             // Use the watchlist name if available, otherwise use index
-            const watchlistIdentifier = (watchlist as any).name || `#${i + 1}`;
+            const watchlistIdentifier =
+                typeof watchlist === 'object' && watchlist !== null && 'name' in watchlist && typeof (watchlist as Record<string, unknown>).name === 'string'
+                    ? String((watchlist as Record<string, unknown>).name)
+                    : `#${i + 1}`;
             warnings.push(`Watchlist "${watchlistIdentifier}" has validation errors and was skipped`);
             watchlistResult.error.errors.forEach((err) => {
                 errors.push(`Watchlist ${watchlistIdentifier} - ${err.path.join('.')}: ${err.message}`);

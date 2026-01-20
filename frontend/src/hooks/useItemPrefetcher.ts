@@ -98,8 +98,10 @@ export function useItemPrefetcher(): PrefetcherState {
     const {
         items,
         isFullyLoaded,
+        isPrefetching,
         addItems,
         setFullyLoaded,
+        setPrefetching,
         setLoadError
     } = useItemDataStore();
 
@@ -116,8 +118,9 @@ export function useItemPrefetcher(): PrefetcherState {
 
     useEffect(() => {
         // Skip if already loaded or currently fetching
-        if (isFullyLoaded || fetchingRef.current) return;
+        if (isFullyLoaded || isPrefetching || fetchingRef.current) return;
         fetchingRef.current = true;
+        setPrefetching(true);
 
         const controller = new AbortController();
 
@@ -126,58 +129,62 @@ export function useItemPrefetcher(): PrefetcherState {
             let hasMore = true;
             let totalExpected = 0;
             const errors: string[] = [];
+            try {
+                while (hasMore) {
+                    try {
+                        const result = await fetchPageWithRetry(page, controller.signal);
 
-            while (hasMore) {
-                try {
-                    const result = await fetchPageWithRetry(page, controller.signal);
+                        // Update store with new items
+                        addItems(result.items);
 
-                    // Update store with new items
-                    addItems(result.items);
+                        // Update expected total from first successful response
+                        if (result.total > 0) {
+                            totalExpected = result.total;
+                        }
 
-                    // Update expected total from first successful response
-                    if (result.total > 0) {
-                        totalExpected = result.total;
-                    }
+                        // Update state for UI feedback
+                        setState((prev) => ({
+                            ...prev,
+                            hasFirstPage: true,
+                            totalFetched: prev.totalFetched + result.items.length,
+                            totalExpected,
+                        }));
 
-                    // Update state for UI feedback
-                    setState((prev) => ({
-                        ...prev,
-                        hasFirstPage: true,
-                        totalFetched: prev.totalFetched + result.items.length,
-                        totalExpected,
-                    }));
+                        hasMore = result.hasMore;
+                        page++;
+                    } catch (error) {
+                        // Stop if aborted
+                        if (controller.signal.aborted) return;
 
-                    hasMore = result.hasMore;
-                    page++;
-                } catch (error) {
-                    // Stop if aborted
-                    if (controller.signal.aborted) return;
+                        // Log error but continue to next page
+                        const errMsg = `Page ${page} failed after ${MAX_RETRIES} retries`;
+                        errors.push(errMsg);
+                        console.error('[useItemPrefetcher]', errMsg, error);
 
-                    // Log error but continue to next page
-                    const errMsg = `Page ${page} failed after ${MAX_RETRIES} retries`;
-                    errors.push(errMsg);
-                    console.error('[useItemPrefetcher]', errMsg, error);
+                        page++;
 
-                    page++;
-
-                    // Stop if too many consecutive errors (5+ pages failed)
-                    if (errors.length > 5) {
-                        console.error('[useItemPrefetcher] Too many errors, stopping prefetch');
-                        hasMore = false;
+                        // Stop if too many consecutive errors (5+ pages failed)
+                        if (errors.length > 5) {
+                            console.error('[useItemPrefetcher] Too many errors, stopping prefetch');
+                            hasMore = false;
+                        }
                     }
                 }
-            }
 
-            // Mark as fully loaded
-            setFullyLoaded();
+                // Mark as fully loaded
+                setFullyLoaded();
 
-            // Set error state if there were failures
-            if (errors.length > 0) {
-                const errorMsg = `Some pages failed to load: ${errors.length} errors`;
-                setLoadError(errorMsg);
-                setState((prev) => ({ ...prev, isLoading: false, error: errorMsg }));
-            } else {
-                setState((prev) => ({ ...prev, isLoading: false }));
+                // Set error state if there were failures
+                if (errors.length > 0) {
+                    const errorMsg = `Some pages failed to load: ${errors.length} errors`;
+                    setLoadError(errorMsg);
+                    setState((prev) => ({ ...prev, isLoading: false, error: errorMsg }));
+                } else {
+                    setState((prev) => ({ ...prev, isLoading: false }));
+                }
+            } finally {
+                fetchingRef.current = false;
+                setPrefetching(false);
             }
         }
 
@@ -186,9 +193,9 @@ export function useItemPrefetcher(): PrefetcherState {
         // Cleanup: abort any in-flight requests on unmount
         return () => {
             controller.abort();
-            fetchingRef.current = false; // Reset so next mount can fetch
+            fetchingRef.current = false;
         };
-    }, [isFullyLoaded, addItems, setFullyLoaded, setLoadError]);
+    }, [isFullyLoaded, addItems, setFullyLoaded, setPrefetching, setLoadError]);
 
     return state;
 }
