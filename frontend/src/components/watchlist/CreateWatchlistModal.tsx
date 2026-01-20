@@ -2,14 +2,14 @@
  * CreateWatchlistModal - Modal for creating a new watchlist
  */
 
-import { Dialog, Transition } from '@headlessui/react';
-import { FolderPlus, Loader2, X } from 'lucide-react';
-import React, { Fragment, useState } from 'react';
+import { FolderPlus } from 'lucide-react';
+import { useState } from 'react';
 import { toast } from 'sonner';
 import { useWatchlistStore } from '../../stores';
 import { WATCHLIST_LIMITS } from '../../types/watchlist';
 import { isValidWatchlistName } from '../../utils';
-import { Icon, Input, Stack } from '../ui';
+import { FormField } from '../forms/FormField';
+import { Button, Input, Stack, StandardModal } from '../ui';
 
 export interface CreateWatchlistModalProps {
     isOpen: boolean;
@@ -30,9 +30,7 @@ export function CreateWatchlistModal({
     const watchlists = getAllWatchlists();
     const existingNames = watchlists.map((w) => w.name);
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-
+    const handleSubmit = async () => {
         if (isSubmitting) return;
 
         const validation = isValidWatchlistName(name, existingNames);
@@ -73,123 +71,75 @@ export function CreateWatchlistModal({
     const isAtLimit = watchlistCount >= WATCHLIST_LIMITS.MAX_WATCHLISTS;
 
     return (
-        <Transition appear show={isOpen} as={Fragment}>
-            <Dialog as="div" className="relative z-50" onClose={handleClose}>
-                <Transition.Child
-                    as={Fragment}
-                    enter="ease-out duration-300"
-                    enterFrom="opacity-0"
-                    enterTo="opacity-100"
-                    leave="ease-in duration-200"
-                    leaveFrom="opacity-100"
-                    leaveTo="opacity-0"
-                >
-                    <div className="fixed inset-0 bg-black/50" />
-                </Transition.Child>
-
-                <div className="fixed inset-0 overflow-y-auto">
-                    <div className="flex min-h-full items-center justify-center p-4">
-                        <Transition.Child
-                            as={Fragment}
-                            enter="ease-out duration-300"
-                            enterFrom="opacity-0 scale-95"
-                            enterTo="opacity-100 scale-100"
-                            leave="ease-in duration-200"
-                            leaveFrom="opacity-100 scale-100"
-                            leaveTo="opacity-0 scale-95"
+        <StandardModal
+            isOpen={isOpen}
+            onClose={handleClose}
+            title="Create New Watchlist"
+            icon={FolderPlus}
+            iconColor="primary"
+            closeDisabled={isSubmitting}
+            footer={
+                !isAtLimit && (
+                    <Stack direction="row" gap={3} justify="end">
+                        <Button
+                            variant="secondary"
+                            onClick={handleClose}
+                            disabled={isSubmitting}
                         >
-                            <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-lg bg-white dark:bg-gray-800 p-6 text-left align-middle shadow-xl transition-all">
-                                <Stack direction="row" align="center" justify="between" className="mb-4">
-                                    <Stack direction="row" align="center" gap={2}>
-                                        <Icon as={FolderPlus} size="md" color="primary" />
-                                        <Dialog.Title className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                                            Create New Watchlist
-                                        </Dialog.Title>
-                                    </Stack>
-                                    <button
-                                        onClick={handleClose}
-                                        disabled={isSubmitting}
-                                        className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors disabled:opacity-50"
-                                    >
-                                        <Icon as={X} size="md" color="muted" />
-                                    </button>
-                                </Stack>
-
-                                {isAtLimit ? (
-                                    <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
-                                        <p className="text-sm text-yellow-800 dark:text-yellow-200">
-                                            You've reached the maximum of {WATCHLIST_LIMITS.MAX_WATCHLISTS} watchlists.
-                                            Delete a watchlist to create a new one.
-                                        </p>
-                                    </div>
-                                ) : (
-                                    <form onSubmit={handleSubmit} className="space-y-4">
-                                        <div>
-                                            <label
-                                                htmlFor="watchlist-name"
-                                                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-                                            >
-                                                Watchlist Name
-                                            </label>
-                                            <Input
-                                                id="watchlist-name"
-                                                type="text"
-                                                value={name}
-                                                onChange={(e) => setName(e.target.value)}
-                                                placeholder="Enter watchlist name..."
-                                                maxLength={WATCHLIST_LIMITS.MAX_NAME_LENGTH}
-                                                disabled={isSubmitting}
-                                                autoFocus
-                                            />
-                                            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                                                {name.length}/{WATCHLIST_LIMITS.MAX_NAME_LENGTH} characters
-                                            </p>
-                                        </div>
-
-                                        <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                                            <p className="text-sm text-gray-700 dark:text-gray-300">
-                                                <span className="font-medium">Tip:</span> You can add up to{' '}
-                                                {WATCHLIST_LIMITS.MAX_ITEMS_PER_WATCHLIST} items per watchlist.
-                                            </p>
-                                        </div>
-
-                                        <div className="flex gap-3 pt-2">
-                                            <button
-                                                type="button"
-                                                onClick={handleClose}
-                                                disabled={isSubmitting}
-                                                className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
-                                            >
-                                                Cancel
-                                            </button>
-                                            <button
-                                                type="submit"
-                                                disabled={isSubmitting || !name.trim()}
-                                                className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white rounded-lg transition-colors flex items-center justify-center gap-2"
-                                            >
-                                                {isSubmitting ? (
-                                                    <>
-                                                        <Icon as={Loader2} size="sm" spin />
-                                                        Creating...
-                                                    </>
-                                                ) : (
-                                                    'Create Watchlist'
-                                                )}
-                                            </button>
-                                        </div>
-                                    </form>
-                                )}
-
-                                <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-                                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                                        Watchlists: {watchlistCount} / {WATCHLIST_LIMITS.MAX_WATCHLISTS}
-                                    </p>
-                                </div>
-                            </Dialog.Panel>
-                        </Transition.Child>
-                    </div>
+                            Cancel
+                        </Button>
+                        <Button
+                            variant="primary"
+                            onClick={handleSubmit}
+                            disabled={isSubmitting || !name.trim()}
+                        >
+                            {isSubmitting ? 'Creating...' : 'Create Watchlist'}
+                        </Button>
+                    </Stack>
+                )
+            }
+        >
+            {isAtLimit ? (
+                <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+                    <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                        You've reached the maximum of {WATCHLIST_LIMITS.MAX_WATCHLISTS} watchlists.
+                        Delete a watchlist to create a new one.
+                    </p>
                 </div>
-            </Dialog>
-        </Transition>
+            ) : (
+                <Stack direction="col" gap={4}>
+                    <FormField
+                        label="Watchlist Name"
+                        htmlFor="watchlist-name"
+                        required
+                        hint={`${name.length}/${WATCHLIST_LIMITS.MAX_NAME_LENGTH} characters`}
+                    >
+                        <Input
+                            id="watchlist-name"
+                            type="text"
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                            placeholder="Enter watchlist name..."
+                            maxLength={WATCHLIST_LIMITS.MAX_NAME_LENGTH}
+                            disabled={isSubmitting}
+                            autoFocus
+                        />
+                    </FormField>
+
+                    <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                        <p className="text-sm text-gray-700 dark:text-gray-300">
+                            <span className="font-medium">Tip:</span> You can add up to{' '}
+                            {WATCHLIST_LIMITS.MAX_ITEMS_PER_WATCHLIST} items per watchlist.
+                        </p>
+                    </div>
+
+                    <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                            Watchlists: {watchlistCount} / {WATCHLIST_LIMITS.MAX_WATCHLISTS}
+                        </p>
+                    </div>
+                </Stack>
+            )}
+        </StandardModal>
     );
 }

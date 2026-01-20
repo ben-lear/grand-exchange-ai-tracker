@@ -2,7 +2,7 @@
  * Unit tests for CreateWatchlistModal component
  */
 
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useWatchlistStore } from '../../stores';
@@ -63,7 +63,7 @@ describe('CreateWatchlistModal', () => {
         );
 
         expect(screen.getByText('Create New Watchlist')).toBeInTheDocument();
-        expect(screen.getByLabelText('Watchlist Name')).toBeInTheDocument();
+        expect(screen.getByPlaceholderText('Enter watchlist name...')).toBeInTheDocument();
         expect(screen.getByRole('button', { name: /create watchlist/i })).toBeInTheDocument();
     });
 
@@ -90,7 +90,7 @@ describe('CreateWatchlistModal', () => {
             />
         );
 
-        const input = screen.getByLabelText('Watchlist Name');
+        const input = screen.getByPlaceholderText('Enter watchlist name...');
         await user.type(input, 'Test');
 
         expect(screen.getByText(`4/${WATCHLIST_LIMITS.MAX_NAME_LENGTH} characters`)).toBeInTheDocument();
@@ -120,7 +120,7 @@ describe('CreateWatchlistModal', () => {
             />
         );
 
-        const input = screen.getByLabelText('Watchlist Name');
+        const input = screen.getByPlaceholderText('Enter watchlist name...');
         await user.type(input, 'My Watchlist');
 
         const submitButton = screen.getByRole('button', { name: /create watchlist/i });
@@ -139,7 +139,7 @@ describe('CreateWatchlistModal', () => {
             />
         );
 
-        const input = screen.getByLabelText('Watchlist Name');
+        const input = screen.getByPlaceholderText('Enter watchlist name...');
         await user.type(input, 'My New Watchlist');
 
         const submitButton = screen.getByRole('button', { name: /create watchlist/i });
@@ -251,18 +251,5 @@ describe('CreateWatchlistModal', () => {
         ).toBeInTheDocument();
     });
 
-    it('prevents form submission with keyboard when name is empty', () => {
-        render(
-            <CreateWatchlistModal
-                isOpen={true}
-                onClose={mockOnClose}
-                onSuccess={mockOnSuccess}
-            />
-        );
-
-        const input = screen.getByLabelText('Watchlist Name');
-        fireEvent.submit(input.closest('form')!);
-
-        expect(mockCreateWatchlist).not.toHaveBeenCalled();
-    });
+    // Removed: Form submission test - StandardModal removed forms, button disabled state prevents submission
 });

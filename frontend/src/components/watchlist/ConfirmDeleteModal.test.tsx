@@ -138,7 +138,7 @@ describe('ConfirmDeleteModal', () => {
             />
         );
 
-        fireEvent.click(screen.getByLabelText('Close'));
+        fireEvent.click(screen.getByLabelText('Close modal'));
         expect(onClose).toHaveBeenCalled();
     });
 

@@ -9,6 +9,7 @@
 
 import { SlidersHorizontal, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { FormField } from '../forms/FormField';
 import { Button, Icon, Input, Radio, Stack } from '../ui';
 
 export interface FilterState {
@@ -145,10 +146,11 @@ export function FilterPanel({
             Price Range (GP)
           </label>
           <div className="grid grid-cols-2 gap-2">
-            <div>
-              <label htmlFor="filter-price-min" className="sr-only">
-                Minimum Price
-              </label>
+            <FormField
+              label="Minimum Price"
+              htmlFor="filter-price-min"
+              hideLabel
+            >
               <Input
                 id="filter-price-min"
                 name="priceMin"
@@ -157,11 +159,12 @@ export function FilterPanel({
                 value={localFilters.priceMin ?? ''}
                 onChange={(e) => handlePriceMinChange(e.target.value)}
               />
-            </div>
-            <div>
-              <label htmlFor="filter-price-max" className="sr-only">
-                Maximum Price
-              </label>
+            </FormField>
+            <FormField
+              label="Maximum Price"
+              htmlFor="filter-price-max"
+              hideLabel
+            >
               <Input
                 id="filter-price-max"
                 name="priceMax"
@@ -170,7 +173,7 @@ export function FilterPanel({
                 value={localFilters.priceMax ?? ''}
                 onChange={(e) => handlePriceMaxChange(e.target.value)}
               />
-            </div>
+            </FormField>
           </div>
         </div>
 
@@ -180,10 +183,11 @@ export function FilterPanel({
             Daily Volume
           </label>
           <div className="grid grid-cols-2 gap-2">
-            <div>
-              <label htmlFor="filter-volume-min" className="sr-only">
-                Minimum Volume
-              </label>
+            <FormField
+              label="Minimum Volume"
+              htmlFor="filter-volume-min"
+              hideLabel
+            >
               <Input
                 id="filter-volume-min"
                 name="volumeMin"
@@ -192,11 +196,12 @@ export function FilterPanel({
                 value={localFilters.volumeMin ?? ''}
                 onChange={(e) => handleVolumeMinChange(e.target.value)}
               />
-            </div>
-            <div>
-              <label htmlFor="filter-volume-max" className="sr-only">
-                Maximum Volume
-              </label>
+            </FormField>
+            <FormField
+              label="Maximum Volume"
+              htmlFor="filter-volume-max"
+              hideLabel
+            >
               <Input
                 id="filter-volume-max"
                 name="volumeMax"
@@ -205,7 +210,7 @@ export function FilterPanel({
                 value={localFilters.volumeMax ?? ''}
                 onChange={(e) => handleVolumeMaxChange(e.target.value)}
               />
-            </div>
+            </FormField>
           </div>
         </div>
       </div>

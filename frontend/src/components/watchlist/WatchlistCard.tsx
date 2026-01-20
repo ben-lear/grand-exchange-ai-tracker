@@ -2,12 +2,12 @@
  * WatchlistCard - Card component for displaying a watchlist in the manager grid
  */
 
-import { Menu } from '@headlessui/react';
-import { Download, Edit2, MoreVertical, Share2, Star, Trash2 } from 'lucide-react';
-import { useState } from 'react';
+import { Download, Edit2, Share2, Star, Trash2 } from 'lucide-react';
+import { useMemo, useState } from 'react';
 import type { Watchlist } from '../../types/watchlist';
 import { formatItemCount, getRelativeTime } from '../../utils';
-import { Icon, Stack } from '../ui';
+import { ActionMenu, Icon, Stack } from '../ui';
+import type { ActionMenuItem } from '../ui/ActionMenu';
 
 export interface WatchlistCardProps {
     watchlist: Watchlist;
@@ -32,6 +32,55 @@ export function WatchlistCard({
         setImageErrors((prev) => new Set(prev).add(itemId));
     };
 
+    // Build action menu items based on available handlers and watchlist properties
+    const menuItems: ActionMenuItem[] = useMemo(() => {
+        const items: ActionMenuItem[] = [];
+
+        // Edit (only for non-default watchlists)
+        if (onEdit && !watchlist.isDefault) {
+            items.push({
+                key: 'edit',
+                label: 'Edit',
+                icon: Edit2,
+                onClick: onEdit,
+            });
+        }
+
+        // Share
+        if (onShare) {
+            items.push({
+                key: 'share',
+                label: 'Share',
+                icon: Share2,
+                onClick: onShare,
+            });
+        }
+
+        // Export
+        if (onExport) {
+            items.push({
+                key: 'export',
+                label: 'Export',
+                icon: Download,
+                onClick: onExport,
+            });
+        }
+
+        // Delete (only for non-default watchlists, with divider)
+        if (onDelete && !watchlist.isDefault) {
+            items.push({
+                key: 'delete',
+                label: 'Delete',
+                icon: Trash2,
+                onClick: onDelete,
+                variant: 'destructive',
+                dividerBefore: true,
+            });
+        }
+
+        return items;
+    }, [onEdit, onShare, onExport, onDelete, watchlist.isDefault]);
+
     // Show first 8 items as preview
     const previewItems = watchlist.items.slice(0, 8);
     const hasMoreItems = watchlist.items.length > 8;
@@ -54,93 +103,7 @@ export function WatchlistCard({
                     </Stack>
 
                     {/* Actions menu */}
-                    <Menu as="div" className="relative">
-                        <Menu.Button
-                            className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
-                            onClick={(e) => e.stopPropagation()}
-                        >
-                            <Icon as={MoreVertical} size="sm" color="muted" />
-                        </Menu.Button>
-
-                        <Menu.Items className="absolute right-0 mt-1 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-10">
-                            <div className="py-1">
-                                {onEdit && !watchlist.isDefault && (
-                                    <Menu.Item>
-                                        {({ active }) => (
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    onEdit();
-                                                }}
-                                                className={`${active ? 'bg-gray-100 dark:bg-gray-700' : ''
-                                                    } flex items-center gap-2 w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-300`}
-                                            >
-                                                <Icon as={Edit2} size="sm" />
-                                                Edit
-                                            </button>
-                                        )}
-                                    </Menu.Item>
-                                )}
-
-                                {onShare && (
-                                    <Menu.Item>
-                                        {({ active }) => (
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    onShare();
-                                                }}
-                                                className={`${active ? 'bg-gray-100 dark:bg-gray-700' : ''
-                                                    } flex items-center gap-2 w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-300`}
-                                            >
-                                                <Share2 className="w-4 h-4" />
-                                                Share
-                                            </button>
-                                        )}
-                                    </Menu.Item>
-                                )}
-
-                                {onExport && (
-                                    <Menu.Item>
-                                        {({ active }) => (
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    onExport();
-                                                }}
-                                                className={`${active ? 'bg-gray-100 dark:bg-gray-700' : ''
-                                                    } flex items-center gap-2 w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-300`}
-                                            >
-                                                <Download className="w-4 h-4" />
-                                                Export
-                                            </button>
-                                        )}
-                                    </Menu.Item>
-                                )}
-
-                                {onDelete && !watchlist.isDefault && (
-                                    <>
-                                        <div className="my-1 border-t border-gray-200 dark:border-gray-700" />
-                                        <Menu.Item>
-                                            {({ active }) => (
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        onDelete();
-                                                    }}
-                                                    className={`${active ? 'bg-red-50 dark:bg-red-900/20' : ''
-                                                        } flex items-center gap-2 w-full px-4 py-2 text-sm text-red-600 dark:text-red-400`}
-                                                >
-                                                    <Trash2 className="w-4 h-4" />
-                                                    Delete
-                                                </button>
-                                            )}
-                                        </Menu.Item>
-                                    </>
-                                )}
-                            </div>
-                        </Menu.Items>
-                    </Menu>
+                    <ActionMenu items={menuItems} stopPropagation />
                 </Stack>
 
                 {/* Stats */}

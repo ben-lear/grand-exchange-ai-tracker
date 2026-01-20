@@ -48,6 +48,8 @@ export interface StandardModalProps extends VariantProps<typeof modalSizeVariant
     className?: string;
     /** Whether clicking backdrop closes the modal (default: true) */
     closeOnBackdropClick?: boolean;
+    /** Whether to show the close button in header (default: true) */
+    showCloseButton?: boolean;
 }
 
 const iconColorClasses = {
@@ -92,6 +94,7 @@ export function StandardModal({
     closeDisabled = false,
     className,
     closeOnBackdropClick = true,
+    showCloseButton = true,
 }: StandardModalProps): React.ReactElement {
     const handleClose = () => {
         if (!closeDisabled) {
@@ -151,15 +154,17 @@ export function StandardModal({
                                             {title}
                                         </Dialog.Title>
                                     </Stack>
-                                    <button
-                                        type="button"
-                                        onClick={handleClose}
-                                        disabled={closeDisabled}
-                                        className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                        aria-label="Close modal"
-                                    >
-                                        <Icon as={X} size="md" color="muted" />
-                                    </button>
+                                    {showCloseButton && (
+                                        <button
+                                            type="button"
+                                            onClick={handleClose}
+                                            disabled={closeDisabled}
+                                            className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                            aria-label="Close modal"
+                                        >
+                                            <Icon as={X} size="md" color="muted" />
+                                        </button>
+                                    )}
                                 </Stack>
 
                                 {/* Content */}

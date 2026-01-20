@@ -58,7 +58,7 @@ describe('ImportWatchlistModal', () => {
 
         render(<ImportWatchlistModal isOpen={true} onClose={mockOnClose} />);
 
-        const closeButton = screen.getByRole('button', { name: '' }); // X button
+        const closeButton = screen.getByRole('button', { name: 'Close modal' });
         await user.click(closeButton);
 
         expect(mockOnClose).toHaveBeenCalled();

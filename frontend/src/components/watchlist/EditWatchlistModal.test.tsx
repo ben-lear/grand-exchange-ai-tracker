@@ -69,7 +69,7 @@ describe('EditWatchlistModal', () => {
 
         const input = screen.getByDisplayValue('Test Watchlist');
         fireEvent.change(input, { target: { value: 'New Name' } });
-        fireEvent.submit(screen.getByRole('button', { name: /save/i }).closest('form')!);
+        fireEvent.click(screen.getByRole('button', { name: /save/i }));
 
         await waitFor(() => {
             expect(mockRenameWatchlist).toHaveBeenCalledWith('test-id', 'New Name');
@@ -77,7 +77,7 @@ describe('EditWatchlistModal', () => {
         });
     });
 
-    it('shows error for empty name', async () => {
+    it('disables save button for empty/whitespace name', () => {
         render(
             <EditWatchlistModal
                 isOpen={true}
@@ -87,12 +87,18 @@ describe('EditWatchlistModal', () => {
         );
 
         const input = screen.getByDisplayValue('Test Watchlist');
-        fireEvent.change(input, { target: { value: '   ' } });
-        fireEvent.submit(screen.getByRole('button', { name: /save/i }).closest('form')!);
+        const button = screen.getByRole('button', { name: /save/i });
 
-        await waitFor(() => {
-            expect(screen.getByText('Name cannot be empty')).toBeInTheDocument();
-        });
+        // Button should be enabled initially with valid name
+        expect(button).not.toBeDisabled();
+
+        // Change to whitespace - button should be disabled
+        fireEvent.change(input, { target: { value: '   ' } });
+        expect(button).toBeDisabled();
+
+        // Change to empty - button should be disabled
+        fireEvent.change(input, { target: { value: '' } });
+        expect(button).toBeDisabled();
     });
 
     it('shows error for name too long', async () => {
@@ -107,10 +113,11 @@ describe('EditWatchlistModal', () => {
         const input = screen.getByDisplayValue('Test Watchlist');
         const longName = 'a'.repeat(51);
         fireEvent.change(input, { target: { value: longName } });
-        fireEvent.submit(screen.getByRole('button', { name: /save/i }).closest('form')!);
+        const button = screen.getByRole('button', { name: /save/i });
+        fireEvent.click(button);
 
         await waitFor(() => {
-            expect(screen.getByText('Name must be 50 characters or less')).toBeInTheDocument();
+            expect(screen.getByRole('alert')).toHaveTextContent('Name must be 50 characters or less');
         });
     });
 
@@ -127,7 +134,7 @@ describe('EditWatchlistModal', () => {
 
         const input = screen.getByDisplayValue('Test Watchlist');
         fireEvent.change(input, { target: { value: 'New Name' } });
-        fireEvent.submit(screen.getByRole('button', { name: /save/i }).closest('form')!);
+        fireEvent.click(screen.getByRole('button', { name: /save/i }));
 
         await waitFor(() => {
             expect(screen.getByText(/Failed to rename watchlist/)).toBeInTheDocument();
@@ -160,7 +167,7 @@ describe('EditWatchlistModal', () => {
             />
         );
 
-        fireEvent.click(screen.getByLabelText('Close'));
+        fireEvent.click(screen.getByLabelText('Close modal'));
         expect(onClose).toHaveBeenCalled();
     });
 
@@ -175,7 +182,7 @@ describe('EditWatchlistModal', () => {
             />
         );
 
-        fireEvent.submit(screen.getByRole('button', { name: /save/i }).closest('form')!);
+        fireEvent.click(screen.getByRole('button', { name: /save/i }));
 
         await waitFor(() => {
             expect(mockRenameWatchlist).not.toHaveBeenCalled();

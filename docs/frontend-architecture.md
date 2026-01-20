@@ -456,6 +456,137 @@ src/
 
 ---
 
+## Component Architecture Standards
+
+### Component Composition Depth
+
+**Rule: Maximum 3 levels of component composition**
+
+Components should not nest custom components more than 3 levels deep to maintain:
+- Debuggability (easier stack traces)
+- Performance (reduced render overhead)
+- Understandability (clearer data flow)
+
+**Composition Levels:**
+- **Level 1:** Direct DOM element wrappers (Link, List, Table primitives)
+- **Level 2:** Components using Level 1 components (Button uses Icon)
+- **Level 3:** Components using Level 2 components (ToggleButton uses IconButton uses Icon)
+
+**Examples:**
+
+✅ **GOOD - 3 levels:**
+```tsx
+// ToggleButton (Level 3) → IconButton (Level 2) → Icon (Level 1) → SVG element
+<ToggleButton icon={Pin} isActive={isPinned} onToggle={togglePin} />
+```
+
+✅ **GOOD - 2 levels:**
+```tsx
+// Button (Level 2) → Icon (Level 1) → SVG element
+<Button leftIcon={Plus}>Create</Button>
+```
+
+❌ **BAD - 4+ levels:**
+```tsx
+// SuperButton → ToggleButton → IconButton → Icon → SVG
+// Too deep! Extract to separate pattern or refactor
+```
+
+### Component Interface Consistency
+
+All form components (Input, Select, Textarea, FileInput) MUST implement `CommonComponentProps`:
+- `size`: Visual size variant
+- `variant`: Functional/style variant
+- `disabled`: Disabled state
+- `error`: Error message string
+- `helperText`: Helper text below input
+- `className`: Additional CSS classes
+
+See [components.ts](../frontend/src/types/components.ts) for complete interface definitions.
+
+### Dropdown Component Usage Guide
+
+| Component | Use Case | Example |
+|-----------|----------|---------|
+| **Select** | Form input dropdown (single/multi select) | "Select country", "Choose tags" |
+| **Dropdown** | Generic dropdown container | Custom dropdown with any content |
+| **ActionMenu** | List of 3+ actions with icons | "Edit", "Share", "Delete" menu |
+| **AnimatedDropdown** | Complex custom dropdown content with animations | Search results with categories |
+
+**Selection Guide:**
+1. Form input? → `Select`
+2. Action list (3+ items)? → `ActionMenu`
+3. Custom content with animations? → `AnimatedDropdown`
+4. Generic dropdown container? → `Dropdown`
+
+### HeadlessUI Integration
+
+Use HeadlessUI for complex interactive components requiring:
+- Accessibility (ARIA, focus management, keyboard navigation)
+- Complex state management (open/close, selection, focus)
+- Transition/animation support
+
+**Components using HeadlessUI:**
+- StandardModal (Dialog)
+- Select (Listbox)
+- ActionMenu (Menu)
+- Dropdown (Menu)
+
+### Component Prop Naming Conventions
+
+**Boolean Props:**
+- Use `is` prefix for state: `isOpen`, `isActive`, `isLoading`
+- Use `has` prefix for capability: `hasError`, `hasIcon`
+- Use `show` prefix for visibility: `showCloseButton`, `showCount`
+- Use `disabled` for disabled state (not `isDisabled`)
+
+**Handler Props:**
+- Use `on` prefix: `onClick`, `onChange`, `onToggle`, `onClose`
+- Be specific: `onFileSelect` not `onSelect`, `onToggle` not `onChange`
+
+**Component Props:**
+- Use `as` for polymorphic rendering: `as="a"`, `as="button"`
+- Use `variant` for visual/functional variants: `variant="primary"`
+- Use `size` for size variants: `size="md"`
+
+### Accessibility Requirements
+
+All new components MUST include:
+- Semantic HTML when possible (not `<div role="button">`)
+- ARIA labels for icon-only buttons: `aria-label="Close modal"`
+- ARIA attributes for state: `aria-expanded`, `aria-selected`, `aria-checked`
+- Keyboard navigation support (Tab, Enter, Space, Escape, Arrow keys)
+- Focus indicators (`:focus-visible` styles)
+- Screen reader announcements for dynamic changes
+- Color contrast ratio ≥ 4.5:1 (WCAG AA)
+
+### Testing Requirements
+
+All new components MUST include:
+- **Unit Tests** (`.test.tsx` file alongside component)
+  - Rendering with all prop variants
+  - User interactions (click, keyboard, hover)
+  - Edge cases (empty, error, loading states)
+  - Accessibility (ARIA, keyboard navigation, focus)
+  - 80%+ code coverage
+- **Storybook Stories** (`.stories.tsx` file)
+  - Default variant
+  - All size variants
+  - All state variants (disabled, error, loading)
+  - Interactive examples
+  - Accessibility addon enabled
+
+### Styling Conventions
+
+- Use `class-variance-authority` (CVA) for variant systems
+- Use `cn()` utility for className merging
+- Support dark mode with Tailwind `dark:` prefix
+- Use Tailwind CSS classes (avoid inline styles)
+- Keep responsive design: mobile-first approach
+- Maintain consistent spacing scale (Tailwind defaults)
+
+---
+
 ## Further Reading
 
 - [React Documentation](https://react.dev/)

@@ -2,12 +2,13 @@
  * EditWatchlistModal - Modal for renaming a watchlist
  */
 
-import { Button, Icon, Input, Stack, Text } from '@/components/ui';
+import { Button, Input, Stack, StandardModal } from '@/components/ui';
 import { WatchlistSchema } from '@/schemas/watchlist';
 import { useWatchlistStore } from '@/stores';
-import { X } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import { Edit2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import type { Watchlist } from '../../types/watchlist';
+import { FormField } from '../forms/FormField';
 
 export interface EditWatchlistModalProps {
     isOpen: boolean;
@@ -33,8 +34,7 @@ export function EditWatchlistModal({
         }
     }, [isOpen, watchlist.name]);
 
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
+    const handleSubmit = () => {
         setError(null);
         setIsSubmitting(true);
 
@@ -80,105 +80,55 @@ export function EditWatchlistModal({
         }
     };
 
-    const handleKeyDown = (e: React.KeyboardEvent) => {
-        if (e.key === 'Escape') {
-            onClose();
-        }
-    };
-
-    if (!isOpen) return null;
-
     return (
-        <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
-            onClick={onClose}
-        >
-            <div
-                className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md mx-4"
-                onClick={(e) => e.stopPropagation()}
-                onKeyDown={handleKeyDown}
-            >
-                {/* Header */}
-                <Stack
-                    direction="row"
-                    align="center"
-                    justify="between"
-                    className="p-6 border-b border-gray-200 dark:border-gray-700"
-                >
-                    <Text as="h2" variant="heading" size="xl">
-                        Rename Watchlist
-                    </Text>
-                    <button
+        <StandardModal
+            isOpen={isOpen}
+            onClose={onClose}
+            title="Rename Watchlist"
+            icon={Edit2}
+            iconColor="primary"
+            closeDisabled={isSubmitting}
+            footer={
+                <Stack direction="row" align="center" justify="end" gap={3}>
+                    <Button
+                        variant="secondary"
+                        size="default"
                         onClick={onClose}
-                        className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
-                        aria-label="Close"
+                        disabled={isSubmitting}
                     >
-                        <Icon as={X} size="md" color="muted" />
-                    </button>
+                        Cancel
+                    </Button>
+                    <Button
+                        variant="primary"
+                        size="default"
+                        onClick={handleSubmit}
+                        disabled={isSubmitting || !name.trim()}
+                    >
+                        {isSubmitting ? 'Saving...' : 'Save'}
+                    </Button>
                 </Stack>
-
-                {/* Form */}
-                <form onSubmit={handleSubmit}>
-                    <Stack direction="col" gap={4} className="p-6">
-                        <Stack direction="col" gap={2}>
-                            <Text
-                                as="label"
-                                htmlFor="watchlist-name"
-                                variant="body"
-                                size="sm"
-                                weight="medium"
-                            >
-                                Watchlist Name
-                            </Text>
-                            <Input
-                                id="watchlist-name"
-                                type="text"
-                                value={name}
-                                onChange={(e) => setName(e.target.value)}
-                                placeholder="Enter watchlist name"
-                                maxLength={50}
-                                autoFocus
-                                disabled={isSubmitting}
-                            />
-                        </Stack>
-                        {error && (
-                            <Text variant="error" size="sm">
-                                {error}
-                            </Text>
-                        )}
-                        <Text variant="muted" size="xs">
-                            {name.length}/50 characters
-                        </Text>
-                    </Stack>
-
-                    {/* Footer */}
-                    <Stack
-                        direction="row"
-                        align="center"
-                        justify="end"
-                        gap={3}
-                        className="p-6 border-t border-gray-200 dark:border-gray-700"
-                    >
-                        <Button
-                            type="button"
-                            variant="secondary"
-                            size="default"
-                            onClick={onClose}
-                            disabled={isSubmitting}
-                        >
-                            Cancel
-                        </Button>
-                        <Button
-                            type="submit"
-                            variant="primary"
-                            size="default"
-                            disabled={isSubmitting || !name.trim()}
-                        >
-                            {isSubmitting ? 'Saving...' : 'Save'}
-                        </Button>
-                    </Stack>
-                </form>
-            </div>
-        </div>
+            }
+        >
+            <Stack direction="col" gap={4}>
+                <FormField
+                    label="Watchlist Name"
+                    htmlFor="watchlist-name"
+                    required
+                    error={error || undefined}
+                    hint={`${name.length}/50 characters`}
+                >
+                    <Input
+                        id="watchlist-name"
+                        type="text"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        placeholder="Enter watchlist name"
+                        maxLength={50}
+                        autoFocus
+                        disabled={isSubmitting}
+                    />
+                </FormField>
+            </Stack>
+        </StandardModal>
     );
 }

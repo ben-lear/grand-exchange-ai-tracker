@@ -2,9 +2,9 @@
  * WatchlistDropdown - Multi-select dropdown for assigning items to watchlists
  */
 
-import { Menu, Transition } from '@headlessui/react';
+import { Menu, Portal, Transition } from '@headlessui/react';
 import { Check, ListPlus, Star } from 'lucide-react';
-import React, { Fragment, KeyboardEvent, useState } from 'react';
+import React, { Fragment, KeyboardEvent, useRef, useState } from 'react';
 import { useWatchlistStore } from '../../stores';
 import type { Watchlist } from '../../types/watchlist';
 import { WATCHLIST_LIMITS } from '../../types/watchlist';
@@ -45,6 +45,7 @@ export function WatchlistDropdown({
 
     const [newWatchlistName, setNewWatchlistName] = useState('');
     const [createError, setCreateError] = useState<string | null>(null);
+    const buttonRef = useRef<HTMLButtonElement>(null);
 
     const watchlists = getAllWatchlists();
     const itemWatchlists = getItemWatchlists(itemId);
@@ -125,6 +126,9 @@ export function WatchlistDropdown({
     };
 
     const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+        // Stop event propagation to prevent Menu keyboard navigation interference
+        e.stopPropagation();
+
         if (e.key === 'Enter') {
             e.preventDefault();
             handleCreateWatchlist();
@@ -133,97 +137,111 @@ export function WatchlistDropdown({
 
     return (
         <Menu as="div" className="relative inline-block text-left">
-            <Menu.Button className={buttonClassName}>
-                {buttonContent || <Icon as={ListPlus} size="sm" />}
-            </Menu.Button>
+            {({ open }) => (
+                <>
+                    <Menu.Button ref={buttonRef} className={buttonClassName}>
+                        {buttonContent || <Icon as={ListPlus} size="sm" />}
+                    </Menu.Button>
 
-            <Transition
-                as={Fragment}
-                enter="transition ease-out duration-100"
-                enterFrom="transform opacity-0 scale-95"
-                enterTo="transform opacity-100 scale-100"
-                leave="transition ease-in duration-75"
-                leaveFrom="transform opacity-100 scale-100"
-                leaveTo="transform opacity-0 scale-95"
-            >
-                <Menu.Items className="absolute right-0 z-50 mt-2 w-56 origin-top-right rounded-lg bg-white dark:bg-gray-800 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
-                    <div className="p-2">
-                        {/* Quick Create Input */}
-                        <div className="px-2 py-2 border-b border-gray-200 dark:border-gray-700 mb-1">
-                            <Input
-                                type="text"
-                                placeholder="Create new watchlist..."
-                                value={newWatchlistName}
-                                onChange={(e) => setNewWatchlistName(e.target.value)}
-                                onKeyDown={handleKeyDown}
-                                size="sm"
-                                maxLength={WATCHLIST_LIMITS.MAX_NAME_LENGTH}
-                            />
-                            {createError && (
-                                <Text variant="error" size="xs" className="mt-1">
-                                    {createError}
-                                </Text>
-                            )}
-                        </div>
-
-                        {/* Watchlist Options */}
-                        <div className="space-y-0.5">
-                            {watchlists.map((watchlist) => {
-                                const isInWatchlist = isItemInWatchlist(watchlist.id, itemId);
-
-                                return (
-                                    <Menu.Item key={watchlist.id}>
-                                        {({ active }) => (
-                                            <button
-                                                type="button"
-                                                onClick={() => handleToggleWatchlist(watchlist)}
-                                                className={`
-                                                    w-full flex items-center justify-between px-2 py-2 rounded-md text-sm
-                                                    ${active ? 'bg-gray-100 dark:bg-gray-700' : ''}
-                                                    ${isInWatchlist ? 'text-blue-600 dark:text-blue-400' : 'text-gray-700 dark:text-gray-300'}
-                                                `}
-                                            >
-                                                <Stack direction="row" align="center" gap={2}>
-                                                    {watchlist.isDefault && (
-                                                        <Icon as={Star} size="xs" className="text-yellow-500 fill-yellow-500" />
-                                                    )}
-                                                    <Text className="truncate">{watchlist.name}</Text>
-                                                    <Text variant="muted" size="xs">
-                                                        ({watchlist.items.length})
-                                                    </Text>
-                                                </Stack>
-                                                {isInWatchlist && (
-                                                    <Icon as={Check} size="sm" data-testid="check-icon" />
-                                                )}
-                                            </button>
+                    <Portal>
+                        <Transition
+                            show={open}
+                            as={Fragment}
+                            enter="transition ease-out duration-100"
+                            enterFrom="transform opacity-0 scale-95"
+                            enterTo="transform opacity-100 scale-100"
+                            leave="transition ease-in duration-75"
+                            leaveFrom="transform opacity-100 scale-100"
+                            leaveTo="transform opacity-0 scale-95"
+                        >
+                            <Menu.Items
+                                className="fixed z-50 w-56 mt-2 origin-top-right rounded-lg bg-white dark:bg-gray-800 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
+                                style={{
+                                    top: buttonRef.current
+                                        ? `${buttonRef.current.getBoundingClientRect().bottom + 8}px`
+                                        : undefined,
+                                    left: buttonRef.current
+                                        ? `${buttonRef.current.getBoundingClientRect().right - 224}px`
+                                        : undefined,
+                                }}
+                            >
+                                <div className="p-2">
+                                    {/* Quick Create Input */}
+                                    <div className="px-2 py-2 border-b border-gray-200 dark:border-gray-700 mb-1">
+                                        <Input
+                                            type="text"
+                                            placeholder="Create new watchlist..."
+                                            value={newWatchlistName}
+                                            onChange={(e) => setNewWatchlistName(e.target.value)}
+                                            onKeyDown={handleKeyDown}
+                                            size="sm"
+                                            maxLength={WATCHLIST_LIMITS.MAX_NAME_LENGTH}
+                                        />
+                                        {createError && (
+                                            <Text variant="error" size="xs" className="mt-1">
+                                                {createError}
+                                            </Text>
                                         )}
-                                    </Menu.Item>
-                                );
-                            })}
-                        </div>
+                                    </div>
 
-                        {/* Empty State */}
-                        {watchlists.length === 0 && (
-                            <div className="px-2 py-8 text-center">
-                                <Text variant="muted" size="sm">
-                                    No watchlists yet
-                                </Text>
-                            </div>
-                        )}
+                                    {/* Watchlist Options */}
+                                    <div className="space-y-0.5">
+                                        {watchlists.map((watchlist) => {
+                                            const isInWatchlist = isItemInWatchlist(watchlist.id, itemId);
 
-                        {/* Currently In Watchlists (if any) */}
-                        {itemWatchlists.length > 0 && (
-                            <div className="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
-                                <div className="px-2 py-1">
-                                    <Text variant="muted" size="xs">
-                                        In {itemWatchlists.length} watchlist{itemWatchlists.length !== 1 ? 's' : ''}
-                                    </Text>
+                                            return (
+                                                <button
+                                                    key={watchlist.id}
+                                                    type="button"
+                                                    onClick={() => handleToggleWatchlist(watchlist)}
+                                                    className={`
+                                            w-full flex items-center justify-between px-2 py-2 rounded-md text-sm
+                                            hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors
+                                            ${isInWatchlist ? 'text-blue-600 dark:text-blue-400' : 'text-gray-700 dark:text-gray-300'}
+                                        `}
+                                                >
+                                                    <Stack direction="row" align="center" gap={2}>
+                                                        {watchlist.isDefault && (
+                                                            <Icon as={Star} size="xs" className="text-yellow-500 fill-yellow-500" />
+                                                        )}
+                                                        <Text className="truncate">{watchlist.name}</Text>
+                                                        <Text variant="muted" size="xs">
+                                                            ({watchlist.items.length})
+                                                        </Text>
+                                                    </Stack>
+                                                    {isInWatchlist && (
+                                                        <Icon as={Check} size="sm" data-testid="check-icon" />
+                                                    )}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+
+                                    {/* Empty State */}
+                                    {watchlists.length === 0 && (
+                                        <div className="px-2 py-8 text-center">
+                                            <Text variant="muted" size="sm">
+                                                No watchlists yet
+                                            </Text>
+                                        </div>
+                                    )}
+
+                                    {/* Currently In Watchlists (if any) */}
+                                    {itemWatchlists.length > 0 && (
+                                        <div className="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
+                                            <div className="px-2 py-1">
+                                                <Text variant="muted" size="xs">
+                                                    In {itemWatchlists.length} watchlist{itemWatchlists.length !== 1 ? 's' : ''}
+                                                </Text>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
-                            </div>
-                        )}
-                    </div>
-                </Menu.Items>
-            </Transition>
+                            </Menu.Items>
+                        </Transition>
+                    </Portal>
+                </>
+            )}
         </Menu>
     );
 }
