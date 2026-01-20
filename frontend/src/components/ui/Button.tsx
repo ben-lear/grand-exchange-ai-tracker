@@ -4,7 +4,7 @@
  */
 
 import { type VariantProps, cva } from 'class-variance-authority';
-import { forwardRef } from 'react';
+import React from 'react';
 import { cn } from '../../utils';
 
 // Button variant styles using class-variance-authority
@@ -127,7 +127,7 @@ export interface ButtonProps
  * // Menu item
  * <Button variant="menu" width="full">Menu Item</Button>
  */
-export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
+export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({
     className,
     variant,
@@ -180,3 +180,4 @@ Button.displayName = 'Button';
 // Export types for external use
 export { buttonVariants };
 export type { VariantProps };
+

@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Button } from '../ui';
 import { ErrorBoundary } from './ErrorBoundary';
 import { ErrorFallback } from './ErrorFallback';
@@ -105,34 +105,36 @@ export const InlineVariant: Story = {
     },
 };
 
-export const WithResetKeys: Story = {
-    render: () => {
-        const [itemId, setItemId] = useState(1);
-        const [shouldThrow, setShouldThrow] = useState(false);
+const ResetKeysDemo = () => {
+    const [itemId, setItemId] = useState(1);
+    const [shouldThrow, setShouldThrow] = useState(false);
 
-        return (
-            <div className="space-y-4">
-                <div className="flex gap-2">
-                    <Button onClick={() => setShouldThrow(true)} variant="error">
-                        Throw Error
-                    </Button>
-                    <Button onClick={() => setItemId(prev => prev + 1)} variant="secondary">
-                        Change Item ID (triggers reset)
-                    </Button>
-                </div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Current Item ID: <strong>{itemId}</strong>
-                </p>
-
-                <ErrorBoundary
-                    fallback={(props) => <ErrorFallback {...props} variant="section" />}
-                    resetKeys={[itemId]}
-                >
-                    <ThrowError shouldThrow={shouldThrow} />
-                </ErrorBoundary>
+    return (
+        <div className="space-y-4">
+            <div className="flex gap-2">
+                <Button onClick={() => setShouldThrow(true)} variant="error">
+                    Throw Error
+                </Button>
+                <Button onClick={() => setItemId(prev => prev + 1)} variant="secondary">
+                    Change Item ID (triggers reset)
+                </Button>
             </div>
-        );
-    },
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+                Current Item ID: <strong>{itemId}</strong>
+            </p>
+
+            <ErrorBoundary
+                fallback={(props) => <ErrorFallback {...props} variant="section" />}
+                resetKeys={[itemId]}
+            >
+                <ThrowError shouldThrow={shouldThrow} />
+            </ErrorBoundary>
+        </div>
+    );
+};
+
+export const WithResetKeys: Story = {
+    render: () => <ResetKeysDemo />,
     parameters: {
         docs: {
             description: {
@@ -142,38 +144,31 @@ export const WithResetKeys: Story = {
     },
 };
 
+const WithErrorLoggingComponent = () => {
+    const [shouldThrow, setShouldThrow] = useState(false);
+
+    const handleError = (error: Error, errorInfo: React.ErrorInfo) => {
+        console.log('Custom error handler called:', { error, errorInfo });
+        // In production, send to error tracking service
+    };
+
+    return (
+        <div className="space-y-4">
+            <ErrorBoundary fallback={ErrorFallback} onError={handleError}>
+                <ThrowError shouldThrow={shouldThrow} />
+            </ErrorBoundary>
+            <Button
+                onClick={() => setShouldThrow(!shouldThrow)}
+                variant={shouldThrow ? 'secondary' : 'error'}
+            >
+                {shouldThrow ? 'Reset' : 'Throw Error'}
+            </Button>
+        </div>
+    );
+};
+
 export const WithErrorLogging: Story = {
-    render: () => {
-        const [shouldThrow, setShouldThrow] = useState(false);
-
-        const handleError = (error: Error, errorInfo: React.ErrorInfo) => {
-            console.log('Custom error handler called:', { error, errorInfo });
-            // In production, send to error tracking service
-        };
-
-        return (
-            <div className="space-y-4">
-                <div className="flex gap-2">
-                    <Button onClick={() => setShouldThrow(true)} variant="error">
-                        Throw Error
-                    </Button>
-                    <Button onClick={() => setShouldThrow(false)} variant="secondary">
-                        Reset
-                    </Button>
-                </div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Check console for logged errors
-                </p>
-
-                <ErrorBoundary
-                    fallback={(props) => <ErrorFallback {...props} variant="section" />}
-                    onError={handleError}
-                >
-                    <ThrowError shouldThrow={shouldThrow} />
-                </ErrorBoundary>
-            </div>
-        );
-    },
+    render: () => <WithErrorLoggingComponent />,
     parameters: {
         docs: {
             description: {

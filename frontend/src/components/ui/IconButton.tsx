@@ -4,7 +4,7 @@
  */
 
 import { type VariantProps, cva } from 'class-variance-authority';
-import { forwardRef } from 'react';
+import React from 'react';
 import { cn } from '../../utils';
 
 // IconButton variant styles using class-variance-authority
@@ -75,7 +75,7 @@ export interface IconButtonProps
  * // Close button
  * <IconButton icon={X} variant="close" size="sm" aria-label="Close" />
  */
-export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(
+export const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>(
     ({ className, variant, size, radius, icon: IconComponent, loading, disabled, ...props }, ref) => {
         return (
             <button

@@ -4,7 +4,7 @@
 
 import { Dialog, Transition } from '@headlessui/react';
 import { FolderPlus, Loader2, X } from 'lucide-react';
-import { Fragment, useState } from 'react';
+import React, { Fragment, useState } from 'react';
 import { toast } from 'sonner';
 import { useWatchlistStore } from '../../stores/useWatchlistStore';
 import { WATCHLIST_LIMITS } from '../../types/watchlist';

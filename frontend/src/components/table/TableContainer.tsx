@@ -4,6 +4,7 @@
  */
 
 import { Card } from '@/components/ui';
+import React from 'react';
 
 interface TableContainerProps {
     /** Toolbar section (filters, search, etc.) */

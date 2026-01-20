@@ -7,6 +7,10 @@ import { flexRender, type Row } from '@tanstack/react-table';
 import type { VirtualItem } from '@tanstack/react-virtual';
 import type { ItemWithPrice } from './columns';
 
+type ColumnMeta = {
+    cellClassName?: string;
+};
+
 interface TableBodyProps {
     rows: Row<ItemWithPrice>[];
     virtualRows?: VirtualItem[];
@@ -41,7 +45,7 @@ export function TableBody({
                         className="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                     >
                         {row.getVisibleCells().map((cell, cellIndex) => {
-                            const customClassName = (cell.column.columnDef.meta as any)?.cellClassName;
+                            const customClassName = (cell.column.columnDef.meta as ColumnMeta | undefined)?.cellClassName;
                             const baseClassName = customClassName || 'px-2';
 
                             return (

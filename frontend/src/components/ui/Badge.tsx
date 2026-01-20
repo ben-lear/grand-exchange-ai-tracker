@@ -4,7 +4,7 @@
  */
 
 import { type VariantProps, cva } from 'class-variance-authority';
-import { forwardRef } from 'react';
+import React from 'react';
 import { cn } from '../../utils';
 
 // Badge variant styles using class-variance-authority
@@ -84,7 +84,7 @@ export interface BadgeProps
  * // Small size badge
  * <Badge size="sm" variant="info">New</Badge>
  */
-export const Badge = forwardRef<HTMLSpanElement, BadgeProps>(
+export const Badge = React.forwardRef<HTMLSpanElement, BadgeProps>(
     ({ className, variant, size, shape, icon, children, ...props }, ref) => {
         return (
             <span

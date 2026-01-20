@@ -4,7 +4,7 @@
 
 import { Dialog, Transition } from '@headlessui/react';
 import { AlertCircle, CheckCircle, Upload, X } from 'lucide-react';
-import { Fragment, useState } from 'react';
+import React, { Fragment, useState } from 'react';
 import { useWatchlistStore } from '../../stores/useWatchlistStore';
 import type { WatchlistExport } from '../../types/watchlist';
 import { validateWatchlistExport } from '../../utils/watchlist-validation';

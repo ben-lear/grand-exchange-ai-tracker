@@ -4,6 +4,7 @@
 
 import { Button, Icon, Stack, Text } from '@/components/ui';
 import { AlertTriangle, X } from 'lucide-react';
+import React from 'react';
 import type { Watchlist } from '../../types/watchlist';
 
 export interface ConfirmDeleteModalProps {

@@ -42,8 +42,10 @@ describe('ErrorFallback', () => {
         });
 
         it('should show error stack in development mode', () => {
-            const originalEnv = process.env.NODE_ENV;
-            process.env.NODE_ENV = 'development';
+            const originalEnv = globalThis.process?.env?.NODE_ENV;
+            if (globalThis.process?.env) {
+                globalThis.process.env.NODE_ENV = 'development';
+            }
 
             const errorWithStack = new Error('Test error');
             errorWithStack.stack = 'Error: Test error\n  at line 1';
@@ -58,7 +60,9 @@ describe('ErrorFallback', () => {
 
             expect(screen.getByText('Show error details')).toBeInTheDocument();
 
-            process.env.NODE_ENV = originalEnv;
+            if (globalThis.process?.env && originalEnv !== undefined) {
+                globalThis.process.env.NODE_ENV = originalEnv;
+            }
         });
     });
 

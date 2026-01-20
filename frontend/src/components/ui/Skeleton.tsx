@@ -4,7 +4,7 @@
  */
 
 import { type VariantProps, cva } from 'class-variance-authority';
-import { forwardRef } from 'react';
+import React from 'react';
 import { cn } from '../../utils';
 
 // Skeleton variant styles using class-variance-authority
@@ -81,7 +81,7 @@ export interface SkeletonProps
  * // Button skeleton
  * <Skeleton variant="button" width="120px" height="36px" />
  */
-export const Skeleton = forwardRef<HTMLDivElement, SkeletonProps>(
+export const Skeleton = React.forwardRef<HTMLDivElement, SkeletonProps>(
     (
         {
             className,

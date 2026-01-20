@@ -5,7 +5,7 @@
 import { Icon, Input, Stack, Text } from '@/components/ui';
 import { Menu, Transition } from '@headlessui/react';
 import { Check, ListPlus, Star } from 'lucide-react';
-import { Fragment, KeyboardEvent, useState } from 'react';
+import React, { Fragment, KeyboardEvent, useState } from 'react';
 import { useWatchlistStore } from '../../stores/useWatchlistStore';
 import type { Watchlist } from '../../types/watchlist';
 import { WATCHLIST_LIMITS } from '../../types/watchlist';

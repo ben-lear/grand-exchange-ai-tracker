@@ -4,7 +4,7 @@
  */
 
 import { type VariantProps, cva } from 'class-variance-authority';
-import { forwardRef } from 'react';
+import React from 'react';
 import { cn } from '../../utils';
 
 // Radio variant styles using class-variance-authority
@@ -62,7 +62,7 @@ export interface RadioProps
  *   onChange={(e) => setTier(e.target.value)}
  * />
  */
-export const Radio = forwardRef<HTMLInputElement, RadioProps>(
+export const Radio = React.forwardRef<HTMLInputElement, RadioProps>(
     (
         {
             className,

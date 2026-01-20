@@ -45,7 +45,7 @@ export interface StatusBannerProps extends VariantProps<typeof statusBannerVaria
     /** Main title text */
     title: string;
     /** Optional description text */
-    description?: string;
+    description?: React.ReactNode;
     /** Optional custom icon component */
     icon?: React.ComponentType<{ className?: string }>;
     /** Optional action element (button, link, etc.) */

@@ -4,7 +4,7 @@
  */
 
 import { type VariantProps, cva } from 'class-variance-authority';
-import { forwardRef } from 'react';
+import React from 'react';
 import { cn } from '../../utils';
 
 // Card variant styles using class-variance-authority
@@ -149,7 +149,7 @@ export interface CardFooterProps
  *   </CardFooter>
  * </Card>
  */
-export const Card = forwardRef<HTMLDivElement, CardProps>(
+export const Card = React.forwardRef<HTMLDivElement, CardProps>(
     ({ className, variant, padding, ...props }, ref) => {
         return (
             <div
@@ -164,7 +164,7 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(
 /**
  * Card header component for titles and actions
  */
-export const CardHeader = forwardRef<HTMLDivElement, CardHeaderProps>(
+export const CardHeader = React.forwardRef<HTMLDivElement, CardHeaderProps>(
     ({ className, padding, ...props }, ref) => {
         return (
             <div
@@ -179,7 +179,7 @@ export const CardHeader = forwardRef<HTMLDivElement, CardHeaderProps>(
 /**
  * Card content component for main body content
  */
-export const CardContent = forwardRef<HTMLDivElement, CardContentProps>(
+export const CardContent = React.forwardRef<HTMLDivElement, CardContentProps>(
     ({ className, padding, ...props }, ref) => {
         return (
             <div
@@ -194,7 +194,7 @@ export const CardContent = forwardRef<HTMLDivElement, CardContentProps>(
 /**
  * Card footer component for actions and supplementary content
  */
-export const CardFooter = forwardRef<HTMLDivElement, CardFooterProps>(
+export const CardFooter = React.forwardRef<HTMLDivElement, CardFooterProps>(
     ({ className, padding, borderTop, ...props }, ref) => {
         return (
             <div

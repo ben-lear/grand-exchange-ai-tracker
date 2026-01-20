@@ -3,13 +3,13 @@
  * Renders the table header with sortable and resizable columns
  */
 
-import type { HeaderGroup } from '@tanstack/react-table';
+import type { HeaderGroup, TableState } from '@tanstack/react-table';
 import type { ItemWithPrice } from './columns';
 import { TableHeaderCell } from './TableHeaderCell';
 
 interface TableHeaderProps {
     headerGroups: HeaderGroup<ItemWithPrice>[];
-    tableState?: any;
+    tableState?: TableState;
 }
 
 export function TableHeader({ headerGroups, tableState }: TableHeaderProps) {

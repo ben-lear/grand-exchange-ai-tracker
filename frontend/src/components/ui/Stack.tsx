@@ -4,7 +4,12 @@
  */
 
 import { type VariantProps, cva } from 'class-variance-authority';
-import { forwardRef } from 'react';
+import React from 'react';
+import type {
+    PolymorphicComponent,
+    PolymorphicComponentProps,
+    PolymorphicRef,
+} from '../../types/polymorphic';
 import { cn } from '../../utils';
 
 // Stack variant styles using class-variance-authority
@@ -55,15 +60,19 @@ const stackVariants = cva(
     }
 );
 
-export interface StackProps<T extends React.ElementType = 'div'>
-    extends VariantProps<typeof stackVariants> {
-    /** Element type to render */
-    as?: T;
+type StackOwnProps = VariantProps<typeof stackVariants> & {
     /** Additional CSS classes */
     className?: string;
     /** Children elements */
     children?: React.ReactNode;
-}
+};
+
+export type StackProps<T extends React.ElementType = 'div'> =
+    PolymorphicComponentProps<T, StackOwnProps>;
+
+type StackBaseProps = StackOwnProps & {
+    as?: React.ElementType;
+} & Omit<React.ComponentPropsWithoutRef<React.ElementType>, keyof StackOwnProps | 'as'>;
 
 /**
  * Stack component for flexible layouts
@@ -96,11 +105,11 @@ export interface StackProps<T extends React.ElementType = 'div'>
  *   <button>Action</button>
  * </Stack>
  */
-export const Stack = forwardRef<any, StackProps>(
+const StackBase = React.forwardRef<HTMLElement, StackBaseProps>(
     ({ as: Component = 'div', className, direction, align, justify, gap, children, ...props }, ref) => {
         return (
             <Component
-                ref={ref}
+                ref={ref as PolymorphicRef<React.ElementType>}
                 className={cn(stackVariants({ direction, align, justify, gap }), className)}
                 {...props}
             >
@@ -108,10 +117,11 @@ export const Stack = forwardRef<any, StackProps>(
             </Component>
         );
     }
-) as <T extends React.ElementType = 'div'>(
-    props: StackProps<T> & Omit<React.ComponentPropsWithRef<T>, keyof StackProps<T>>
-) => React.ReactElement | null;
+);
 
-(Stack as any).displayName = 'Stack';
+StackBase.displayName = 'Stack';
+
+export const Stack = StackBase as PolymorphicComponent<'div', StackOwnProps>;
 
 export { stackVariants };
+

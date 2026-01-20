@@ -4,7 +4,7 @@
  */
 
 import { type VariantProps, cva } from 'class-variance-authority';
-import { forwardRef } from 'react';
+import React from 'react';
 import { cn } from '../../utils';
 
 // Checkbox variant styles using class-variance-authority
@@ -64,7 +64,7 @@ export interface CheckboxProps
  * // Disabled state
  * <Checkbox label="Required field" checked disabled />
  */
-export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
+export const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
     (
         {
             className,

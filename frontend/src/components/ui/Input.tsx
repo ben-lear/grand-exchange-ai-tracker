@@ -4,7 +4,7 @@
  */
 
 import { type VariantProps, cva } from 'class-variance-authority';
-import { forwardRef } from 'react';
+import React from 'react';
 import { cn } from '../../utils';
 
 // Input variant styles using class-variance-authority
@@ -69,7 +69,7 @@ export interface InputProps
  * // Number input with size
  * <Input type="number" size="sm" placeholder="Amount" />
  */
-export const Input = forwardRef<HTMLInputElement, InputProps>(
+export const Input = React.forwardRef<HTMLInputElement, InputProps>(
     ({ className, containerClassName, variant, size, leftIcon, rightIcon, ...props }, ref) => {
         // If no icons, render simple input
         if (!leftIcon && !rightIcon) {

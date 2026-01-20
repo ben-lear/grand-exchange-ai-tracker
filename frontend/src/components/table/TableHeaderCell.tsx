@@ -4,18 +4,22 @@
  */
 
 import { Icon } from '@/components/ui';
-import { flexRender, type Header } from '@tanstack/react-table';
+import { flexRender, type Header, type TableState } from '@tanstack/react-table';
 import { ArrowDown, ArrowUp, ArrowUpDown } from 'lucide-react';
 import type { ItemWithPrice } from './columns';
 
 interface TableHeaderCellProps {
     header: Header<ItemWithPrice, unknown>;
     showDivider?: boolean;
-    tableState?: any;
+    tableState?: TableState;
 }
 
+type ColumnMeta = {
+    cellClassName?: string;
+};
+
 export function TableHeaderCell({ header, showDivider, tableState }: TableHeaderCellProps) {
-    const customClassName = (header.column.columnDef.meta as any)?.cellClassName;
+    const customClassName = (header.column.columnDef.meta as ColumnMeta | undefined)?.cellClassName;
     const baseClassName = customClassName || 'px-2';
 
     return (

@@ -5,7 +5,7 @@
 
 import { type VariantProps, cva } from 'class-variance-authority';
 import { AlertCircle, CheckCircle, Info, X, XCircle } from 'lucide-react';
-import { forwardRef } from 'react';
+import React from 'react';
 import { cn } from '../../utils';
 import { Button } from './Button';
 
@@ -117,7 +117,7 @@ export interface AlertProps
  * // No icon
  * <Alert variant="success" showIcon={false} title="Success!" />
  */
-export const Alert = forwardRef<HTMLDivElement, AlertProps>(
+export const Alert = React.forwardRef<HTMLDivElement, AlertProps>(
     (
         {
             className,

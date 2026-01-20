@@ -5,7 +5,7 @@
 
 import { type VariantProps, cva } from 'class-variance-authority';
 import { X } from 'lucide-react';
-import { forwardRef, useEffect, useRef } from 'react';
+import React from 'react';
 import { createPortal } from 'react-dom';
 import { cn } from '../../utils';
 import { Button } from './Button';
@@ -78,9 +78,9 @@ export interface ModalProps
     backdropClassName?: string;
 }
 
-export interface ModalHeaderProps extends React.HTMLAttributes<HTMLDivElement> { }
-export interface ModalBodyProps extends React.HTMLAttributes<HTMLDivElement> { }
-export interface ModalFooterProps extends React.HTMLAttributes<HTMLDivElement> { }
+export type ModalHeaderProps = React.HTMLAttributes<HTMLDivElement>;
+export type ModalBodyProps = React.HTMLAttributes<HTMLDivElement>;
+export type ModalFooterProps = React.HTMLAttributes<HTMLDivElement>;
 
 /**
  * Modal component with backdrop and focus management
@@ -106,7 +106,7 @@ export interface ModalFooterProps extends React.HTMLAttributes<HTMLDivElement> {
  *   </ModalFooter>
  * </Modal>
  */
-export const Modal = forwardRef<HTMLDivElement, ModalProps>(
+export const Modal = React.forwardRef<HTMLDivElement, ModalProps>(
     (
         {
             isOpen,
@@ -121,10 +121,10 @@ export const Modal = forwardRef<HTMLDivElement, ModalProps>(
         },
         ref
     ) => {
-        const modalRef = useRef<HTMLDivElement>(null);
+        const modalRef = React.useRef<HTMLDivElement>(null);
 
         // Handle escape key
-        useEffect(() => {
+        React.useEffect(() => {
             const handleEscape = (event: KeyboardEvent) => {
                 if (event.key === 'Escape' && isOpen) {
                     onClose();
@@ -143,7 +143,7 @@ export const Modal = forwardRef<HTMLDivElement, ModalProps>(
         }, [isOpen, onClose]);
 
         // Focus management
-        useEffect(() => {
+        React.useEffect(() => {
             if (isOpen && modalRef.current) {
                 const focusableElements = modalRef.current.querySelectorAll(
                     'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
@@ -208,7 +208,7 @@ export const Modal = forwardRef<HTMLDivElement, ModalProps>(
 /**
  * Modal header component for custom headers
  */
-export const ModalHeader = forwardRef<HTMLDivElement, ModalHeaderProps>(
+export const ModalHeader = React.forwardRef<HTMLDivElement, ModalHeaderProps>(
     ({ className, ...props }, ref) => {
         return (
             <div
@@ -223,7 +223,7 @@ export const ModalHeader = forwardRef<HTMLDivElement, ModalHeaderProps>(
 /**
  * Modal body component for scrollable content
  */
-export const ModalBody = forwardRef<HTMLDivElement, ModalBodyProps>(
+export const ModalBody = React.forwardRef<HTMLDivElement, ModalBodyProps>(
     ({ className, ...props }, ref) => {
         return (
             <div
@@ -238,7 +238,7 @@ export const ModalBody = forwardRef<HTMLDivElement, ModalBodyProps>(
 /**
  * Modal footer component for actions
  */
-export const ModalFooter = forwardRef<HTMLDivElement, ModalFooterProps>(
+export const ModalFooter = React.forwardRef<HTMLDivElement, ModalFooterProps>(
     ({ className, ...props }, ref) => {
         return (
             <div

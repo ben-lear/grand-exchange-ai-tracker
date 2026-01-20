@@ -20,3 +20,13 @@ export type { ShareWatchlistModalProps } from './ShareWatchlistModal';
 export { ConfirmDeleteModal } from './ConfirmDeleteModal';
 export type { ConfirmDeleteModalProps } from './ConfirmDeleteModal';
 
+// New Phase 4 components
+export { ShareInfoBanner } from './ShareInfoBanner';
+export type { ShareInfoBannerProps } from './ShareInfoBanner';
+
+export { ImportSuccessBanner } from './ImportSuccessBanner';
+export type { ImportSuccessBannerProps } from './ImportSuccessBanner';
+
+export { ItemGrid } from './ItemGrid';
+export type { ItemGridProps } from './ItemGrid';
+

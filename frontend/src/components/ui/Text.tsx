@@ -4,7 +4,12 @@
  */
 
 import { type VariantProps, cva } from 'class-variance-authority';
-import { forwardRef } from 'react';
+import React from 'react';
+import type {
+    PolymorphicComponent,
+    PolymorphicComponentProps,
+    PolymorphicRef,
+} from '../../types/polymorphic';
 import { cn } from '../../utils';
 
 // Text variant styles using class-variance-authority
@@ -52,15 +57,19 @@ const textVariants = cva(
     }
 );
 
-export interface TextProps<T extends React.ElementType = 'span'>
-    extends VariantProps<typeof textVariants> {
-    /** Element type to render */
-    as?: T;
+type TextOwnProps = VariantProps<typeof textVariants> & {
     /** Additional CSS classes */
     className?: string;
     /** Children elements */
     children?: React.ReactNode;
-}
+};
+
+export type TextProps<T extends React.ElementType = 'span'> =
+    PolymorphicComponentProps<T, TextOwnProps>;
+
+type TextBaseProps = TextOwnProps & {
+    as?: React.ElementType;
+} & Omit<React.ComponentPropsWithoutRef<React.ElementType>, keyof TextOwnProps | 'as'>;
 
 /**
  * Text component for consistent typography
@@ -95,11 +104,11 @@ export interface TextProps<T extends React.ElementType = 'span'>
  *   Main Heading
  * </Text>
  */
-export const Text = forwardRef<any, TextProps>(
+const TextBase = React.forwardRef<HTMLElement, TextBaseProps>(
     ({ as: Component = 'span', className, variant, size, weight, align, children, ...props }, ref) => {
         return (
             <Component
-                ref={ref}
+                ref={ref as PolymorphicRef<React.ElementType>}
                 className={cn(textVariants({ variant, size, weight, align }), className)}
                 {...props}
             >
@@ -107,10 +116,11 @@ export const Text = forwardRef<any, TextProps>(
             </Component>
         );
     }
-) as <T extends React.ElementType = 'span'>(
-    props: TextProps<T> & Omit<React.ComponentPropsWithRef<T>, keyof TextProps<T>>
-) => React.ReactElement | null;
+);
 
-(Text as any).displayName = 'Text';
+TextBase.displayName = 'Text';
+
+export const Text = TextBase as PolymorphicComponent<'span', TextOwnProps>;
 
 export { textVariants };
+

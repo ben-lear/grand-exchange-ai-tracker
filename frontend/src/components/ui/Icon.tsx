@@ -4,7 +4,8 @@
  */
 
 import { type VariantProps, cva } from 'class-variance-authority';
-import { forwardRef } from 'react';
+import React from 'react';
+import type { PolymorphicRef } from '../../types/polymorphic';
 import { cn } from '../../utils';
 
 // Icon variant styles using class-variance-authority
@@ -36,17 +37,24 @@ const iconVariants = cva(
     }
 );
 
-export interface IconProps<T extends React.ElementType = 'svg'>
-    extends VariantProps<typeof iconVariants> {
-    /** Icon component to render (e.g., lucide-react icon) */
-    as: T;
+type IconOwnProps = VariantProps<typeof iconVariants> & {
     /** Additional CSS classes */
     className?: string;
     /** Enable spin animation for loading states */
     spin?: boolean;
     /** Accessible label for semantic icons (when provided, removes aria-hidden) */
     'aria-label'?: string;
-}
+};
+
+export type IconProps<T extends React.ElementType = 'svg'> =
+    IconOwnProps & {
+        /** Icon component to render (e.g., lucide-react icon) */
+        as: T;
+    } & Omit<React.ComponentPropsWithoutRef<T>, keyof IconOwnProps | 'as'>;
+
+type IconBaseProps = IconOwnProps & {
+    as: React.ElementType;
+} & Omit<React.ComponentPropsWithoutRef<React.ElementType>, keyof IconOwnProps | 'as'>;
 
 /**
  * Icon component for consistent icon rendering
@@ -71,7 +79,7 @@ export interface IconProps<T extends React.ElementType = 'svg'>
  * // Large primary icon
  * <Icon as={CheckCircle} size="xl" color="primary" />
  */
-export const Icon = forwardRef<any, IconProps>(
+const IconBase = React.forwardRef<SVGSVGElement, IconBaseProps>(
     ({ as: Component, className, size, color, spin, 'aria-label': ariaLabel, ...props }, ref) => {
         const iconClasses = cn(
             iconVariants({ size, color }),
@@ -81,7 +89,7 @@ export const Icon = forwardRef<any, IconProps>(
 
         return (
             <Component
-                ref={ref}
+                ref={ref as PolymorphicRef<React.ElementType>}
                 className={iconClasses}
                 aria-hidden={ariaLabel ? undefined : 'true'}
                 aria-label={ariaLabel}
@@ -89,10 +97,13 @@ export const Icon = forwardRef<any, IconProps>(
             />
         );
     }
-) as <T extends React.ElementType = 'svg'>(
-    props: IconProps<T> & Omit<React.ComponentPropsWithRef<T>, keyof IconProps<T>>
+);
+
+IconBase.displayName = 'Icon';
+
+export const Icon = IconBase as <T extends React.ElementType = 'svg'>(
+    props: IconProps<T>
 ) => React.ReactElement | null;
 
-(Icon as any).displayName = 'Icon';
-
 export { iconVariants };
+
