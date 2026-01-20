@@ -4,7 +4,7 @@
  */
 
 import Fuse, { type FuseIndex, type IFuseOptions } from 'fuse.js';
-import type { Item } from '../../types';
+import type { Item } from '@/types';
 
 /**
  * Extended Fuse instance that exposes the internal index with docs

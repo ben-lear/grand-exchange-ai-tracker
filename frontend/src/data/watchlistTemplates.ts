@@ -2,7 +2,7 @@
  * Pre-built watchlist templates for common item categories
  */
 
-import type { WatchlistTemplate } from '../types/watchlist';
+import type { WatchlistTemplate } from '@/types/watchlist';
 
 export const WATCHLIST_TEMPLATES: WatchlistTemplate[] = [
     {

@@ -4,7 +4,7 @@
 
 import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { DEFAULT_WATCHLIST_ID, WATCHLIST_LIMITS } from '../../types/watchlist';
+import { DEFAULT_WATCHLIST_ID, WATCHLIST_LIMITS } from '@/types/watchlist';
 import { useWatchlistStore } from './useWatchlistStore';
 
 describe('useWatchlistStore', () => {

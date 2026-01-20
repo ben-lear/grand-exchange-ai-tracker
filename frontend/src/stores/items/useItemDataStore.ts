@@ -4,7 +4,7 @@
  */
 
 import { create } from 'zustand';
-import type { CurrentPrice, Item } from '../../types';
+import type { CurrentPrice, Item } from '@/types';
 
 export interface ItemDataState {
     // State

@@ -1,13 +1,12 @@
 /**
- * Layout component exports
+ * Layout Component Exports
  */
 
-export { Header } from './Header';
-export type { HeaderHandle, HeaderProps } from './Header';
+export { MainLayout } from './MainLayout/MainLayout';
+export type { MainLayoutProps } from './MainLayout/MainLayout';
 
-export { Footer } from './Footer';
-export type { FooterProps } from './Footer';
+export { Header } from './Header/Header';
+export type { HeaderProps } from './Header/Header';
 
-export { MainLayout } from './MainLayout';
-export type { MainLayoutProps } from './MainLayout';
-
+export { Footer } from './Footer/Footer';
+export type { FooterProps } from './Footer/Footer';

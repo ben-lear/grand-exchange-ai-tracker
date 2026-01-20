@@ -2,7 +2,7 @@
  * Data transformation and validation utilities
  */
 
-import type { CurrentPrice, PriceTrend } from '../types';
+import type { CurrentPrice, PriceTrend } from '@/types';
 
 /**
  * Calculate the trend based on price change

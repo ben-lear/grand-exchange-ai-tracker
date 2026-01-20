@@ -3,7 +3,7 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import type { Watchlist, WatchlistItem } from '../../types/watchlist';
+import type { Watchlist, WatchlistItem } from '@/types/watchlist';
 import {
     duplicateWatchlist,
     formatItemCount,

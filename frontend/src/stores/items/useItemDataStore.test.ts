@@ -4,7 +4,7 @@
  */
 
 import { beforeEach, describe, expect, it } from 'vitest';
-import type { CurrentPrice, Item } from '../../types';
+import type { CurrentPrice, Item } from '@/types';
 import { useItemDataStore } from './useItemDataStore';
 
 describe('itemDataStore', () => {

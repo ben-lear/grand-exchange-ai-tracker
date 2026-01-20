@@ -1,4 +1,4 @@
-ï»¿/**
+/**
  * Column definitions for the Items data table
  * Uses TanStack Table v8 column definitions
  */
@@ -6,7 +6,7 @@
 import type { CurrentPrice, Item } from '@/types';
 import { formatGold, formatNumber } from '@/utils';
 import { createColumnHelper } from '@tanstack/react-table';
-import { Badge } from '../ui';
+import { Badge } from '@/components/ui';
 import { FavoriteCell, ItemNameCell, PinCell, PriceCell, WatchlistCell } from './cells';
 
 export interface ItemWithPrice extends Item {
@@ -127,7 +127,7 @@ export const columns = [
           {formatNumber(value)}
         </span>
       ) : (
-        <span className="text-gray-400">â€”</span>
+        <span className="text-gray-400">—</span>
       );
     },
     enableSorting: true,
@@ -145,7 +145,7 @@ export const columns = [
           {formatGold(value)}
         </span>
       ) : (
-        <span className="text-gray-400">â€”</span>
+        <span className="text-gray-400">—</span>
       );
     },
     enableSorting: true,

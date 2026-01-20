@@ -1,18 +1,38 @@
 /**
- * Table components barrel export
+ * Table Component Exports
  */
 
-export { COLUMN_IDS, defaultColumnVisibility } from './columnConfig';
+// Main table component
+export { ItemsTable } from './ItemsTable/ItemsTable';
+export type { ItemsTableProps } from './ItemsTable/ItemsTable';
+
+// Table sub-components
+export { TableBody } from './TableBody/TableBody';
+export { TablePagination } from './TablePagination/TablePagination';
+export type { TablePaginationProps } from './TablePagination/TablePagination';
+export { TableToolbar } from './TableToolbar/TableToolbar';
+export type { TableToolbarProps } from './TableToolbar/TableToolbar';
+
+// Table helper components
+export { ColumnToggle } from './ColumnToggle/ColumnToggle';
+export { ExportButton } from './ExportButton/ExportButton';
+export type { ExportButtonProps } from './ExportButton/ExportButton';
+export { FilterPanel } from './FilterPanel/FilterPanel';
+export type { FilterPanelProps, FilterState } from './FilterPanel/FilterPanel';
+export { TableContainer } from './TableContainer/TableContainer';
+export { TableHeader } from './TableHeader/TableHeader';
+export { TableHeaderCell } from './TableHeaderCell/TableHeaderCell';
+
+// Cell components
+export {
+    FavoriteCell,
+    ItemNameCell,
+    PinCell,
+    PriceCell,
+    WatchlistCell
+} from './cells';
+
+// Shared types and configurations
 export { columns } from './columns';
 export type { ItemWithPrice } from './columns';
-export { ExportButton } from './ExportButton';
-export type { ExportButtonProps } from './ExportButton';
-export { FilterPanel } from './FilterPanel';
-export type { FilterPanelProps, FilterState } from './FilterPanel';
-export { ItemsTable } from './ItemsTable';
-export type { ItemsTableProps } from './ItemsTable';
-export { TablePagination } from './TablePagination';
-export type { TablePaginationProps } from './TablePagination';
-export { TableToolbar } from './TableToolbar';
-export type { TableToolbarProps } from './TableToolbar';
 

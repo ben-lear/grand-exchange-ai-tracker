@@ -1,7 +1,11 @@
 import '@testing-library/jest-dom';
+import { mockAnimationsApi } from 'jsdom-testing-mocks';
 import React from 'react';
 // Make vi available globally for mocks
-import { vi } from 'vitest';
+import { afterAll, beforeAll, vi } from 'vitest';
+
+// Mock Web Animations API for HeadlessUI
+mockAnimationsApi();
 
 declare global {
     var vi: typeof import('vitest').vi;
@@ -9,6 +13,39 @@ declare global {
 
 // Make vi globally available for all test files
 globalThis.vi = vi;
+
+// Suppress expected console warnings in tests
+const originalError = console.error;
+const originalWarn = console.warn;
+
+beforeAll(() => {
+    console.error = (...args: any[]) => {
+        const message = args[0]?.toString() || '';
+        // Suppress React Router future flag warnings
+        if (message.includes('React Router Future Flag Warning')) {
+            return;
+        }
+        // Suppress HeadlessUI warnings (should be handled by jsdom-testing-mocks, but just in case)
+        if (message.includes('getAnimations') || message.includes('polyfilled')) {
+            return;
+        }
+        originalError.call(console, ...args);
+    };
+
+    console.warn = (...args: any[]) => {
+        const message = args[0]?.toString() || '';
+        // Suppress React Router future flag warnings
+        if (message.includes('React Router Future Flag Warning')) {
+            return;
+        }
+        originalWarn.call(console, ...args);
+    };
+});
+
+afterAll(() => {
+    console.error = originalError;
+    console.warn = originalWarn;
+});
 
 // Global mock for commonly used UI components
 vi.mock('@/components/ui', async () => {

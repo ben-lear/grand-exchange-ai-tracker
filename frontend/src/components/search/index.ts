@@ -1,21 +1,22 @@
 /**
- * Search component exports
+ * Search Component Exports
  */
 
-export { GlobalSearch } from './GlobalSearch';
-export type { GlobalSearchHandle } from './GlobalSearch';
+export { GlobalSearch } from './GlobalSearch/GlobalSearch';
+export type { GlobalSearchHandle } from './GlobalSearch/GlobalSearch';
 
-export { SearchResultItem } from './SearchResultItem';
-export type { SearchResultItemProps } from './SearchResultItem';
+export { SearchResult } from './SearchResult/SearchResult';
+export type { SearchResultProps } from './SearchResult/SearchResult';
 
-export { RecentSearchItem } from './RecentSearchItem';
-export type { RecentSearchItemProps } from './RecentSearchItem';
+export { RecentSearchItem } from './RecentSearchItem/RecentSearchItem';
+export type { RecentSearchItemProps } from './RecentSearchItem/RecentSearchItem';
 
-export { SearchDropdownContent } from './SearchDropdownContent';
+export { SearchDropdownContent } from './SearchDropdownContent/SearchDropdownContent';
+export type { SearchDropdownContentProps } from './SearchDropdownContent/SearchDropdownContent';
 
-export { SearchInput } from './SearchInput';
-export type { SearchInputProps } from './SearchInput';
+export { SearchInput } from './SearchInput/SearchInput';
+export type { SearchInputProps } from './SearchInput/SearchInput';
 
-export { SearchResult } from './SearchResult';
-export type { SearchResultProps } from './SearchResult';
+export { SearchResultItem } from './SearchResultItem/SearchResultItem';
+export type { SearchResultItemProps } from './SearchResultItem/SearchResultItem';
 

@@ -1,10 +1,9 @@
 /**
- * Central exports for all pages
+ * Page Component Exports
  */
 
-export { DashboardPage } from './DashboardPage';
-export { ItemDetailPage } from './ItemDetailPage';
-export { NotFoundPage } from './NotFoundPage';
-export { SharedWatchlistPage } from './SharedWatchlistPage';
-export { WatchlistsPage } from './WatchlistsPage';
-
+export { DashboardPage } from './DashboardPage/DashboardPage';
+export { ItemDetailPage } from './ItemDetailPage/ItemDetailPage';
+export { NotFoundPage } from './NotFoundPage/NotFoundPage';
+export { SharedWatchlistPage } from './SharedWatchlistPage/SharedWatchlistPage';
+export { WatchlistPage } from './WatchlistPage/WatchlistPage';

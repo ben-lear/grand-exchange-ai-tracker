@@ -3,7 +3,7 @@
  */
 
 import type { Meta, StoryObj } from '@storybook/react';
-import { Stack } from '../../ui';
+import { Stack } from '@/components/ui';
 import {
     CardGridLoading,
     DotsLoading,

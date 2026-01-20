@@ -3,8 +3,8 @@
  */
 
 import React from 'react';
-import { cn } from '../../../utils';
-import { Skeleton, Stack } from '../../ui';
+import { cn } from '@/utils';
+import { Skeleton, Stack } from '@/components/ui';
 
 export interface TableLoadingProps {
     /** Number of rows to show */

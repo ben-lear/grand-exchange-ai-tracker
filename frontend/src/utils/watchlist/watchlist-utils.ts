@@ -2,7 +2,7 @@
  * Utility functions for watchlist operations
  */
 
-import type { Watchlist, WatchlistExport, WatchlistItem } from '../../types/watchlist';
+import type { Watchlist, WatchlistExport, WatchlistItem } from '@/types/watchlist';
 
 /**
  * Format watchlist for export

@@ -3,7 +3,7 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import type { CurrentPrice } from '../types';
+import type { CurrentPrice } from '@/types';
 import {
   calculatePercentageChange,
   calculateTrend,

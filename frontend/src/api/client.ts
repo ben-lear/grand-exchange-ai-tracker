@@ -3,7 +3,7 @@
  */
 
 import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from 'axios';
-import type { ApiError } from '../types';
+import type { ApiError } from '@/types';
 
 /**
  * Base URL for the API - defaults to localhost for development

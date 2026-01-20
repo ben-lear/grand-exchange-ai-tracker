@@ -1,7 +1,6 @@
 /**
- * Dashboard components barrel export
+ * Dashboard Component Exports
  */
 
-export { DashboardHeader } from './DashboardHeader';
-
-export type { DashboardHeaderProps } from './DashboardHeader';
+export { DashboardHeader } from './DashboardHeader/DashboardHeader';
+export type { DashboardHeaderProps } from './DashboardHeader/DashboardHeader';

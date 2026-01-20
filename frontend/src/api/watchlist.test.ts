@@ -3,7 +3,7 @@
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { Watchlist } from '../types/watchlist';
+import type { Watchlist } from '@/types/watchlist';
 import apiClient from './client';
 import {
     createWatchlistShare,

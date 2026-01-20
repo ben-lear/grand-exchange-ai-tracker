@@ -9,7 +9,7 @@ import type {
   ItemListResponse,
   PaginationParams,
   SortParams,
-} from '../types';
+} from '@/types';
 import apiClient from './client';
 
 /**

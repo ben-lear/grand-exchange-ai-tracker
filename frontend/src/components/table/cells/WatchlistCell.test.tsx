@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { WatchlistCell } from './WatchlistCell';
 
 // Mock the WatchlistDropdown component
-vi.mock('@/components/common/WatchlistDropdown', () => ({
+vi.mock('@/components/common', () => ({
     WatchlistDropdown: ({ itemName }: { itemName: string }) => (
         <div data-testid="watchlist-dropdown">Dropdown for {itemName}</div>
     ),

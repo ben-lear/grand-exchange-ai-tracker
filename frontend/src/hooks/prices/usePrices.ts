@@ -9,14 +9,14 @@ import {
   fetchCurrentPrice,
   fetchPriceHistory,
   syncCurrentPrices,
-} from '../../api';
+} from '@/api';
 import type {
   ApiError,
   BatchPriceResponse,
   CurrentPrice,
   PriceHistory,
   TimePeriod,
-} from '../../types';
+} from '@/types';
 
 /**
  * Query keys for prices

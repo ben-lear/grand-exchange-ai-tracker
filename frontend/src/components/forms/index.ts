@@ -1,7 +1,6 @@
 /**
- * Forms Component Library Exports
+ * Form Component Exports
  */
 
-export { FormField, InlineFormField } from './FormField';
-export type { FormFieldProps, InlineFormFieldProps } from './FormField';
-
+export { FormField } from './FormField/FormField';
+export type { FormFieldProps } from './FormField/FormField';

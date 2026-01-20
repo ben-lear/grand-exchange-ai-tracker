@@ -2,7 +2,7 @@
  * Watchlist API functions for sharing watchlists
  */
 
-import type { Watchlist, WatchlistShare } from '../types/watchlist';
+import type { Watchlist, WatchlistShare } from '@/types/watchlist';
 import apiClient from './client';
 
 /**

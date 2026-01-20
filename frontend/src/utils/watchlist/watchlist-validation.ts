@@ -11,7 +11,7 @@ import type {
     Watchlist,
     WatchlistItem,
     WatchlistValidationResult,
-} from '../../types/watchlist';
+} from '@/types/watchlist';
 
 /**
  * Validate a watchlist with detailed error reporting

@@ -9,9 +9,9 @@
  */
 
 import { useMemo } from 'react';
-import { useLiveBufferStore } from '../../stores';
-import type { PricePoint, TimePeriod } from '../../types';
-import { getTimestepForPeriod } from '../../utils/chart';
+import { useLiveBufferStore } from '@/stores';
+import type { PricePoint, TimePeriod } from '@/types';
+import { getTimestepForPeriod } from '@/utils/chart';
 
 export interface ChartDataPoint {
     timestamp: number;

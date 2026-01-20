@@ -3,7 +3,7 @@
  */
 
 import { z } from 'zod';
-import { WATCHLIST_LIMITS } from '../types/watchlist';
+import { WATCHLIST_LIMITS } from '@/types/watchlist';
 
 /**
  * Schema for validating watchlist items

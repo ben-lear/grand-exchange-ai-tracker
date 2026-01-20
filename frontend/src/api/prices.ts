@@ -8,7 +8,7 @@ import type {
   PriceHistory,
   BatchPriceResponse,
   TimePeriod,
-} from '../types';
+} from '@/types';
 
 /**
  * Fetch all current prices

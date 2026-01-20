@@ -3,7 +3,7 @@
  */
 
 import React from 'react';
-import { cn } from '../../../utils';
+import { cn } from '@/utils';
 
 export interface DotsLoadingProps {
     /** Size of the dots */

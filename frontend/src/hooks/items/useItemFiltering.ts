@@ -5,9 +5,9 @@
 
 import type Fuse from 'fuse.js';
 import { useMemo } from 'react';
-import type { FilterState } from '../../components/table';
-import type { CurrentPrice, Item } from '../../types';
-import { createItemSearchIndex, filterItemIdsByRelevance } from '../../utils/search';
+import type { FilterState } from '@/components/table';
+import type { CurrentPrice, Item } from '@/types';
+import { createItemSearchIndex, filterItemIdsByRelevance } from '@/utils/search';
 
 export interface UseItemFilteringParams {
     /** All items to filter */

@@ -3,7 +3,7 @@
  * Renders watchlist dropdown and displays watchlist names
  */
 
-import { WatchlistDropdown } from '@/components/common/WatchlistDropdown';
+import { WatchlistDropdown } from '@/components/common';
 import { useWatchlistStore } from '@/stores';
 import type { Item } from '@/types';
 import { ListPlus } from 'lucide-react';

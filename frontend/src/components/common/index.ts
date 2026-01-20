@@ -1,31 +1,38 @@
 /**
- * Common component exports
+ * Common Component Exports
  */
 
-export { ErrorBoundary } from './ErrorBoundary';
-export type { ErrorFallbackProps } from './ErrorBoundary';
+export { BackButton } from './BackButton/BackButton';
+export type { BackButtonProps } from './BackButton/BackButton';
 
-export { ErrorFallback } from './ErrorFallback';
+export { ErrorBoundary } from './ErrorBoundary/ErrorBoundary';
+export type { ErrorBoundaryProps, ErrorFallbackProps } from './ErrorBoundary/ErrorBoundary';
 
-export { ItemIcon } from './ItemIcon';
-export type { ItemIconProps } from './ItemIcon';
+export { ErrorDisplay } from './ErrorDisplay/ErrorDisplay';
+export type { ErrorDisplayProps } from './ErrorDisplay/ErrorDisplay';
 
-export { BackButton } from './BackButton';
-export type { BackButtonProps } from './BackButton';
+export { ErrorFallback } from './ErrorFallback/ErrorFallback';
 
-// Loading components - re-export from loading folder
+export { ItemIcon } from './ItemIcon/ItemIcon';
+export type { ItemIconProps } from './ItemIcon/ItemIcon';
+
+export { WatchlistDropdown } from './WatchlistDropdown/WatchlistDropdown';
+export type { WatchlistDropdownProps } from './WatchlistDropdown/WatchlistDropdown';
+
+// Loading components - re-export from subdirectory
 export {
-    CardGridLoading, DotsLoading, InlineLoading, Loading,
-    LoadingSpinner, PulseLoading, TableLoading
+    CardGridLoading,
+    DotsLoading,
+    InlineLoading,
+    Loading,
+    LoadingSpinner,
+    PulseLoading,
+    TableLoading
 } from './loading';
+
 export type {
-    CardGridLoadingProps, DotsLoadingProps, InlineLoadingProps, LoadingProps,
-    LoadingSpinnerProps, PulseLoadingProps, TableLoadingProps
+    CardGridLoadingProps,
+    LoadingProps,
+    LoadingSpinnerProps,
+    TableLoadingProps
 } from './loading';
-
-export { EmptyState, ErrorDisplay } from './ErrorDisplay';
-export type { EmptyStateProps, ErrorDisplayProps } from './ErrorDisplay';
-
-export { WatchlistDropdown } from './WatchlistDropdown';
-export type { WatchlistDropdownProps } from './WatchlistDropdown';
-

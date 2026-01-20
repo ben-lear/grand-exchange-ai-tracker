@@ -1,43 +1,38 @@
 /**
- * Select components - accessible dropdowns with HeadlessUI Listbox
- *
- * This module provides type-safe select components:
- * - SingleSelect: For selecting a single value
- * - MultiSelect: For selecting multiple values
- *
- * @example
- * // Single select
- * import { SingleSelect } from '@/components/ui';
- * const [value, setValue] = useState<string | null>(null);
- * <SingleSelect value={value} onChange={setValue} options={options} />
- *
- * @example
- * // Multi-select
- * import { MultiSelect } from '@/components/ui';
- * const [values, setValues] = useState<string[]>([]);
- * <MultiSelect value={values} onChange={setValues} options={options} />
+ * Select component - basic select dropdown
  */
 
-// Re-export main components
-export { MultiSelect } from './select/MultiSelect';
-export { SingleSelect } from './select/SingleSelect';
+import React from 'react';
 
-// Re-export types
-export type {
-    BaseSelectProps, MultiSelectProps, SelectOption, SelectSize, SingleSelectProps
-} from './select/selectTypes';
+export interface SelectOption {
+    value: string;
+    label: string;
+}
 
-// Re-export styles for customization
-export {
-    dropdownPanelVariants,
-    optionVariants, selectButtonVariants, transitionProps
-} from './select/selectStyles';
+export interface SelectProps {
+    options: SelectOption[];
+    value: string | null;
+    onChange: (value: string | null) => void;
+    disabled?: boolean;
+    className?: string;
+}
 
-// Re-export hook for custom implementations
-export { useSelectBase } from './select/useSelectBase';
-export type { UseSelectBaseOptions, UseSelectBaseReturn } from './select/useSelectBase';
+const Select: React.FC<SelectProps> = ({ value, onChange, options, disabled, className }) => {
+    return (
+        <select
+            value={value || ''}
+            onChange={(e) => onChange(e.target.value || null)}
+            disabled={disabled}
+            className={className}
+        >
+            <option value="">Select...</option>
+            {options.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                </option>
+            ))}
+        </select>
+    );
+};
 
-// Legacy compatibility - deprecated, use SingleSelect or MultiSelect directly
-/** @deprecated Use SingleSelect or MultiSelect instead */
-export { SingleSelect as Select } from './select/SingleSelect';
-
+export default Select;
