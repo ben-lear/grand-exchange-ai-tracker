@@ -174,6 +174,9 @@ describe('useItemPrefetcher', () => {
     });
 
     it('does not start multiple fetches on re-render', async () => {
+        // Reset the store first to ensure clean state
+        useItemDataStore.getState().reset();
+
         const mockResponse = {
             data: [mockItem1],
             meta: {
@@ -184,16 +187,20 @@ describe('useItemPrefetcher', () => {
             },
         };
 
-        vi.mocked(api.fetchItems).mockResolvedValueOnce(mockResponse);
+        vi.mocked(api.fetchItems).mockResolvedValue(mockResponse);
 
-        const { rerender } = renderHook(() => useItemPrefetcher());
+        const { rerender, result } = renderHook(() => useItemPrefetcher());
 
-        // Wait for initial fetch (may be called twice in strict mode)
+        // Wait for loading to complete (initial fetch is done)
         await waitFor(() => {
-            expect(api.fetchItems).toHaveBeenCalled();
+            expect(result.current.isLoading).toBe(false);
         });
 
-        const initialCallCount = vi.mocked(api.fetchItems).mock.calls.length;
+        // Give a moment for all async operations to complete
+        await new Promise(resolve => setTimeout(resolve, 100));
+
+        // Clear mocks to track only new calls after loading completes
+        vi.mocked(api.fetchItems).mockClear();
 
         // Trigger re-renders
         rerender();
@@ -201,10 +208,10 @@ describe('useItemPrefetcher', () => {
         rerender();
 
         // Give time for any duplicate fetches to happen
-        await new Promise(resolve => setTimeout(resolve, 50));
+        await new Promise(resolve => setTimeout(resolve, 100));
 
-        // Should not have called again after re-renders
-        expect(api.fetchItems).toHaveBeenCalledTimes(initialCallCount);
+        // Should not have called again after re-renders (the hook guards against duplicate fetches)
+        expect(vi.mocked(api.fetchItems)).not.toHaveBeenCalled();
     });
 
     it('adds items to store as pages load', async () => {

@@ -7,7 +7,7 @@ import { useState } from 'react';
 import { useWatchlistStore } from '../../stores';
 import type { WatchlistExport } from '../../types/watchlist';
 import { validateWatchlistExport } from '../../utils';
-import { Button, Stack, StandardModal, Text } from '../ui';
+import { Button, FileInput, Stack, StandardModal, Text } from '../ui';
 
 export interface ImportWatchlistModalProps {
     isOpen: boolean;
@@ -23,7 +23,6 @@ interface ImportResult {
 }
 
 export function ImportWatchlistModal({ isOpen, onClose }: ImportWatchlistModalProps) {
-    const [dragActive, setDragActive] = useState(false);
     const [importing, setImporting] = useState(false);
     const [result, setResult] = useState<ImportResult | null>(null);
     const { importWatchlist, getWatchlistCount } = useWatchlistStore();
@@ -116,30 +115,10 @@ export function ImportWatchlistModal({ isOpen, onClose }: ImportWatchlistModalPr
         }
     };
 
-    const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-        const file = event.target.files?.[0];
-        if (file) {
-            processImport(file);
+    const handleFileSelect = (files: File[]) => {
+        if (files.length > 0) {
+            processImport(files[0]);
         }
-    };
-
-    const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
-        event.preventDefault();
-        setDragActive(false);
-
-        const file = event.dataTransfer.files?.[0];
-        if (file) {
-            processImport(file);
-        }
-    };
-
-    const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
-        event.preventDefault();
-        setDragActive(true);
-    };
-
-    const handleDragLeave = () => {
-        setDragActive(false);
     };
 
     return (
@@ -171,43 +150,17 @@ export function ImportWatchlistModal({ isOpen, onClose }: ImportWatchlistModalPr
         >
             {/* Upload Area */}
             {!result && (
-                <div
-                    onDrop={handleDrop}
-                    onDragOver={handleDragOver}
-                    onDragLeave={handleDragLeave}
-                    className={`
-                        border-2 border-dashed rounded-lg p-8 text-center transition-colors
-                        ${dragActive
-                            ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                            : 'border-gray-300 dark:border-gray-600'
-                        }
-                        ${importing ? 'opacity-50 pointer-events-none' : ''}
-                    `}
-                >
-                    <Upload className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-                    <Text variant="muted" size="sm" className="mb-2">
-                        Drag and drop your watchlist file here
-                    </Text>
-                    <Text variant="muted" size="xs" className="mb-4">
-                        or
-                    </Text>
-                    <label className="inline-block">
-                        <input
-                            type="file"
-                            accept=".json"
-                            onChange={handleFileSelect}
-                            disabled={importing}
-                            className="hidden"
-                            aria-label="Choose file to import"
-                        />
-                        <span className="inline-block px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 cursor-pointer transition-colors">
-                            {importing ? 'Importing...' : 'Choose File'}
-                        </span>
-                    </label>
-                    <Text variant="muted" size="xs" className="mt-4">
-                        Supports .json files exported from this app
-                    </Text>
-                </div>
+                <FileInput
+                    onChange={handleFileSelect}
+                    accept=".json"
+                    maxFiles={1}
+                    disabled={importing}
+                    showFileList={false}
+                    emptyMessage="Drop watchlist JSON file here or click to browse"
+                    helperText="Supports .json files exported from this app"
+                    size="base"
+                    aria-label="Choose file to import"
+                />
             )}
 
             {/* Import Result */}

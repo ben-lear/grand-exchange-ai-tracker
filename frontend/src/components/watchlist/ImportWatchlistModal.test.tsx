@@ -37,7 +37,7 @@ describe('ImportWatchlistModal', () => {
         render(<ImportWatchlistModal isOpen={true} onClose={mockOnClose} />);
 
         expect(screen.getByText('Import Watchlists')).toBeInTheDocument();
-        expect(screen.getByText(/Drag and drop your watchlist file here/)).toBeInTheDocument();
+        expect(screen.getByText(/Drop watchlist JSON file here/)).toBeInTheDocument();
     });
 
     it('does not render when closed', () => {
@@ -49,8 +49,8 @@ describe('ImportWatchlistModal', () => {
     it('displays file upload area', () => {
         render(<ImportWatchlistModal isOpen={true} onClose={mockOnClose} />);
 
-        expect(screen.getByText('Choose File')).toBeInTheDocument();
-        expect(screen.getByText(/Supports .json files/)).toBeInTheDocument();
+        expect(screen.getByText(/Drop watchlist JSON file here/)).toBeInTheDocument();
+        expect(screen.getByText(/Accepted: .json/)).toBeInTheDocument();
     });
 
     it('closes modal when close button is clicked', async () => {
@@ -236,7 +236,7 @@ describe('ImportWatchlistModal', () => {
 
         await user.click(screen.getByText('Import Another'));
 
-        expect(screen.getByText(/Drag and drop your watchlist file here/)).toBeInTheDocument();
+        expect(screen.getByText(/Drop watchlist JSON file here/)).toBeInTheDocument();
     });
 
     it('shows error when import fails', async () => {
@@ -298,7 +298,7 @@ describe('ImportWatchlistModal', () => {
 
         render(<ImportWatchlistModal isOpen={true} onClose={mockOnClose} />);
 
-        const dropZone = screen.getByText(/Drag and drop your watchlist file here/).closest('div');
+        const dropZone = screen.getByText(/Drop watchlist JSON file here/).closest('div');
 
         // Use fireEvent for better jsdom compatibility
         fireEvent.drop(dropZone!, {

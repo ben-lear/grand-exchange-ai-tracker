@@ -23,7 +23,7 @@ export type { CardContentProps, CardFooterProps, CardHeaderProps, CardProps } fr
 export { Alert, alertVariants } from './Alert';
 export type { AlertProps } from './Alert';
 
-export { AvatarSkeleton, CardSkeleton, Skeleton, TableRowSkeleton, skeletonVariants } from './Skeleton';
+export { AvatarSkeleton, CardSkeleton, Skeleton, skeletonVariants, TableRowSkeleton } from './Skeleton';
 export type { AvatarSkeletonProps, CardSkeletonProps, SkeletonProps, TableRowSkeletonProps } from './Skeleton';
 
 export { Stack, stackVariants } from './Stack';
@@ -73,4 +73,16 @@ export type { DropdownProps } from './Dropdown';
 
 export { DropdownItem } from './DropdownItem';
 export type { DropdownItemProps } from './DropdownItem';
+
+// Select components - use SingleSelect or MultiSelect for type safety
+export { MultiSelect, Select, SingleSelect } from './Select';
+export type {
+    BaseSelectProps, MultiSelectProps, SelectOption, SelectSize, SingleSelectProps
+} from './Select';
+
+export { Textarea } from './Textarea';
+export type { TextareaProps } from './Textarea';
+
+export { FileInput } from './FileInput';
+export type { FileInputProps } from './FileInput';
 

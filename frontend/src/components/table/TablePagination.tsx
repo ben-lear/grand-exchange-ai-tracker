@@ -7,7 +7,8 @@
  */
 
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
-import { Button, Icon, Stack } from '../ui';
+import type { SelectOption } from '../ui';
+import { Button, Icon, SingleSelect, Stack } from '../ui';
 
 export interface TablePaginationProps {
   currentPage: number;
@@ -32,6 +33,12 @@ export function TablePagination({
 
   const canGoPrevious = currentPage > 1;
   const canGoNext = currentPage < totalPages;
+
+  // Convert page size options to Select format
+  const pageSizeSelectOptions: SelectOption<number>[] = pageSizeOptions.map((option) => ({
+    value: option,
+    label: String(option),
+  }));
 
   const handleFirstPage = () => {
     if (canGoPrevious) {
@@ -64,19 +71,15 @@ export function TablePagination({
         <label htmlFor="page-size-select" className="text-sm text-gray-700 dark:text-gray-300">
           Items per page:
         </label>
-        <select
-          id="page-size-select"
-          name="pageSize"
-          value={pageSize}
-          onChange={(e) => onPageSizeChange(Number(e.target.value))}
-          className="px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-        >
-          {pageSizeOptions.map((option) => (
-            <option key={option} value={option}>
-              {option}
-            </option>
-          ))}
-        </select>
+        <div className="w-24">
+          <SingleSelect<number>
+            id="page-size-select"
+            value={pageSize}
+            onChange={onPageSizeChange}
+            options={pageSizeSelectOptions}
+            size="sm"
+          />
+        </div>
       </Stack>
 
       {/* Center - Page info */}

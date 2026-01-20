@@ -1,4 +1,5 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { TablePagination } from './TablePagination';
 
@@ -23,9 +24,10 @@ describe('TablePagination', () => {
         it('should have accessible page size select with id and name', () => {
             render(<TablePagination {...defaultProps} />);
 
-            const select = screen.getByLabelText(/items per page/i);
+            // SingleSelect uses a button with aria-haspopup="listbox"
+            const select = document.getElementById('page-size-select');
             expect(select).toHaveAttribute('id', 'page-size-select');
-            expect(select).toHaveAttribute('name', 'pageSize');
+            expect(select).toHaveAttribute('aria-haspopup', 'listbox');
         });
 
         it('should have proper label association', () => {
@@ -67,11 +69,18 @@ describe('TablePagination', () => {
     });
 
     describe('Page Size Selection', () => {
-        it('should update page size when select changes', () => {
+        it('should update page size when select changes', async () => {
             render(<TablePagination {...defaultProps} />);
 
-            const select = screen.getByLabelText(/items per page/i);
-            fireEvent.change(select, { target: { value: '100' } });
+            // Click the select button to open dropdown (using id)
+            const selectButton = document.getElementById('page-size-select')!;
+            await userEvent.click(selectButton);
+
+            // Wait for dropdown and click option (labels are just numbers)
+            await waitFor(() => {
+                expect(screen.getByRole('option', { name: '100' })).toBeInTheDocument();
+            });
+            await userEvent.click(screen.getByRole('option', { name: '100' }));
 
             expect(mockOnPageSizeChange).toHaveBeenCalledWith(100);
         });
@@ -79,20 +88,24 @@ describe('TablePagination', () => {
         it('should display current page size value', () => {
             render(<TablePagination {...defaultProps} pageSize={100} />);
 
-            const select = screen.getByLabelText(/items per page/i) as HTMLSelectElement;
-            expect(select.value).toBe('100');
+            // SingleSelect displays the selected value in the button text
+            const selectButton = document.getElementById('page-size-select')!;
+            expect(selectButton).toHaveTextContent('100');
         });
 
-        it('should render all page size options', () => {
+        it('should render all page size options', async () => {
             render(<TablePagination {...defaultProps} />);
 
-            const select = screen.getByLabelText(/items per page/i);
-            const options = Array.from(select.querySelectorAll('option'));
+            // Open dropdown
+            const selectButton = document.getElementById('page-size-select')!;
+            await userEvent.click(selectButton);
 
-            expect(options).toHaveLength(3);
-            expect(options[0]).toHaveValue('50');
-            expect(options[1]).toHaveValue('100');
-            expect(options[2]).toHaveValue('200');
+            // Check all options are present (labels are just numbers)
+            await waitFor(() => {
+                expect(screen.getByRole('option', { name: '50' })).toBeInTheDocument();
+                expect(screen.getByRole('option', { name: '100' })).toBeInTheDocument();
+                expect(screen.getByRole('option', { name: '200' })).toBeInTheDocument();
+            });
         });
     });
 
