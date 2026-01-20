@@ -22,3 +22,10 @@ export {
   type UsePriceStreamReturn
 } from './usePriceStream';
 
+// Search hooks
+export {
+  useSearchKeyboard,
+  type UseSearchKeyboardParams,
+  type UseSearchKeyboardReturn
+} from './useSearchKeyboard';
+

@@ -1,7 +1,7 @@
 # Component Refactoring Implementation Plan
 
 **Created:** January 18, 2026  
-**Status:** In Progress (Phase 4.5 Complete, Ready for Phase 5)  
+**Status:** In Progress (Phase 5 Complete, Ready for Phase 6)  
 **Priority:** High  
 **Estimated Duration:** 5 weeks
 
@@ -1072,13 +1072,13 @@ import { Loading, TableLoading } from '@/components/common/loading';
 
 ---
 
-## Phase 5: Standardize Patterns (Week 5)
+## Phase 5: Standardize Patterns (Week 5) ✅
 
-### 5.1 GlobalSearch Decomposition
+### 5.1 GlobalSearch Decomposition ✅
 
 **Current:** `GlobalSearch.tsx` (229 lines → ~130 lines)
 
-#### useSearchKeyboard Hook (~65 lines)
+#### useSearchKeyboard Hook (~65 lines) ✅
 **Source:** Lines 113-152
 
 ```typescript
@@ -1092,24 +1092,24 @@ interface UseSearchKeyboardParams {
 }
 ```
 
-**Test File:** `useSearchKeyboard.test.ts`
-- Arrow key navigation
-- Enter to select
-- Escape to close
-- Tab handling
+**Test File:** `useSearchKeyboard.test.ts` ✅
+- [x] Arrow key navigation
+- [x] Enter to select
+- [x] Escape to close
+- [x] Tab handling
 
-#### SearchDropdownContent Component (~55 lines)
+#### SearchDropdownContent Component (~55 lines) ✅
 **Source:** Lines 179-221
 
-**Test File:** `SearchDropdownContent.test.tsx`
+**Test File:** `SearchDropdownContent.test.tsx` ✅
 
-**Storybook:** `SearchDropdownContent.stories.tsx`
+**Storybook:** `SearchDropdownContent.stories.tsx` ✅
 
 ---
 
-### 5.2 Create StandardModal Wrapper
+### 5.2 Create StandardModal Wrapper ✅
 
-**New File:** `frontend/src/components/ui/StandardModal.tsx` (~85 lines)
+**New File:** `frontend/src/components/ui/StandardModal.tsx` (~85 lines) ✅
 
 ```typescript
 interface StandardModalProps {
@@ -1124,36 +1124,36 @@ interface StandardModalProps {
 ```
 
 **Features:**
-- Wraps HeadlessUI Dialog + Transition
-- Consistent animations (ease-out 300ms)
-- Backdrop blur
-- Focus trap
-- Escape key handling
+- [x] Wraps HeadlessUI Dialog + Transition
+- [x] Consistent animations (ease-out 300ms)
+- [x] Backdrop blur
+- [x] Focus trap
+- [x] Escape key handling
 
-**Update 5 Modals:** Each reduces ~80 lines
+**Update 5 Modals:** Each reduces ~80 lines (deferred to Phase 6)
 1. CreateWatchlistModal
 2. EditWatchlistModal
 3. ShareWatchlistModal
 4. ImportWatchlistModal
 5. ConfirmDeleteModal
 
-**Test File:** `StandardModal.test.tsx`
-- Should render when open
-- Should trap focus
-- Should close on Escape
-- Should close on backdrop click
+**Test File:** `StandardModal.test.tsx` ✅
+- [x] Should render when open
+- [x] Should trap focus
+- [x] Should close on Escape
+- [x] Should close on backdrop click
 
-**Storybook:** `StandardModal.stories.tsx`
-- All sizes
-- With/without icon
-- With/without footer
-- Long scrolling content
+**Storybook:** `StandardModal.stories.tsx` ✅
+- [x] All sizes
+- [x] With/without icon
+- [x] With/without footer
+- [x] Long scrolling content
 
 ---
 
-### 5.3 Create ActionMenu Component
+### 5.3 Create ActionMenu Component ✅
 
-**New File:** `frontend/src/components/ui/ActionMenu.tsx` (~65 lines)
+**New File:** `frontend/src/components/ui/ActionMenu.tsx` (~65 lines) ✅
 
 ```typescript
 interface ActionMenuItem {
@@ -1171,20 +1171,20 @@ interface ActionMenuProps {
 }
 ```
 
-**Replaces 3 instances:**
+**Replaces 3 instances:** (deferred to Phase 6)
 - WatchlistCard 3-dot menu
 - Potential table row actions
 - Header dropdowns
 
-**Test File:** `ActionMenu.test.tsx`
+**Test File:** `ActionMenu.test.tsx` ✅
 
-**Storybook:** `ActionMenu.stories.tsx`
+**Storybook:** `ActionMenu.stories.tsx` ✅
 
 ---
 
-### 5.4 Create Form Components
+### 5.4 Create Form Components ✅
 
-**New File:** `frontend/src/components/forms/FormField.tsx` (~75 lines)
+**New File:** `frontend/src/components/forms/FormField.tsx` (~75 lines) ✅
 
 ```typescript
 interface FormFieldProps {
@@ -1198,7 +1198,7 @@ interface FormFieldProps {
 }
 ```
 
-**Replaces pattern in 5+ locations:**
+**Replaces pattern in 5+ locations:** (deferred to Phase 6)
 - CreateWatchlistModal
 - EditWatchlistModal
 - ImportWatchlistModal
@@ -1216,25 +1216,25 @@ interface FormFieldProps {
 </Stack>
 ```
 
-**Test File:** `FormField.test.tsx`
-- Label association (htmlFor)
-- Error message display
-- Hint text display
-- Required indicator
-- Accessibility (ARIA attributes)
+**Test File:** `FormField.test.tsx` ✅
+- [x] Label association (htmlFor)
+- [x] Error message display
+- [x] Hint text display
+- [x] Required indicator
+- [x] Accessibility (ARIA attributes)
 
-**Storybook:** `FormField.stories.tsx`
-- Default field
-- With error
-- With hint
-- Required
-- All combinations
+**Storybook:** `FormField.stories.tsx` ✅
+- [x] Default field
+- [x] With error
+- [x] With hint
+- [x] Required
+- [x] All combinations
 
 ---
 
-### 5.5 Create AnimatedDropdown Wrapper
+### 5.5 Create AnimatedDropdown Wrapper ✅
 
-**New File:** `frontend/src/components/ui/AnimatedDropdown.tsx` (~55 lines)
+**New File:** `frontend/src/components/ui/AnimatedDropdown.tsx` (~55 lines) ✅
 
 ```typescript
 interface AnimatedDropdownProps {
@@ -1249,13 +1249,28 @@ interface AnimatedDropdownProps {
 
 **Wraps:** HeadlessUI Transition + Menu pattern
 
-**Replaces:**
+**Replaces:** (deferred to Phase 6)
 - WatchlistDropdown transition boilerplate
 - Future dropdown components
 
-**Test File:** `AnimatedDropdown.test.tsx`
+**Test File:** `AnimatedDropdown.test.tsx` ✅
 
-**Storybook:** `AnimatedDropdown.stories.tsx`
+**Storybook:** `AnimatedDropdown.stories.tsx` ✅
+
+---
+
+### Phase 5 Completion Checklist ✅
+
+- [x] useSearchKeyboard hook created with tests
+- [x] SearchDropdownContent component created with tests and stories
+- [x] GlobalSearch updated to use useSearchKeyboard hook
+- [x] StandardModal wrapper created with tests and stories
+- [x] ActionMenu component created with tests and stories
+- [x] FormField component created with tests and stories
+- [x] AnimatedDropdown wrapper created with tests and stories
+- [x] All exports updated (ui/index.ts, hooks/index.ts)
+- [x] Build passes (`npm run build`)
+- [x] All tests pass (`npm test`)
 
 ---
 

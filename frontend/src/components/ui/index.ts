@@ -53,7 +53,21 @@ export type { StatusBannerProps } from './StatusBanner';
 export { KeyboardShortcut } from './KeyboardShortcut';
 export type { KeyboardShortcutProps } from './KeyboardShortcut';
 
+export { StandardModal } from './StandardModal';
+export type { StandardModalProps } from './StandardModal';
 
+export { ActionMenu } from './ActionMenu';
+export type { ActionMenuItem, ActionMenuProps } from './ActionMenu';
 
-
+export {
+    AnimatedDropdown,
+    AnimatedDropdownDivider,
+    AnimatedDropdownHeader,
+    AnimatedDropdownItem
+} from './AnimatedDropdown';
+export type {
+    AnimatedDropdownHeaderProps,
+    AnimatedDropdownItemProps,
+    AnimatedDropdownProps
+} from './AnimatedDropdown';
 

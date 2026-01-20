@@ -4,7 +4,7 @@
  */
 
 import { Text } from '@/components/ui';
-import React, {
+import {
     forwardRef,
     useCallback,
     useEffect,
@@ -16,6 +16,7 @@ import React, {
 import { useNavigate } from 'react-router-dom';
 import { useDebouncedValue } from '../../hooks/useDebouncedValue';
 import { useRecentSearches, type RecentItem } from '../../hooks/useRecentSearches';
+import { useSearchKeyboard } from '../../hooks/useSearchKeyboard';
 import { useItemDataStore } from '../../stores/itemDataStore';
 import type { Item } from '../../types';
 import { createItemSearchIndex, searchItems } from '../../utils/itemSearch';
@@ -137,40 +138,21 @@ export const GlobalSearch = forwardRef<GlobalSearchHandle, GlobalSearchProps>(
             [addRecentItem, navigate]
         );
 
-        // Keyboard navigation
-        const handleKeyDown = useCallback(
-            (e: React.KeyboardEvent<HTMLInputElement>) => {
-                switch (e.key) {
-                    case 'ArrowDown':
-                        e.preventDefault();
-                        // Open dropdown if closed, otherwise move selection down
-                        if (!isOpen) {
-                            setIsOpen(true);
-                        } else if (itemCount > 0) {
-                            setSelectedIndex((i) => (i + 1) % itemCount);
-                        }
-                        break;
-                    case 'ArrowUp':
-                        e.preventDefault();
-                        if (itemCount > 0) {
-                            setSelectedIndex((i) => (i - 1 + itemCount) % itemCount);
-                        }
-                        break;
-                    case 'Enter':
-                        e.preventDefault();
-                        if (currentItems[selectedIndex]) {
-                            selectItem(currentItems[selectedIndex]);
-                        }
-                        break;
-                    case 'Escape':
-                        e.preventDefault();
-                        setIsOpen(false);
-                        inputRef.current?.blur();
-                        break;
+        // Use the extracted keyboard navigation hook
+        const { handleKeyDown } = useSearchKeyboard({
+            isOpen,
+            itemCount,
+            selectedIndex,
+            setSelectedIndex,
+            onSelect: useCallback(() => {
+                if (currentItems[selectedIndex]) {
+                    selectItem(currentItems[selectedIndex]);
                 }
-            },
-            [isOpen, itemCount, currentItems, selectedIndex, selectItem]
-        );
+            }, [currentItems, selectedIndex, selectItem]),
+            onClose: useCallback(() => setIsOpen(false), []),
+            onOpen: useCallback(() => setIsOpen(true), []),
+            inputRef,
+        });
 
         const handleClose = useCallback(() => setIsOpen(false), []);
 

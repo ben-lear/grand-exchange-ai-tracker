@@ -48,3 +48,6 @@ Thumbs.db
 /playwright-report/
 /test-results/
 /playwright/.cache/
+
+# Storybook
+/storybook-static/
