@@ -1,6 +1,40 @@
 import '@testing-library/jest-dom';
+import React from 'react';
 // Make vi available globally for mocks
 import { vi } from 'vitest';
+
+declare global {
+    var vi: typeof import('vitest').vi;
+}
+
+// Make vi globally available for all test files
+globalThis.vi = vi;
+
+// Global mock for commonly used UI components
+vi.mock('@/components/ui', async () => {
+    const actual = await vi.importActual('@/components/ui');
+    return {
+        ...actual,
+        Icon: ({ as: Component, className = '', spin, ...props }: any) => {
+            const combinedClassName = [className, spin ? 'animate-spin' : null]
+                .filter(Boolean)
+                .join(' ');
+            const dataTestId = props['data-testid'] ?? 'icon';
+            if (Component) {
+                return React.createElement(Component, { className: combinedClassName, ...props, 'data-testid': dataTestId });
+            }
+            return React.createElement('span', { className: combinedClassName, ...props, 'data-testid': dataTestId }, 'icon');
+        },
+        StatusBanner: ({ variant, title, description, icon: IconComponent, ...props }: any) =>
+            React.createElement(
+                'div',
+                { 'data-testid': 'status-banner', 'data-variant': variant, ...props },
+                IconComponent && React.createElement(IconComponent, { className: 'w-5 h-5', 'data-testid': 'status-icon' }),
+                React.createElement('h3', { 'data-testid': 'status-title' }, title),
+                React.createElement('div', { 'data-testid': 'status-description' }, description)
+            ),
+    };
+});
 
 // Mock ResizeObserver for HeadlessUI components
 class MockResizeObserver {
@@ -9,7 +43,7 @@ class MockResizeObserver {
     disconnect() { }
 }
 
-global.ResizeObserver = MockResizeObserver as any;
+globalThis.ResizeObserver = MockResizeObserver as unknown as typeof ResizeObserver;
 
 // Mock clipboard API for tests
 export const mockWriteText = vi.fn().mockResolvedValue(undefined);
