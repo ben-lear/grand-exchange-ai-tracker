@@ -28,14 +28,16 @@ const textareaVariants = cva(
                     'bg-white dark:bg-gray-700 border-2 border-green-500 dark:border-green-400 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-green-500',
             },
             size: {
-                sm: 'px-2 py-1 text-sm',
-                base: 'px-3 py-2 text-sm',
-                lg: 'px-4 py-3 text-base',
+                xs: 'px-2 py-1 text-xs',
+                sm: 'px-3 py-1.5 text-sm',
+                md: 'px-3.5 py-2 text-sm',
+                lg: 'px-4 py-2.5 text-base',
+                xl: 'px-5 py-3 text-lg',
             },
         },
         defaultVariants: {
             variant: 'default',
-            size: 'base',
+            size: 'md',
         },
     }
 );
@@ -62,7 +64,9 @@ export interface TextareaProps
     /** Additional container class name */
     containerClassName?: string;
     /** Size variant */
-    size?: 'sm' | 'base' | 'lg';
+    size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+    /** Value change handler (value only) */
+    onValueChange?: (value: string) => void;
 }
 
 /**
@@ -116,6 +120,7 @@ export const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
             required,
             value,
             onChange,
+            onValueChange,
             helperText,
             ...props
         },
@@ -147,9 +152,8 @@ export const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
 
         // Handle input change
         const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-            if (onChange) {
-                onChange(e);
-            }
+            onChange?.(e);
+            onValueChange?.(e.target.value);
             if (showCount) {
                 setCharCount(e.target.value.length);
             }

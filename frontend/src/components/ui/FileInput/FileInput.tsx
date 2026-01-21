@@ -27,15 +27,17 @@ const fileInputContainerVariants = cva(
                 false: '',
             },
             size: {
+                xs: 'p-3',
                 sm: 'p-4',
-                base: 'p-6',
+                md: 'p-6',
                 lg: 'p-8',
+                xl: 'p-10',
             },
         },
         defaultVariants: {
             variant: 'default',
             isDragging: false,
-            size: 'base',
+            size: 'md',
         },
     }
 );
@@ -87,7 +89,7 @@ export interface FileInputProps
     /** Additional container class name */
     containerClassName?: string;
     /** Size variant */
-    size?: 'sm' | 'base' | 'lg';
+    size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 }
 
 /**
@@ -187,7 +189,7 @@ export const FileInput = React.forwardRef<HTMLInputElement, FileInputProps>(
             error,
             label,
             required,
-            size = 'base',
+            size = 'md',
             emptyMessage = 'Drag and drop files here, or click to select',
             containerClassName,
             className,

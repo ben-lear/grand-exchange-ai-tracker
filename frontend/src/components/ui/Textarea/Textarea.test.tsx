@@ -99,7 +99,7 @@ describe('Textarea', () => {
             );
 
             const textarea = screen.getByRole('textbox');
-            expect(textarea).toHaveClass('px-4', 'py-3', 'text-base');
+            expect(textarea).toHaveClass('px-4', 'py-2.5', 'text-base');
         });
     });
 
@@ -335,7 +335,7 @@ describe('Textarea', () => {
             );
 
             const textarea = screen.getByRole('textbox');
-            expect(textarea).toHaveClass('px-2', 'py-1', 'text-sm');
+            expect(textarea).toHaveClass('px-3', 'py-1.5', 'text-sm');
         });
 
         it('should apply lg size classes', () => {
@@ -349,7 +349,7 @@ describe('Textarea', () => {
             );
 
             const textarea = screen.getByRole('textbox');
-            expect(textarea).toHaveClass('px-4', 'py-3', 'text-base');
+            expect(textarea).toHaveClass('px-4', 'py-2.5', 'text-base');
         });
     });
 

@@ -40,10 +40,15 @@ vi.mock('@/components/common', () => ({
     ItemIcon: ({ alt }: any) => <div data-testid="item-icon">{alt}</div>,
 }));
 
-vi.mock('lucide-react', () => ({
-    ArrowLeft: () => <button data-testid="back-button">←</button>,
-    TrendingUp: () => <div data-testid="trending-icon">📈</div>,
-}));
+vi.mock('lucide-react', async (importOriginal) => {
+    const actual = await importOriginal<typeof import('lucide-react')>();
+    return {
+        ...actual,
+        // Override only the icons we want to simplify for testing
+        ArrowLeft: () => <button data-testid="back-button">←</button>,
+        TrendingUp: () => <div data-testid="trending-icon">📈</div>,
+    };
+});
 
 const mockItem: Item = {
     id: 1,

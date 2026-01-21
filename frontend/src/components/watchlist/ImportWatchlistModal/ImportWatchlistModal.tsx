@@ -2,12 +2,12 @@
  * ImportWatchlistModal - Modal for importing watchlists from JSON files
  */
 
-import { AlertCircle, CheckCircle, Upload } from 'lucide-react';
-import { useState } from 'react';
+import { Button, FileInput, Stack, StandardModal, Text } from '@/components/ui';
 import { useWatchlistStore } from '@/stores';
 import type { WatchlistExport } from '@/types/watchlist';
 import { validateWatchlistExport } from '@/utils';
-import { Button, FileInput, Stack, StandardModal, Text } from '@/components/ui';
+import { AlertCircle, CheckCircle, Upload } from 'lucide-react';
+import { useState } from 'react';
 
 export interface ImportWatchlistModalProps {
     isOpen: boolean;
@@ -158,7 +158,7 @@ export function ImportWatchlistModal({ isOpen, onClose }: ImportWatchlistModalPr
                     showFileList={false}
                     emptyMessage="Drop watchlist JSON file here or click to browse"
                     helperText="Supports .json files exported from this app"
-                    size="base"
+                    size="md"
                     aria-label="Choose file to import"
                 />
             )}

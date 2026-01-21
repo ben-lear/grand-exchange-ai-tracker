@@ -34,6 +34,11 @@ vi.mock('@/components/ui', () => ({
             {children}
         </button>
     ),
+    Link: ({ to, children, ...props }: any) => (
+        <a href={to} {...props}>
+            {children}
+        </a>
+    ),
     Icon: ({ as: Component, className = '', ...props }: any) => {
         if (Component) {
             return React.createElement(Component, { className, ...props, 'data-testid': 'icon' });

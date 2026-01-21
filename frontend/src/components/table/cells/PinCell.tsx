@@ -3,6 +3,7 @@
  * Renders a pin toggle button for table rows
  */
 
+import { ToggleButton } from '@/components/ui';
 import { usePinnedItemsStore } from '@/stores';
 import { Pin } from 'lucide-react';
 
@@ -15,18 +16,14 @@ export function PinCell({ itemId }: PinCellProps) {
     const pinned = isPinned(itemId);
 
     return (
-        <button
-            onClick={() => togglePin(itemId)}
-            className="rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors block mx-auto"
-            title={pinned ? 'Unpin item' : 'Pin item to top'}
-            aria-label={pinned ? 'Unpin item' : 'Pin item to top'}
-        >
-            <Pin
-                className={`w-4 h-4 ${pinned
-                        ? 'fill-blue-600 text-blue-600 dark:fill-blue-400 dark:text-blue-400'
-                        : 'text-gray-400 dark:text-gray-500'
-                    }`}
-            />
-        </button>
+        <ToggleButton
+            icon={Pin}
+            isActive={pinned}
+            onToggle={() => togglePin(itemId)}
+            activeColor="blue"
+            size="sm"
+            label={pinned ? 'Unpin item' : 'Pin item to top'}
+            tooltip={pinned ? 'Unpin item' : 'Pin item to top'}
+        />
     );
 }

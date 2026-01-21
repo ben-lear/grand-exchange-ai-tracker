@@ -93,8 +93,8 @@ describe('FavoriteCell', () => {
 
     it('should apply correct styling for favorited state', () => {
         render(<FavoriteCell item={mockItem} />);
-        const svg = screen.getByRole('button').querySelector('svg');
-        expect(svg).toHaveClass('fill-yellow-500');
+        const button = screen.getByRole('button');
+        expect(button).toHaveAttribute('aria-pressed', 'true');
     });
 
     it('should apply correct styling for unfavorited state', async () => {
@@ -109,7 +109,7 @@ describe('FavoriteCell', () => {
 
         const nonFavoriteItem = { ...mockItem, itemId: 2 };
         render(<FavoriteCell item={nonFavoriteItem} />);
-        const svg = screen.getByRole('button').querySelector('svg');
-        expect(svg).toHaveClass('text-gray-400');
+        const button = screen.getByRole('button');
+        expect(button).toHaveAttribute('aria-pressed', 'false');
     });
 });

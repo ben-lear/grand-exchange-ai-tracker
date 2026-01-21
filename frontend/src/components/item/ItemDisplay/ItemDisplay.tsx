@@ -4,10 +4,10 @@
  */
 
 import { ItemIcon } from '@/components/common';
+import { Link } from '@/components/ui';
 import type { Item } from '@/types';
 import { getItemUrl } from '@/utils';
 import React from 'react';
-import { Link } from 'react-router-dom';
 
 export interface ItemDisplayProps {
     /** The item to display */
@@ -96,6 +96,8 @@ export const ItemDisplay: React.FC<ItemDisplayProps> = ({
         return (
             <Link
                 to={getItemUrl(item.itemId, item.name)}
+                variant="primary"
+                underline="none"
                 className="hover:opacity-80 transition-opacity"
             >
                 {content}

@@ -1,7 +1,7 @@
 # UI Component Library Standardization Implementation Plan
 
 **Created:** January 19, 2026  
-**Status:** Planning  
+**Status:** In Progress  
 **Priority:** HIGH  
 **Estimated Duration:** 5 weeks  
 **Breaking Changes:** YES (acceptable - unreleased code)
@@ -9,6 +9,13 @@
 ## 🎯 Objective
 
 Systematically migrate from raw DOM elements to reusable UI components across the entire frontend codebase. Complete deferred Phase 6 items from [015-component-refactoring.md](015-component-refactoring.md), create 8 new essential components (Select, Textarea, FileInput, Link, ToggleButton, List, Table primitives), enhance 3 existing components (Button, Input, IconButton), and establish component architecture standards.
+
+## ✅ Progress Update (as of January 20, 2026)
+
+- **Phase 0:** Complete (CommonComponentProps + architecture standards documented).
+- **Phase 1:** Modal migrations + ActionMenu + FormField adoptions complete. Modal test pass status not re-verified; `showCloseButton` prop tests not yet added.
+- **Phase 2:** Partially complete. Textarea + FileInput implemented with stories/tests and ImportWatchlistModal uses FileInput. Select is currently a basic native select (not HeadlessUI) with no stories/tests; TablePagination still uses native select.
+- **Phases 3–7:** Not started.
 
 ## 📊 Current State Analysis
 
@@ -34,8 +41,8 @@ Systematically migrate from raw DOM elements to reusable UI components across th
 - AnimatedDropdown.tsx ✅
 
 **Modals/Dialogs:**
-- Modal.tsx ⚠️ (deprecated - will be deleted)
-- StandardModal.tsx ✅ (needs `showCloseButton` prop)
+- Modal.tsx ❌ (deleted)
+- StandardModal.tsx ✅ (now has `showCloseButton` prop)
 
 **Display:**
 - Alert.tsx, Badge.tsx, Card.tsx, EmptyState.tsx, Icon.tsx, KeyboardShortcut.tsx, PriceDisplay.tsx, Skeleton.tsx, Stack.tsx, StatusBanner.tsx, Text.tsx ✅
@@ -44,24 +51,24 @@ Systematically migrate from raw DOM elements to reusable UI components across th
 - FormField.tsx ✅ (needs adoption campaign)
 
 ### Deferred Phase 6 Items (Priority)
-1. **Modal Migrations** - 5 modals still using boilerplate instead of StandardModal
-2. **ActionMenu Adoption** - 3 instances using raw button menus
-3. **FormField Adoption** - 5+ instances using label/input/error pattern
+1. ✅ **Modal Migrations** - Completed for all 5 watchlist modals
+2. ✅ **ActionMenu Adoption** - WatchlistCard now uses ActionMenu
+3. ✅ **FormField Adoption** - Create/Edit modals + FilterPanel updated
 
 ### Missing Core Components (8)
-1. **Select** - Dropdown input (HeadlessUI Listbox wrapper)
-2. **Textarea** - Multi-line text input
-3. **FileInput** - File upload with drag-and-drop
-4. **Link** - Styled react-router-dom Link wrapper
-5. **ToggleButton** - Active/inactive icon button (extracted from cells)
-6. **List/ListItem** - Semantic list components
-7. **Table Primitives** - Semantic table element wrappers (Table, TableHead, TableRow, TableCell)
+1. ⚠️ **Select** - Basic native select exists; HeadlessUI version not implemented
+2. ✅ **Textarea** - Implemented
+3. ✅ **FileInput** - Implemented
+4. ❌ **Link** - Not implemented
+5. ❌ **ToggleButton** - Not implemented
+6. ❌ **List/ListItem** - Not implemented
+7. ❌ **Table Primitives** - Not implemented
 
 ### Missing Standards
-- ❌ No `CommonComponentProps` interface for consistent prop naming
-- ❌ No composition depth guidelines (will establish: max 3 levels)
-- ❌ No dropdown usage documentation (ActionMenu vs Dropdown vs AnimatedDropdown vs Select)
-- ⚠️ Inconsistent component prop patterns across codebase
+- ✅ `CommonComponentProps` interface added
+- ✅ Composition depth guidelines documented
+- ✅ Dropdown usage documentation added
+- ⚠️ Inconsistent component prop patterns across codebase (remaining)
 
 ## 🎯 Target State
 
@@ -579,25 +586,29 @@ const menuItems: ActionMenuItem[] = [
 ### Phase 1 Completion Checklist
 
 **Modal Migrations:**
-- [ ] StandardModal has `showCloseButton` prop
-- [ ] CreateWatchlistModal migrated (~80 lines saved)
-- [ ] EditWatchlistModal migrated (~80 lines saved)
-- [ ] ShareWatchlistModal migrated (~80 lines saved)
-- [ ] ImportWatchlistModal migrated (~80 lines saved)
-- [ ] ConfirmDeleteModal migrated (~80 lines saved)
-- [ ] Modal.tsx deleted (breaking change)
+- [x] StandardModal has `showCloseButton` prop
+- [x] CreateWatchlistModal migrated (~80 lines saved)
+- [x] EditWatchlistModal migrated (~80 lines saved)
+- [x] ShareWatchlistModal migrated (~80 lines saved)
+- [x] ImportWatchlistModal migrated (~80 lines saved)
+- [x] ConfirmDeleteModal migrated (~80 lines saved)
+- [x] Modal.tsx deleted (breaking change)
 - [ ] All modal tests passing
 
 **ActionMenu Adoption:**
-- [ ] WatchlistCard uses ActionMenu (~17 lines saved)
+- [x] WatchlistCard uses ActionMenu (~17 lines saved)
 - [ ] ActionMenu tests passing
 
 **FormField Adoption:**
-- [ ] CreateWatchlistModal uses FormField (~30 lines saved)
-- [ ] EditWatchlistModal uses FormField (~30 lines saved)
-- [ ] FilterPanel uses FormField (~60 lines saved)
+- [x] CreateWatchlistModal uses FormField (~30 lines saved)
+- [x] EditWatchlistModal uses FormField (~30 lines saved)
+- [x] FilterPanel uses FormField (~60 lines saved)
 
 **Total Lines Saved in Phase 1:** ~537 lines
+
+**Progress Notes:**
+- `StandardModal` tests do not yet cover `showCloseButton` behavior.
+- Modal and ActionMenu tests have not been re-run for verification.
 
 ---
 
@@ -1015,22 +1026,27 @@ const validateFile = (file: File): string | null => {
 - [ ] Select has keyboard navigation and type-ahead
 - [ ] Select has Storybook stories
 - [ ] Select has 80%+ test coverage
-- [ ] Textarea component created
-- [ ] Textarea supports auto-resize
-- [ ] Textarea has character counter
-- [ ] Textarea has Storybook stories
+- [x] Textarea component created
+- [x] Textarea supports auto-resize
+- [x] Textarea has character counter
+- [x] Textarea has Storybook stories
 - [ ] Textarea has 80%+ test coverage
-- [ ] FileInput component created
-- [ ] FileInput supports drag-and-drop
-- [ ] FileInput has file validation
-- [ ] FileInput has Storybook stories
+- [x] FileInput component created
+- [x] FileInput supports drag-and-drop
+- [x] FileInput has file validation
+- [x] FileInput has Storybook stories
 - [ ] FileInput has 80%+ test coverage
 
 **Component Adoptions:**
 - [ ] TablePagination uses Select component
-- [ ] ImportWatchlistModal uses FileInput component
+- [x] ImportWatchlistModal uses FileInput component
 
 **Total New Components in Phase 2:** 3
+
+**Progress Notes:**
+- `Select` is currently a basic native select; HeadlessUI Listbox version and tests/stories are pending.
+- `TablePagination` still uses a native `<select>`.
+- Textarea/FileInput tests exist, but 80% coverage has not been verified.
 
 ---
 

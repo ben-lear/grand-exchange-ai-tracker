@@ -3,10 +3,9 @@
  * Used in SharedWatchlistPage to show import confirmation
  */
 
-import { StatusBanner } from '@/components/ui';
+import { Link, StatusBanner } from '@/components/ui';
 import { ListPlus } from 'lucide-react';
 import React from 'react';
-import { Link } from 'react-router-dom';
 
 export interface ImportSuccessBannerProps {
     /** Name of the imported watchlist */
@@ -28,7 +27,8 @@ export const ImportSuccessBanner: React.FC<ImportSuccessBannerProps> = ({
             You can now find "{watchlistName} (Imported)" in your{' '}
             <Link
                 to="/watchlists"
-                className="underline hover:no-underline text-green-700 dark:text-green-300"
+                variant="success"
+                underline="always"
             >
                 watchlists
             </Link>.

@@ -21,19 +21,20 @@ describe('TablePagination', () => {
     });
 
     describe('Accessibility', () => {
-        it('should have accessible page size select with id and name', () => {
+        it('should have accessible page size select with id', () => {
             render(<TablePagination {...defaultProps} />);
 
-            const select = document.getElementById('page-size-select');
-            expect(select).toHaveAttribute('id', 'page-size-select');
+            const trigger = screen.getByRole('button', { name: /items per page/i });
+            expect(trigger).toHaveAttribute('id', 'page-size-select');
         });
 
         it('should have proper label association', () => {
             render(<TablePagination {...defaultProps} />);
 
-            const label = screen.getByText(/items per page/i);
-            expect(label.tagName).toBe('LABEL');
-            expect(label).toHaveAttribute('for', 'page-size-select');
+            const trigger = screen.getByRole('button', { name: /items per page/i });
+
+            // Verify the select has an aria-label for accessibility
+            expect(trigger).toHaveAttribute('aria-label', 'Items per page');
         });
 
         it('should have accessible navigation buttons with titles', () => {
@@ -68,10 +69,12 @@ describe('TablePagination', () => {
 
     describe('Page Size Selection', () => {
         it('should update page size when select changes', async () => {
+            const user = userEvent.setup();
             render(<TablePagination {...defaultProps} />);
 
-            const select = screen.getByLabelText(/items per page/i) as HTMLSelectElement;
-            await userEvent.selectOptions(select, '100');
+            const trigger = screen.getByRole('button', { name: /items per page/i });
+            await user.click(trigger);
+            await user.click(screen.getByRole('option', { name: '100' }));
 
             expect(mockOnPageSizeChange).toHaveBeenCalledWith(100);
         });
@@ -79,12 +82,16 @@ describe('TablePagination', () => {
         it('should display current page size value', () => {
             render(<TablePagination {...defaultProps} pageSize={100} />);
 
-            const select = screen.getByLabelText(/items per page/i) as HTMLSelectElement;
-            expect(select.value).toBe('100');
+            const trigger = screen.getByRole('button', { name: /items per page/i });
+            expect(trigger).toHaveTextContent('100');
         });
 
         it('should render all page size options', async () => {
+            const user = userEvent.setup();
             render(<TablePagination {...defaultProps} />);
+
+            const trigger = screen.getByRole('button', { name: /items per page/i });
+            await user.click(trigger);
 
             const options = screen.getAllByRole('option');
             expect(options.map(option => option.textContent)).toEqual(['50', '100', '200']);

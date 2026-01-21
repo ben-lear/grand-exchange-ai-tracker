@@ -3,9 +3,9 @@
  * Renders item icon, name, and ID with link
  */
 
+import { Link } from '@/components/ui';
 import type { Item } from '@/types';
 import { getItemUrl } from '@/utils';
-import { Link } from 'react-router-dom';
 
 interface ItemNameCellProps {
     item: Item;
@@ -27,7 +27,8 @@ export function ItemNameCell({ item }: ItemNameCellProps) {
             <div className="flex items-center gap-2">
                 <Link
                     to={itemUrl}
-                    className="font-medium text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+                    variant="primary"
+                    className="font-medium"
                 >
                     {item.name}
                 </Link>

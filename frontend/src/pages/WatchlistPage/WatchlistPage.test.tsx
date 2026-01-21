@@ -63,6 +63,11 @@ vi.mock('@/components/ui', () => ({
         }
         return React.createElement('span', { className, ...props, 'data-testid': 'icon' }, 'icon');
     },
+    Link: ({ to, children, ...props }: any) => (
+        <a href={to} {...props}>
+            {children}
+        </a>
+    ),
 }));
 
 vi.mock('lucide-react', () => ({

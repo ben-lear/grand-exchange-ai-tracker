@@ -19,6 +19,11 @@ vi.mock('@/components/item', () => ({
 }));
 
 vi.mock('@/components/ui', () => ({
+    Link: ({ to, children, ...props }: any) => (
+        <a href={to} {...props}>
+            {children}
+        </a>
+    ),
     EmptyState: ({ icon: Icon, title, description }: any) => (
         <div data-testid="empty-state">
             <Icon />

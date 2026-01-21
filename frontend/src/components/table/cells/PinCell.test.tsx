@@ -57,8 +57,8 @@ describe('PinCell', () => {
         });
 
         render(<PinCell itemId={1} />);
-        const svg = screen.getByRole('button').querySelector('svg');
-        expect(svg).toHaveClass('fill-blue-600');
+        const button = screen.getByRole('button');
+        expect(button).toHaveAttribute('aria-pressed', 'true');
     });
 
     it('should apply correct styling for unpinned state', async () => {
@@ -70,7 +70,7 @@ describe('PinCell', () => {
         });
 
         render(<PinCell itemId={2} />);
-        const svg = screen.getByRole('button').querySelector('svg');
-        expect(svg).toHaveClass('text-gray-400');
+        const button = screen.getByRole('button');
+        expect(button).toHaveAttribute('aria-pressed', 'false');
     });
 });

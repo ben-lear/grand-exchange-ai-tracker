@@ -3,12 +3,11 @@
  */
 
 import { GlobalSearch, type GlobalSearchHandle } from '@/components/search';
-import { Button, Icon, Stack, Text } from '@/components/ui';
+import { Button, Icon, Link, Stack, Text } from '@/components/ui';
 import { useUIStore } from '@/stores';
 import { cn } from '@/utils';
 import { Bell, Menu, Search, Settings } from 'lucide-react';
 import { forwardRef, useImperativeHandle, useRef } from 'react';
-import { Link } from 'react-router-dom';
 
 export interface HeaderProps {
   className?: string;
@@ -51,7 +50,7 @@ export const Header = forwardRef<HeaderHandle, HeaderProps>(
                 <Icon as={Menu} size="md" />
               </button>
 
-              <Link to="/" className="flex items-center gap-3">
+              <Link to="/" variant="primary" className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-yellow-500 to-amber-600 flex items-center justify-center">
                   <span className="text-white font-bold text-lg">GE</span>
                 </div>
@@ -96,6 +95,8 @@ export const Header = forwardRef<HeaderHandle, HeaderProps>(
 
               <Link
                 to="/settings"
+                variant="muted"
+                underline="none"
                 className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800"
                 aria-label="Settings"
               >

@@ -2,10 +2,10 @@
  * Footer component for the main layout
  */
 
-import { Icon, Stack, Text } from '@/components/ui';
+import { Icon, Link, List, ListItem, Stack, Text } from '@/components/ui';
+import { cn } from '@/utils';
 import { Github, Heart } from 'lucide-react';
 import React from 'react';
-import { cn } from '@/utils';
 
 export interface FooterProps {
   className?: string;
@@ -42,38 +42,38 @@ export const Footer: React.FC<FooterProps> = ({ className }) => {
             <Text as="h3" variant="heading" size="base" className="mb-3">
               Resources
             </Text>
-            <ul className="space-y-2 text-sm">
-              <li>
-                <a
-                  href="https://oldschool.runescape.wiki/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400"
+            <List variant="unstyled" spacing="tight" className="text-sm">
+              <ListItem className="text-sm">
+                <Link
+                  to="https://oldschool.runescape.wiki/"
+                  external
+                  variant="muted"
+                  size="sm"
                 >
                   OSRS Wiki
-                </a>
-              </li>
-              <li>
-                <a
-                  href="https://secure.runescape.com/m=itemdb_oldschool/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400"
+                </Link>
+              </ListItem>
+              <ListItem className="text-sm">
+                <Link
+                  to="https://secure.runescape.com/m=itemdb_oldschool/"
+                  external
+                  variant="muted"
+                  size="sm"
                 >
                   Official GE Database
-                </a>
-              </li>
-              <li>
-                <a
-                  href={`${import.meta.env.VITE_API_BASE_URL?.replace('/api/v1', '')}/health`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400"
+                </Link>
+              </ListItem>
+              <ListItem className="text-sm">
+                <Link
+                  to={`${import.meta.env.VITE_API_BASE_URL?.replace('/api/v1', '')}/health`}
+                  external
+                  variant="muted"
+                  size="sm"
                 >
                   API Status
-                </a>
-              </li>
-            </ul>
+                </Link>
+              </ListItem>
+            </List>
           </div>
 
           {/* Info */}
@@ -82,15 +82,17 @@ export const Footer: React.FC<FooterProps> = ({ className }) => {
               Project
             </Text>
             <Stack direction="col" gap={3}>
-              <a
-                href="https://github.com/ben-lear/grand-exchange-ai-tracker"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400"
+              <Link
+                to="https://github.com/ben-lear/grand-exchange-ai-tracker"
+                external
+                variant="muted"
+                underline="none"
+                size="sm"
+                className="inline-flex items-center gap-2"
               >
                 <Icon as={Github} size="sm" />
                 View on GitHub
-              </a>
+              </Link>
               <Text variant="muted" size="xs">
                 Data updated every minute from OSRS API
               </Text>

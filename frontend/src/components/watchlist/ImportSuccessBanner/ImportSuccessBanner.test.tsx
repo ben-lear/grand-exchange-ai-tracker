@@ -13,12 +13,11 @@ vi.mock('@/components/ui', () => ({
             <div>{description}</div>
         </div>
     ),
-    Icon: ({ as: Component, className = '', ...props }: any) => {
-        if (Component) {
-            return React.createElement(Component, { className, ...props, 'data-testid': 'icon' });
-        }
-        return React.createElement('span', { className, ...props, 'data-testid': 'icon' }, 'icon');
-    },
+    Link: ({ to, children, ...props }: any) => (
+        <a href={to} {...props}>
+            {children}
+        </a>
+    ),
 }));
 
 const renderWithRouter = (ui: React.ReactElement) => {
@@ -77,7 +76,7 @@ describe('ImportSuccessBanner', () => {
         it('should have proper link styling classes', () => {
             renderWithRouter(<ImportSuccessBanner {...defaultProps} />);
             const link = screen.getByRole('link', { name: 'watchlists' });
-            expect(link).toHaveClass('underline', 'hover:no-underline');
+            expect(link).toHaveAttribute('href', '/watchlists');
         });
 
         it('should navigate to correct URL', () => {

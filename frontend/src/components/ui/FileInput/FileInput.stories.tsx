@@ -16,7 +16,7 @@ const meta: Meta<typeof FileInput> = {
     argTypes: {
         size: {
             control: 'select',
-            options: ['sm', 'base', 'lg'],
+            options: ['xs', 'sm', 'md', 'lg', 'xl'],
         },
         disabled: {
             control: 'boolean',
@@ -70,7 +70,7 @@ export const Default: Story = {
 export const AllSizes: Story = {
     render: () => (
         <div className="space-y-6">
-            {(['sm', 'base', 'lg'] as const).map((size) => (
+            {(['xs', 'sm', 'md', 'lg', 'xl'] as const).map((size) => (
                 <div key={size}>
                     <label className="text-sm font-medium mb-2 block">Size: {size}</label>
                     <FileInputDemo

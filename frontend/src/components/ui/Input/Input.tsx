@@ -3,9 +3,9 @@
  * Provides reusable input fields with consistent styling and behavior
  */
 
+import { cn } from '@/utils';
 import { type VariantProps, cva } from 'class-variance-authority';
 import React from 'react';
-import { cn } from '@/utils';
 
 // Input variant styles using class-variance-authority
 const inputVariants = cva(
@@ -27,14 +27,16 @@ const inputVariants = cva(
                 search: 'bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400',
             },
             size: {
-                sm: 'px-2 py-1 text-sm rounded-md',
-                base: 'px-3 py-2 text-sm rounded-lg',
-                lg: 'px-4 py-3 text-base rounded-lg',
+                xs: 'px-2 py-1 text-xs rounded-md',
+                sm: 'px-3 py-1.5 text-sm rounded-md',
+                md: 'px-3.5 py-2 text-sm rounded-lg',
+                lg: 'px-4 py-2.5 text-base rounded-lg',
+                xl: 'px-5 py-3 text-lg rounded-xl',
             },
         },
         defaultVariants: {
             variant: 'default',
-            size: 'base',
+            size: 'md',
         },
     }
 );
@@ -48,6 +50,8 @@ export interface InputProps
     rightIcon?: React.ReactNode;
     /** Additional container class name */
     containerClassName?: string;
+    /** Value change handler (value only) */
+    onValueChange?: (value: string) => void;
 }
 
 /**
@@ -70,13 +74,19 @@ export interface InputProps
  * <Input type="number" size="sm" placeholder="Amount" />
  */
 export const Input = React.forwardRef<HTMLInputElement, InputProps>(
-    ({ className, containerClassName, variant, size, leftIcon, rightIcon, ...props }, ref) => {
+    ({ className, containerClassName, variant, size, leftIcon, rightIcon, onChange, onValueChange, ...props }, ref) => {
+        const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+            onChange?.(event);
+            onValueChange?.(event.target.value);
+        };
+
         // If no icons, render simple input
         if (!leftIcon && !rightIcon) {
             return (
                 <input
                     ref={ref}
                     className={cn(inputVariants({ variant, size }), className)}
+                    onChange={handleChange}
                     {...props}
                 />
             );
@@ -98,6 +108,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
                         rightIcon && 'pr-9',
                         className
                     )}
+                    onChange={handleChange}
                     {...props}
                 />
                 {rightIcon && (

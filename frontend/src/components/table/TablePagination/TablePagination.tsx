@@ -6,7 +6,7 @@
  * - Current page indicator
  */
 
-import { Button, Icon, Stack } from '@/components/ui';
+import { Button, Icon, Select, Stack } from '@/components/ui';
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
 
 export interface TablePaginationProps {
@@ -61,22 +61,22 @@ export function TablePagination({
     <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-4 py-3 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
       {/* Left side - Page size selector */}
       <Stack direction="row" align="center" gap={2}>
-        <label htmlFor="page-size-select" className="text-sm text-gray-700 dark:text-gray-300">
+        <label id="page-size-label" className="text-sm text-gray-700 dark:text-gray-300">
           Items per page:
         </label>
-        <div className="w-24">
-          <select
+        <div className="w-32">
+          <Select
             id="page-size-select"
+            ariaLabel="Items per page"
+            ariaLabelledBy="page-size-label"
             value={pageSize}
-            onChange={(e) => onPageSizeChange(Number(e.target.value))}
-            className="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-          >
-            {pageSizeOptions.map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
+            onChange={onPageSizeChange}
+            options={pageSizeOptions.map((option) => ({
+              value: option,
+              label: `${option}`,
+            }))}
+            size="sm"
+          />
         </div>
       </Stack>
 
